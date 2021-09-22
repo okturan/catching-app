@@ -16,6 +16,10 @@ class ActivitiesController < ApplicationController
   def show
   end
 
+  def index
+    @activities = Activity.all
+  end
+
   def destroy
     @activity = Activity.find(params[:id])
     @activity.destroy
