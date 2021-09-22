@@ -8,6 +8,7 @@ class ActivitiesController < ApplicationController
     @activity = Activity.new(activity_params)
     @activity.event = current_event
     @activity.save
+    redirect_to dashboard_path
   end
 
   def edit
