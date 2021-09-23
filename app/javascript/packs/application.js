@@ -28,9 +28,11 @@ import "bootstrap";
 // Internal imports, e.g:
 // import { initSelect2 } from '../components/init_select2';
 import { initDashboardTabs } from '../components/dashboard_tabs';
+import { initTimeSlotDefiner } from '../components/timeslot_definer';
 
 document.addEventListener('turbolinks:load', () => {
   // Call your functions here, e.g:
   // initSelect2();
-  initDashboardTabs()
+  initDashboardTabs();
+  initTimeSlotDefiner();
 });
