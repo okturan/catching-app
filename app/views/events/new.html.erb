@@ -1,0 +1,18 @@
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-12 col-sm-4">
+      <h2>Create Event</h2>
+      <%= simple_form_for (@event) do |f| %>
+    <div class="form-events">
+      <%= f.input :name %>
+      <%= f.input :description, as: :text %>
+      <%= f.input :start_time, as: :string, required: true %>
+      <%= f.input :end_time, as: :string, required: true %>
+    </div>
+      <div class="form-actions">
+        <%= f.button :submit, "Submit", class: "btn btn-primary" %>
+      </div>
+     </div>
+  </div>
+</div>
+  <% end %>
