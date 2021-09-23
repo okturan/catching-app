@@ -1,0 +1,60 @@
+.banner {
+  background-size: cover;
+  background-position: center;
+  padding: 100px 0;
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100vw;
+  height: 100vh;
+  background-image: url("Homepage1.png");
+}
+
+.banner-logo {
+  position: absolute;
+  bottom: 7%;
+  right: 7%;
+}
+.banner-logo img {
+  height: 30vh;
+  border-radius: 50%;
+  opacity: 0,3;
+}
+
+.banner h1 {
+  margin: 10px 0;
+  color: white;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+  font-size: 4em;
+  font-weight: bolder;
+}
+
+.banner h2 {
+  margin: 1rem 0;
+  color: black;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+  font-size: 2em;
+  font-weight: bold;
+}
+
+.banner h3 {
+  display: inline-block;
+  color: black;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+  font-size: 1.5em;
+  width: fit-content;
+  padding: 0.1em 0.4em;
+  background-color: bisque;
+}
+
+.skewed {
+  transform: skew(8deg, 358deg);
+}
+
+.banner p {
+  margin-top: 20px;
+  font-size: 1.4em;
+  color: white;
+  opacity: .8;
+  width: 30vw;
+}
