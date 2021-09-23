@@ -1,12 +1,11 @@
 const initTimeSlotDefiner = () => {
-  if (!document.getElementById("submit-slots")) {
+  if (!document.querySelector(".time-slot-definer")) {
     return;
   }
 
   // Div selectors
-  const submitButton = document.getElementById("submit-slots");
-  const beginShow = document.getElementById("begin-show");
-  const endShow = document.getElementById("end-show");
+  // const beginShow = document.getElementById("begin-show");
+  // const endShow = document.getElementById("end-show");
   const daysShow = document.getElementById("days-show");
   const calendar = document.getElementById("calendar");
 
@@ -28,7 +27,7 @@ const initTimeSlotDefiner = () => {
 
   // Fill days as headers
   function fillDays() {
-    for (c = 0; c <= difference; c++) {
+    for (let c = 0; c <= difference; c++) {
       let options = {
         weekday: "long",
         month: "short",
@@ -36,7 +35,7 @@ const initTimeSlotDefiner = () => {
         timeZone: `${searchList.value}`,
       };
       let cell = document.createElement("div");
-      cell.innerText = date1.toLocaleString("en-Tr", options);
+      cell.innerText = date1.toLocaleString(getLang(), options);
       calendar.appendChild(cell).className = "grid-header";
       // Fill hour info for each day
       fillHours(date1);
@@ -46,7 +45,7 @@ const initTimeSlotDefiner = () => {
   }
 
   function fillHours(date) {
-    for (i = 0; i < 24; i++) {
+    for (let i = 0; i < 24; i++) {
       let cell = document.createElement("div");
       if (i < 10) {
         cell.innerText = "0" + i + ":00";
@@ -59,16 +58,13 @@ const initTimeSlotDefiner = () => {
 
       // Format time for UTC through chosen locale
       const now = new Date(date.setHours(i));
-      // console.log("now", now)
 
       const utcNow = now.toLocaleString("en-US", {
         timeZone: searchList.value,
-        timeZoneName: "long",
+        timeZoneName: "short",
       });
-      // console.log("utcNow", utcNow)
 
       let dateString = new Date(utcNow);
-      // console.log("dateString", dateString)
 
       // Set cell id with hour-date info
       cell.dataset.date = `${dateString.toISOString()}`;
@@ -86,8 +82,8 @@ const initTimeSlotDefiner = () => {
 
   // Show calculations on test box
   function updateInfoDivs() {
-    beginShow.innerText = beginDateInput.value;
-    endShow.innerText = endDateInput.value;
+    // beginShow.innerText = beginDateInput.value;
+    // endShow.innerText = endDateInput.value;
     daysShow.innerText = difference + 1;
   }
 
@@ -141,14 +137,17 @@ const initTimeSlotDefiner = () => {
       element.removeEventListener("mouseover", addSlots);
       element.removeEventListener("mouseover", removeSlots);
     });
+    getActiveCells();
   }
 
   // Select active cells
   function getActiveCells() {
+    let slots = [];
     let activeCells = calendar.querySelectorAll(".active");
     activeCells.forEach((cell) => {
-      console.log(cell.dataset.date);
+      slots.push(cell.dataset.date);
     });
+    document.querySelector("#time_slot_array").value = slots;
   }
 
   // Get timezone
@@ -164,7 +163,6 @@ const initTimeSlotDefiner = () => {
 
   // Event listeners
   searchList.addEventListener("change", drawCalendar);
-  submitButton.addEventListener("click", getActiveCells);
   beginDateInput.addEventListener("change", drawCalendar);
   endDateInput.addEventListener("change", drawCalendar);
   calendar.addEventListener("mousedown", highlightCell);
@@ -175,6 +173,7 @@ const initTimeSlotDefiner = () => {
   inferUserTimezone();
   drawCalendar();
 };
+export { initTimeSlotDefiner };
 
 // TODO
 // Date selector ✅
