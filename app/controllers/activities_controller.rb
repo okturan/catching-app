@@ -1,6 +1,5 @@
 class ActivitiesController < ApplicationController
   def new
-    @activity = Activity.find(params[:activity_id])
     @activity = Activity.new
   end
 
