@@ -1,0 +1,26 @@
+<div class="col-md-10 ml-auto col-xl-6 mr-auto">
+  <div>
+    <div class="tabs-container">
+      <div class="tabs">
+        <input type="radio" id="radio-1" name="tabs" data-tab-content="my-events" checked />
+        <label class="tab" for="radio-1"><i class="far fa-calendar-alt mr-3"></i>My Events<span class="notification">2</span></label>
+        <input type="radio" id="radio-2" name="tabs" data-tab-content="my-activities"/>
+        <label class="tab" for="radio-2"><i class="fas fa-poll mr-3"> </i> My Activities</label>
+        <input type="radio" id="radio-3" name="tabs" data-tab-content="my-friends" />
+        <label class="tab" for="radio-3"><i class="fas fa-users mr-3"></i>My Friends</label>
+        <span class="glider"></span>
+      </div>
+      <div class="tab-contents">
+        <div class="tab-content w-100" data-tab-content-id="my-events">
+          <%= render "dashboards/shared/my_events" %>
+        </div>
+        <div class="tab-content w-100 d-none" data-tab-content-id="my-activities">
+          <%= render "dashboards/shared/my_activities" %>
+        </div>
+        <div class="tab-content w-100 d-none" data-tab-content-id="my-friends">
+          <%= render "dashboards/shared/my_friends" %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
