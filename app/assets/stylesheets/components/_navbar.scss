@@ -1,11 +1,14 @@
 .navbar-lewagon {
   justify-content: space-between;
-  background: #E67E22;
   z-index: 10;
   font-size: 22px;
+  background-color: white;
   position: sticky;
   top: 0;
   font-size : clamp(16px, 2vw, 20px);
+}
+.navbar-home {
+  position: relative !important;
 }
 
 .navbar-lewagon .navbar-collapse {
@@ -14,4 +17,5 @@
 
 .navbar-lewagon .navbar-brand img {
   width: 40px;
+  margin-left: 1vw;
 }

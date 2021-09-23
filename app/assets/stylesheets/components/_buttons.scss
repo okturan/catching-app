@@ -1,0 +1,11 @@
+.btn-success {
+ /*  transform: rotate(-10deg); */
+  border-radius: 40px;
+  padding: 15px 40px;
+  font-weight: bold;
+  color: white;
+  background-color: red;
+}
+.btn-success:hover {
+  transform: scale(1.2);
+}
