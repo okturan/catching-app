@@ -1,2 +1,17 @@
-<h1>Pages#home</h1>
-<p>Find me in app/views/pages/home.html.erb</p>
+<div class="banner" >  <%# style="background-image: linear-gradient(rgba(0,0,0,0.4),rgba(0,0,0,0.4)), url(../images/Homepage_background.png);"> %>
+  <div class="container-homepage">
+    <h2> We have so much <em>CATCHING.APP</em> to do!</h2>
+
+   <%#  <a href="#" class="btn btn-lg btn-success">Plan Your Meeting Now</a> %>
+    <%= link_to 'Plan Your Meeting Now', new_event_path, class: 'btn btn-md btn-success' %>
+
+<%#     <div class='skewed'>
+      <h3><em>/ˈpɑː.tiˈænɪməl/</em></h3>
+      <h3><strong>noun</strong></h3>
+    </div> %>
+
+    <div class="banner-logo">
+      <%= image_tag "CATCHING.APP.gif" %>
+    </div>
+  </div>
+</div>

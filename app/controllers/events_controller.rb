@@ -1,9 +1,9 @@
 class EventsController < ApplicationController
-
   def create
-    @event = Event.new(list_params)
+    @event = Event.new(event_params)
     @event.user = current_user
     @event.save
+    redirect_to dashboard_path
   end
 
   def new
