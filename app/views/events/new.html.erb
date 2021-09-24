@@ -6,12 +6,21 @@
         <div class="form-events">
           <%= f.input :name, placeholder: "Istanbul Meeting" %>
           <%= f.input :description, as: :text, placeholder: "Local meeting with friends in Istanbul" %>
-          <%= f.input :user_id, collection: Event::FRIENDS %>
-          <%#= f.input :start_time, as: :string, required: true, input_html: {class: "datepicker"} %>
-          <%#= f.input :end_time, as: :string, required: true, input_html: {class: "datepicker"} %>
+
+          <%# Using regular HTML forms to escape model validation %>
+          <select class="form-control select required" name="user_info[user_id]">
+            <% @users.each do |user| %>
+              <option value="<%= user.id %>"><%= user.email %></option>
+            <% end %>
+          </select>
+          <input name="time_slots[time_slot_array]" id="time_slot_array" type="hidden">
+
         </div>
         <%= f.submit "Submit", class: "btn btn-primary" %>
       <% end %>
-     </div>
+    </div>
+    <%= render '/shared/time_slot_definer' %>
   </div>
 </div>
+<%#= f.input :start_time, as: :string, required: true, input_html: {class: "datepicker"} %>
+<%#= f.input :end_time, as: :string, required: true, input_html: {class: "datepicker"} %>

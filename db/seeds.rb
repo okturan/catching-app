@@ -5,11 +5,20 @@
 #
 #   movies = Movie.create([{ name: 'Star Wars' }, { name: 'Lord of the Rings' }])
 #   Character.create(name: 'Luke', movie: movies.first)
-Event.create(name: 'meeting', user_id: '1')
-Event.create(name: 'meeting2', user_id: '1')
+Activity.destroy_all
+Event.destroy_all
+User.destroy_all
 
-netflix = { name: 'Netflix', duration: 12, description: 'so much fun', event_id: 1 }
-gaming = { name: 'Gaming', duration: 1, description: 'fun times', event_id: 1 }
+ege = User.create(email: "ege@ege.com", password: "123456")
+sedef = User.create(email: "sedef@sedef.com", password: "123456")
+okan= User.create(email: "okan@okan.com", password: "123456")
+
+event1 = Event.create(name: 'meeting online', user: okan)
+event2 = Event.create(name: 'meeting outside', user: okan)
+
+
+netflix = { name: 'Netflix', duration: 12, description: 'so much fun', event: event1 }
+gaming = { name: 'Gaming', duration: 1, description: 'fun times', event: event1 }
 
 [netflix, gaming].each do |attributes|
   activity = Activity.create!(attributes)

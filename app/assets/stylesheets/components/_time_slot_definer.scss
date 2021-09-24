@@ -1,0 +1,144 @@
+// :root {
+//   --grid-cols: 1;
+//   --grid-rows: 1;
+// }
+
+// html {
+//   -webkit-box-sizing: border-box;
+//   -moz-box-sizing: border-box;
+//   box-sizing: border-box;
+// }
+// *,
+// *:before,
+// *:after {
+//   -webkit-box-sizing: inherit;
+//   -moz-box-sizing: inherit;
+//   box-sizing: inherit;
+// }
+
+.time-slot-definer {
+  p,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    margin: 0;
+  }
+
+  .top {
+    height: max-content;
+    width: max-content;
+    margin: 20px auto;
+    border: black dotted 2px;
+    border-radius: 5px;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+  }
+
+  #calendar {
+    width: 95%;
+    display: grid;
+    justify-content: center;
+    margin: 0 auto;
+    overflow: scroll;
+    column-gap: 2px;
+    grid-template-columns: repeat(var(--grid-cols), auto);
+    grid-template-rows: repeat(var(--grid-rows), auto);
+
+    -moz-user-select: -moz-none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    /*
+    Introduced in IE 10.
+    See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
+  */
+    -ms-user-select: none;
+    user-select: none;
+  }
+
+  .grid-header {
+    grid-row: 1;
+    padding: 1em;
+    border: 3px double rgb(194, 191, 191);
+    text-align: center;
+    width: 115px;
+    border-radius: 2px;
+  }
+  .grid-item {
+    font-size: 16px;
+    line-height: 1.7em;
+    margin-top: 3px;
+    border: 1px solid #ddd;
+    text-align: center;
+    width: 115px;
+    border-radius: 2px;
+  }
+
+  .info {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    width: 250px;
+    margin: 2vh;
+  }
+
+  .active {
+    background-color: rgba(0, 128, 0, 0.418);
+    animation: pulse 0.3s;
+    animation-timing-function: ease-in;
+  }
+
+  @-webkit-keyframes pulse {
+    0% {
+      -webkit-transform: scale(1);
+    }
+    50% {
+      -webkit-transform: scale(1.1);
+    }
+    100% {
+      -webkit-transform: scale(1);
+    }
+  }
+  @-moz-keyframes pulse {
+    0% {
+      -moz-transform: scale(1);
+    }
+    50% {
+      -moz-transform: scale(1.1);
+    }
+    100% {
+      -moz-transform: scale(1);
+    }
+  }
+  @-o-keyframes pulse {
+    0% {
+      -o-transform: scale(1);
+    }
+    50% {
+      -o-transform: scale(1.1);
+    }
+    100% {
+      -o-transform: scale(1);
+    }
+  }
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.1);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+  .pulse {
+    -webkit-animation-name: pulse;
+    -moz-animation-name: pulse;
+    -o-animation-name: pulse;
+    animation-name: pulse;
+  }
+}

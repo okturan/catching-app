@@ -1,4 +1,5 @@
 class Event < ApplicationRecord
   belongs_to :user
-  FRIENDS = User.all
+  has_many :time_slots
+  has_many :users, through: :invitations
 end
