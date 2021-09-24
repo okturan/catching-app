@@ -16,7 +16,9 @@
 //   box-sizing: inherit;
 // }
 
-.time-slot-definer {
+
+
+.time-slot-definer, .time-slot-show {
   p,
   h1,
   h2,
@@ -26,7 +28,6 @@
   h6 {
     margin: 0;
   }
-
   .top {
     height: max-content;
     width: max-content;
