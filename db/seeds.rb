@@ -9,10 +9,12 @@ Activity.destroy_all
 Event.destroy_all
 User.destroy_all
 
-user1 = User.create(email: "okan@test.com", password: "123456")
+ege = User.create(email: "ege@ege.com", password: "123456")
+sedef = User.create(email: "sedef@sedef.com", password: "123456")
+okan= User.create(email: "okan@okan.com", password: "123456")
 
-event1 = Event.create(name: 'meeting', user: user1)
-event2 = Event.create(name: 'meeting2', user: user1)
+event1 = Event.create(name: 'meeting online', user: okan)
+event2 = Event.create(name: 'meeting outside', user: okan)
 
 
 netflix = { name: 'Netflix', duration: 12, description: 'so much fun', event: event1 }
