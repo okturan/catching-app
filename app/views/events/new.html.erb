@@ -8,6 +8,7 @@
           <%= f.input :description, as: :text, placeholder: "Local meeting with friends in Istanbul" %>
 
           <%# Using regular HTML forms to escape model validation %>
+          <label for="user_info[user_id]">Choose friends</label><br>
           <select class="form-control select required" name="user_info[user_id]">
             <% @users.each do |user| %>
               <option value="<%= user.id %>"><%= user.email %></option>
