@@ -1,0 +1,11 @@
+<% @time_slots.each do |slot| %>
+  <%= slot.start_time %>
+  <form>
+      <input type="radio" id="yes" name="yes" value="yes">
+      <label for="no">Agree</label><br>
+    
+      <input type="radio" id="no" name="no" value="no">
+      <label for="no">Disagree</label><br>
+  </form>
+<% end %>
+

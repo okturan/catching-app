@@ -3,7 +3,7 @@
     <div class="tabs-container">
       <div class="tabs">
         <input type="radio" id="radio-1" name="tabs" data-tab-content="my-events" checked />
-        <label class="tab" for="radio-1"><i class="far fa-calendar-alt mr-3"></i>My Events<span class="notification"><%=Event.count %></span></label>
+        <label class="tab" for="radio-1"><i class="far fa-calendar-alt mr-3"></i>My Events<span class="notification"><%=@events.count %></span></label>
         <input type="radio" id="radio-2" name="tabs" data-tab-content="my-activities"/>
         <label class="tab" for="radio-2"><i class="fas fa-poll mr-3"> </i> My Activities<span class="notification"><%=Activity.count %></span></label>
         <input type="radio" id="radio-3" name="tabs" data-tab-content="my-friends" />
