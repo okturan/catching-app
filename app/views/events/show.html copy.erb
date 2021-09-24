@@ -9,11 +9,9 @@
 <input id="begin-date" type="hidden" value="<%= @time_slots.first.start_time %>">
 <input id="end-date" type="hidden" value="<%= @time_slots.last.start_time %>">
 <input id="inferred-timezone" type="hidden" value="">
-<input id="received-time-slots" type="hidden" value="<%= @time_slots_array.to_s %>">
-
+<input id="received-time-slots" type="hidden" value="<%= @time_slots_array.to_s.html_safe %>">
 
 <div class="time-slot-show">
-<%= link_to "Accept", dashboard_path, :class => "btn btn-primary btn-md" %>
   <div id="calendar"></div>
 </div>
 
@@ -41,17 +39,8 @@
   }
   
   function timeSlotCompare() {
-    let x = receivedTimeSlots.value
-
-    let y = x.replaceAll(/"/g, '');
-
-    let z = y.substring(1).slice(0,-1)
-
-    const arrayz = z.split(", ")
-    return arrayz
+    console.log(receivedTimeSlots.value)
   }
-
-
 
   function fillDays() {
     for (let c = 0; c <= difference; c++) {
@@ -72,8 +61,6 @@
   }
   
   function fillHours(date) {
-    const timeslotarray = timeSlotCompare();
-
     for (let i = 0; i < 24; i++) {
       let cell = document.createElement("div");
       if (i < 10) {
@@ -97,14 +84,7 @@
   
       // Set cell id with hour-date info
       cell.dataset.date = `${dateString.toISOString()}`;
-      
-      timeslotarray.forEach((element) => {
-        console.log(element)
-        console.log(cell.dataset.date)
-        if (cell.dataset.date.replaceAll(/\.000/g, '') == element) {
-          cell.className = "grid-item active";
-        }
-      }); 
+      if cell.dataset.date == 
     }
   }
   
@@ -118,5 +98,6 @@
   }
   
   inferUserTimezone();
+  dateInfo();
   drawCalendar();
 </script>
