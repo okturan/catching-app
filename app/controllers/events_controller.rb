@@ -12,14 +12,19 @@ class EventsController < ApplicationController
       time_slot = TimeSlot.new(start_time: slot, user: current_user, event: @event)
       time_slot.save!
     end
-
-    Invitation.create!(event: @event, user_id: user_info_params[:user_id])
+    invited_user = User.find(user_info_params[:user_id])
+    @event.invite(invited_user)
 
     redirect_to dashboard_path
   end
 
+  def show
+    @time_slots = Event.find(params[:id]).time_slots
+
+  end
+
   def new
-    @users = User.all
+    @users = User.all - [current_user]
     @event = Event.new
   end
 

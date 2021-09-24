@@ -23,6 +23,7 @@ class DashboardsController < ApplicationController
     # @events = @events_invited + @events_hosted
     # @events = @events.to_a.uniq
 
-    @events = Event.all
+    @events = current_user.events + current_user.invited_events
+
   end
 end
