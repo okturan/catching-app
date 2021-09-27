@@ -35,20 +35,24 @@
     date1 = new Date(beginDateInput.value);
     date2 = new Date(endDateInput.value);
     difference = Math.ceil((date2 - date1) / 1000 / 60 / 60 / 24);
-    console.log(date1)
-    console.log(date2)
-    console.log(difference)
+    console.log("Begin date:", date1)
+    console.log("End date:", date2)
+    console.log("Days total:", difference)
   }
   
   function timeSlotCompare() {
-    let x = receivedTimeSlots.value
+    let aa = receivedTimeSlots.value
 
-    let y = x.replaceAll(/"/g, '');
+    let bb = aa.replaceAll(/"/g, '');
 
-    let z = y.substring(1).slice(0,-1)
+    let cc = bb.substring(1).slice(0,-1)
 
-    const arrayz = z.split(", ")
-    return arrayz
+    let dd = cc.replaceAll(/\.000/g, '')
+
+
+    let ee = dd.split(", ")
+
+    return ee
   }
 
 
@@ -72,7 +76,7 @@
   }
   
   function fillHours(date) {
-    const timeslotarray = timeSlotCompare();
+    let timeslotarray = timeSlotCompare();
 
     for (let i = 0; i < 24; i++) {
       let cell = document.createElement("div");
@@ -84,27 +88,22 @@
       cell.style.gridRow = i + 2;
       calendar.appendChild(cell);
       cell.className = "grid-item";
-  
+
+      // increment hours
+      let timeslot = new Date(date.setHours(i));
+      console.log(timeslot)
+
       // Format time for UTC through chosen locale
-      const now = new Date(date.setHours(i));
-  
-      const utcNow = now.toLocaleString("en-US", {
+      const x = timeslot.toLocaleString("en-US", {
         timeZone: inferredTimezone.value,
         timeZoneName: "short",
       });
-  
-      let dateString = new Date(utcNow);
-  
+
+      let dateString = new Date(x);
+
       // Set cell id with hour-date info
       cell.dataset.date = `${dateString.toISOString()}`;
-      
-      timeslotarray.forEach((element) => {
-        console.log(element)
-        console.log(cell.dataset.date)
-        if (cell.dataset.date.replaceAll(/\.000/g, '') == element) {
-          cell.className = "grid-item active";
-        }
-      }); 
+
     }
   }
   

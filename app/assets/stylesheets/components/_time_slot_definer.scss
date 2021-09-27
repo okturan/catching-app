@@ -92,6 +92,11 @@
     animation-timing-function: ease-in;
   }
 
+  .disabled {
+    filter: blur(3px) grayscale(100%);
+    opacity: 0.6
+  }
+
   @-webkit-keyframes pulse {
     0% {
       -webkit-transform: scale(1);
