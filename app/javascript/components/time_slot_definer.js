@@ -99,16 +99,16 @@ const initTimeSlotDefiner = () => {
     let greenCells = document.querySelectorAll(".active");
     let allCells = document.querySelectorAll(".grid-item");
 
-    if (event.target.classList.contains("active")) {
-      greenCells.forEach((element) => {
-        element.addEventListener("mouseover", removeSlots);
-      });
-    } else {
-      allCells.forEach((element) => {
-        element.addEventListener("mouseover", addSlots);
-      });
+      if (event.target.classList.contains("active")) {
+        greenCells.forEach((element) => {
+          element.addEventListener("mouseover", removeSlots);
+        });
+      } else {
+        allCells.forEach((element) => {
+          element.addEventListener("mouseover", addSlots);
+        });
+      }
     }
-  }
 
   // Actual highlighting and removing
   function addSlots(event) {

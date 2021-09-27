@@ -16,7 +16,14 @@
 //   box-sizing: inherit;
 // }
 
-
+.timezone-picker {
+  font-size: 1.2em;
+  display: flex;
+  align-items: baseline;
+  width: fit-content;
+  margin: auto;
+  padding: 20px;
+}
 
 .time-slot-definer, .time-slot-show {
   p,

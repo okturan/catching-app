@@ -1,61 +1,71 @@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nice-select2@1/dist/css/nice-select2.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment-timezone@0.5.33/builds/moment-timezone-with-data-10-year-range.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/nice-select2@1/dist/js/nice-select2.min.js"></script>
+
 <% @time_slots_array = [] %>
 
 <% @time_slots.each do |slot| %>
-  <%#= slot.start_time.strftime("%b %e, %l:%M %p") %>
-  <%#= slot.start_time.iso8601 %>
   <% @time_slots_array << slot.start_time.iso8601 %>
 <% end %>
 
-<input id="begin-date" type="hidden" value="<%= @time_slots.first.start_time %>">
-<input id="end-date" type="hidden" value="<%= @time_slots.last.start_time %>">
+<input id="begin-date" type="hidden" value="<%= @time_slots.first.start_time.iso8601 %>">
+<input id="end-date" type="hidden" value="<%= @time_slots.last.start_time.iso8601 %>">
 <input id="inferred-timezone" type="hidden" value="">
 <input id="received-time-slots" type="hidden" value="<%= @time_slots_array.to_s %>">
 
 
+<div class="timezone-picker">
+  <label for="timezones">Timezone:&nbsp&nbsp</label>
+  <select id="timezones" ></select>
+</div>
+
 <div class="time-slot-show">
-<%= link_to "Accept", dashboard_path, :class => "btn btn-primary btn-md" %>
   <div id="calendar"></div>
 </div>
 
 <script>
-  function drawCalendar() {
-    calendar.innerHTML = "";
-    dateInfo();
-    fillDays();
-    timeSlotCompare();
-  }
-  
   const receivedTimeSlots = document.querySelector("#received-time-slots");
   const inferredTimezone = document.querySelector("#inferred-timezone");
   const beginDateInput = document.querySelector("#begin-date");
   const endDateInput = document.querySelector("#end-date");
   const calendar = document.querySelector("#calendar")
-  
+  const tzpicker = document.querySelector("#timezones")
+  const tzones = moment.tz.names();
+
+  inferredTimezone.value = moment.tz.guess();
+
+  tzones.forEach((tzone) => {
+    if (tzone == inferredTimezone.value) {
+      tzpicker.innerHTML += `<option value="${tzone}" selected>${tzone}</option>`
+    } else {
+      tzpicker.innerHTML += `<option value="${tzone}">${tzone}</option>`
+    }
+  });
+  tzpicker.value = inferredTimezone.value
+  NiceSelect.bind(tzpicker, { searchable: true});
+
+  function drawCalendar() {
+    calendar.innerHTML = "";
+    dateInfo();
+    fillDays();
+  }
+
   function dateInfo() {
-    date1 = new Date(beginDateInput.value);
-    date2 = new Date(endDateInput.value);
+    console.log(beginDateInput.value)
+    date1 = moment.tz(beginDateInput.value, inferredTimezone.value);
+    date2 = moment.tz(endDateInput.value, inferredTimezone.value);
     difference = Math.ceil((date2 - date1) / 1000 / 60 / 60 / 24);
     console.log("Begin date:", date1)
     console.log("End date:", date2)
     console.log("Days total:", difference)
   }
-  
-  function timeSlotCompare() {
-    let aa = receivedTimeSlots.value
 
-    let bb = aa.replaceAll(/"/g, '');
-
-    let cc = bb.substring(1).slice(0,-1)
-
-    let dd = cc.replaceAll(/\.000/g, '')
-
-
-    let ee = dd.split(", ")
-
-    return ee
+  function isoToJsDate() {
+    const iso_regex = (/[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)*/g);
+    let array = receivedTimeSlots.value.match(iso_regex);
+    return array.map(slot => new Date(slot).valueOf());
   }
-
-
 
   function fillDays() {
     for (let c = 0; c <= difference; c++) {
@@ -74,11 +84,12 @@
       date1.setDate(date1.getDate() + 1);
     }
   }
-  
+
   function fillHours(date) {
-    let timeslotarray = timeSlotCompare();
+    let slots_array = isoToJsDate();
 
     for (let i = 0; i < 24; i++) {
+      // Create grid cells
       let cell = document.createElement("div");
       if (i < 10) {
         cell.innerText = "0" + i + ":00";
@@ -89,21 +100,23 @@
       calendar.appendChild(cell);
       cell.className = "grid-item";
 
-      // increment hours
+      // set and increment hours
       let timeslot = new Date(date.setHours(i));
-      console.log(timeslot)
-
+      
       // Format time for UTC through chosen locale
       const x = timeslot.toLocaleString("en-US", {
         timeZone: inferredTimezone.value,
         timeZoneName: "short",
       });
-
+      
       let dateString = new Date(x);
+
+      if (slots_array.includes(dateString.valueOf())) {
+        cell.className = "grid-item active";
+      }
 
       // Set cell id with hour-date info
       cell.dataset.date = `${dateString.toISOString()}`;
-
     }
   }
   
@@ -112,10 +125,5 @@
     navigator.browserLanguage ||
     (navigator.languages || ["en"])[0];
 
-  function inferUserTimezone() {
-    inferredTimezone.value = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  }
-  
-  inferUserTimezone();
   drawCalendar();
 </script>
