@@ -6,24 +6,27 @@
   flex-direction: column;
 
 } */
+ #landingContainer {
+  height: 100px;
+}
+
 #carouselExampleIndicators {
   margin: 0 auto;
   position:absolute !important;
   top: 0;
 }
-/* #landingContainer {
-  background-color: #38B6FF;
-  height: 100px;
+
+video {
+  width: 100%;
 }
- */
+.carousel-indicators {
+  visibility: hidden;
+}
 html, body {
   height: 100% !important;
   margin: 0 !important;
 }
 .wrapper {
   min-height: 100% !important;
-    margin-bottom: -50px !important;
-}
-.carousel-indicators {
-  visibility: hidden;
+  margin-bottom: -50px !important;
 }
