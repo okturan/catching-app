@@ -1,14 +1,16 @@
-<script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+<%# <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.0/js/bootstrap.min.js" integrity="sha384-3qaqj0lc6sV/qpzrc1N5DC6i1VRn/HyX4qdPaiEFbn54VjQBEU341pvjz7Dv3n6P" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.0/js/bootstrap.min.js" integrity="sha384-3qaqj0lc6sV/qpzrc1N5DC6i1VRn/HyX4qdPaiEFbn54VjQBEU341pvjz7Dv3n6P" crossorigin="anonymous"></script> %>
 <%# <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.0/css/bootstrap.min.css" integrity="sha384-SI27wrMjH3ZZ89r4o+fGIJtnzkAnFs3E4qz9DIYioCQ5l9Rd/7UAa8DHcaL8jkWt" crossorigin="anonymous">
  %>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js"></script>
 
 <div id="landingContainer" class="container-fluid">
 </div>
 
 <div class="wrapper">
-  <div id="carouselExampleIndicators" class="carousel slide" data-interval="false"> <%# data-ride="carousel" %>
+  <div id="carouselExampleIndicators" class="carousel slide" data-interval="false" data-pause="false"> <%# data-ride="carousel" %>
     <ol class="carousel-indicators">
       <li data-target="#carouselExampleIndicators" data-slide-to="0" class="active"></li>
       <li data-target="#carouselExampleIndicators" data-slide-to="1"></li>
@@ -17,19 +19,19 @@
 
     <div class="carousel-inner">
       <div class="carousel-item active">
-          <video controls autoplay loop muted class="video" >
+          <video controls autoplay muted class="video" id="video1" >
             <source src="https://res.cloudinary.com/dvpavvw1u/video/upload/v1632835715/Carousel1video_dvzshk.mp4" type="video/mp4">  <%# class="d-block w-100" %>
           </video>
       </div>
 
       <div class="carousel-item">
-          <video controls autoplay loop muted class="video" >
+          <video controls autoplay muted class="video" id="video2" >
             <source src="https://res.cloudinary.com/dvpavvw1u/video/upload/v1632835750/Carousel2video_iiv2gc.mp4" type="video/mp4">
           </video>
       </div>
 
       <div class="carousel-item">
-          <video controls autoplay loop muted class="video" >
+          <video controls autoplay muted class="video" id="video3" >
             <source src="https://res.cloudinary.com/dvpavvw1u/video/upload/v1632834864/Carousel3video_hjegj5.mp4" type="video/mp4">
           </video>
       </div>
@@ -47,13 +49,29 @@
   <div class="push"></div>
 </div>
 
-
 <script>
+  $('.carousel').carousel({
+    interval: 7000
+  })
 
-$('video').on('play', function (e) {
-    $("#carouselExampleIndicators").carousel('pause');
-});
-$('video').on('stop pause ended', function (e) {
-    $("#carouselExampleIndicators").carousel();
-});
+  $("#carouselExampleIndicators").on('slid.bs.carousel', function () {
+    var vids = $(this).find(".active video");
+    if(vids.length > 0){
+        vids[0].pause();
+        vids[0].currentTime = 0;
+        vids[0].play();
+    }
+  })
 </script>
+
+<%#   $("#carouselExampleIndicators").carousel({
+    interval: 4500
+  });
+
+  $('video').on('play', function (e) {
+    $("#carouselExampleIndicators").carousel('pause');
+  });
+  $('video').on('stop pause ended', function (e) {
+    $("#carouselExampleIndicators").carousel();
+  });
+   alert('The carousel has finished sliding from one item to another!'); %>
