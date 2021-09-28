@@ -1,8 +1,11 @@
+import { addDays, startOfDay } from 'date-fns';
+import { zonedTimeToUtc, toDate, utcToZonedTime } from 'date-fns-tz';
+
 const initTimeSlotDefiner = () => {
   if (!document.querySelector("#time-slots")) {
     return;
   }
-
+  
   // Div selectors
   // const beginShow = document.getElementById("begin-show");
   // const endShow = document.getElementById("end-show");
@@ -88,8 +91,17 @@ const initTimeSlotDefiner = () => {
 
   // Get current values of inputs and calculate days
   function dateInfo() {
-    date1 = Date.now();
+    now = new Date()
+    console.log(now)
+    console.log(now.toISOString())
+    console.log("startofdaynow", startOfDay(now).toISOString())
 
+    let okan = utcToZonedTime(now, 'Asia/Shanghai')
+    console.log(okan)
+    console.log(okan.toISOString())
+    console.log("startofdayokan",startOfDay(okan).toISOString())
+
+    console.log(okan.getTimezoneOffset())
 
     difference = (date2 - date1) / 1000 / 60 / 60 / 24;
   }
@@ -173,6 +185,7 @@ const initTimeSlotDefiner = () => {
   inferUserTimezone();
   drawCalendar();
 };
+
 export { initTimeSlotDefiner };
 
 // TODO
@@ -188,5 +201,4 @@ export { initTimeSlotDefiner };
 // Infer timezone from browser ✅
 // Make user select it ✅
 // Convert ids to UTC based on user timezone ✅
-
-// Convert these states into ranges and post to controller
+// Convert these states into ranges and post to controller ✅
