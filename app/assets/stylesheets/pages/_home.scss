@@ -1,12 +1,29 @@
 // Specific CSS for your home-page
-.container-homepage {
+/* .container-homepage {
   display: flex;
 	align-items: center;
 	justify-content: center;
   flex-direction: column;
+
+} */
+#carouselExampleIndicators {
   margin: 0 auto;
+  position:absolute !important;
+  top: 0;
 }
-#landingContainer {
+/* #landingContainer {
   background-color: #38B6FF;
   height: 100px;
+}
+ */
+html, body {
+  height: 100% !important;
+  margin: 0 !important;
+}
+.wrapper {
+  min-height: 100% !important;
+    margin-bottom: -50px !important;
+}
+.carousel-indicators {
+  visibility: hidden;
 }

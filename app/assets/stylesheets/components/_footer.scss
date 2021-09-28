@@ -1,7 +1,13 @@
 /* #home-footer {
   margin-top: 1vh;
-
+position: absolute !important;
+bottom: 0;
+margin-top: auto;
  } */
 .display-6 {
-color: black;
+color: white;
+}
+.footer,
+.push {
+  height: 50px !important;
 }

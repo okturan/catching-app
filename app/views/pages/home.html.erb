@@ -1,55 +1,31 @@
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-beta/js/bootstrap.min.js"></script>
-  <script src="https://darsa.in/sly/examples/js/vendor/plugins.js"></script>
-  <script src="https://darsa.in/sly/js/sly.min.js"></script>
-
 <div id="landingContainer" class="container-fluid">
 </div>
-
-<div id="carouselExampleIndicators" class="carousel slide" data-ride="carousel">
-  <ol class="carousel-indicators">
-    <li data-target="#carouselExampleIndicators" data-slide-to="0" class="active"></li>
-    <li data-target="#carouselExampleIndicators" data-slide-to="1"></li>
-    <li data-target="#carouselExampleIndicators" data-slide-to="2"></li>
-  </ol>
-  <div class="carousel-inner">
-    <div class="carousel-item active" id="firstSlide" data-interval="10000">
-      <img src="https://res.cloudinary.com/dvpavvw1u/image/upload/v1632778203/Carousel1_pkoaeh.png" class="d-block w-100" alt="Organize meetings with friends living in different timezones without hassle.">
+<div class="wrapper">
+  <div id="carouselExampleIndicators" class="carousel slide" data-ride="carousel">
+    <ol class="carousel-indicators">
+      <li data-target="#carouselExampleIndicators" data-slide-to="0" class="active"></li>
+      <li data-target="#carouselExampleIndicators" data-slide-to="1"></li>
+      <li data-target="#carouselExampleIndicators" data-slide-to="2"></li>
+    </ol>
+    <div class="carousel-inner">
+      <div class="carousel-item active" id="firstSlide" data-interval="10000">
+        <img src="https://res.cloudinary.com/dvpavvw1u/image/upload/v1632820160/Carousel1_1_nqi2my.png" class="d-block w-100" alt="You create an event, invite your friends and highlight the times that are good for you. ">
+      </div>
+      <div class="carousel-item" id="secondSlide" data-interval="10000">
+        <img src="https://res.cloudinary.com/dvpavvw1u/image/upload/v1632820241/Carousel2_1_pqzna6.png" class="d-block w-100" alt="You create an event, invite your friends and highlight the times that are good for you. ">
+      </div>
+      <div class="carousel-item" id="thirdSlide" data-interval="10000">
+        <img src="https://res.cloudinary.com/dvpavvw1u/image/upload/v1632820255/Carousel3_1_gmlqc4.png" class="d-block w-100" alt="Organize meetings with friends living in different timezones without hassle.">
+      </div>
     </div>
-    <div class="carousel-item" id="secondSlide" data-interval="10000">
-      <img src="https://res.cloudinary.com/dvpavvw1u/image/upload/v1632778215/Carousel2_fiul0g.png" class="d-block w-100" alt="You create an event, invite your friends and highlight the times that are good for you. ">
-    </div>
-    <div class="carousel-item" id="thirdSlide" data-interval="10000">
-      <img src="https://res.cloudinary.com/dvpavvw1u/image/upload/v1632786533/Carousel3_pgs42e.png" class="d-block w-100" alt="Catching.App provides you a list of online activities that you can do with your friends!">
-    </div>
+    <a class="carousel-control-prev" href="#carouselExampleIndicators" role="button" data-slide="prev">
+      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+      <span class="sr-only">Previous</span>
+    </a>
+    <a class="carousel-control-next" href="#carouselExampleIndicators" role="button" data-slide="next">
+      <span class="carousel-control-next-icon" aria-hidden="true"></span>
+      <span class="sr-only">Next</span>
+    </a>
   </div>
-  <a class="carousel-control-prev" href="#carouselExampleIndicators" role="button" data-slide="prev">
-    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-    <span class="sr-only">Previous</span>
-  </a>
-  <a class="carousel-control-next" href="#carouselExampleIndicators" role="button" data-slide="next">
-    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-    <span class="sr-only">Next</span>
-  </a>
+  <div class="push"></div>
 </div>
-<script>
-/* $('#carouselExampleIndicators').on('slide.bs.carousel', function () {
- document.body.style.backgroundColor = "#AA0000";
-})
-$('#carouselExampleIndicators').on('slid.bs.carousel', function () {
-  document.body.style.backgroundColor = "#b3d3ea";
-}) */
-
-
-$('#carouselExampleIndicators').on('slid.bs.carousel', function(e) {
-  if(e.relatedTarget.id == 'firstSlide'){
- 		$("#landingContainer").css('background-color', '#38B6FF');
-  } else if(e.relatedTarget.id == 'secondSlide'){
-  	$("#landingContainer").css('background-color', '#FFACEC');
-  } else if(e.relatedTarget.id == 'thirdSlide'){
-  	$("#landingContainer").css('background-color', '#CB6CE6');
-  }
-
-})
-</script>
