@@ -27,7 +27,7 @@
   font-style: normal;
   font-weight: 400;
   font-size : clamp(16px, 2vw, 20px);
- /*  text-align: center; */
+  text-align: center;
   display: flex;
   justify-content: center;
   margin: auto;
@@ -38,4 +38,5 @@
   color: red;
   background-color:transparent;
   text-decoration: none;
+  transform: scale(1.1);
 }

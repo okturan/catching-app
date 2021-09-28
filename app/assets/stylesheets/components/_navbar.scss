@@ -19,6 +19,22 @@
   background-color: transparent !important;
   color: black !important;
 }
+
+#navbar-event .btn-event {
+  visibility: hidden;
+}
+
+#navbar-event .nav-link {
+  padding-right: 0px;
+}
+
+#navbar-dashboard #event-link {
+  visibility: hidden;
+}
+
+#navbar-dashboard .btn-event {
+  visibility: hidden;
+}
 .navbar-lewagon .navbar-collapse {
   flex-grow: 0;
 }

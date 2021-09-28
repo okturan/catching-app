@@ -1,5 +1,9 @@
   <% if current_page?(root_path) %>
       <div id='navbar-home' class="navbar navbar-expand-sm navbar-light navbar-lewagon">
+  <% elsif current_page?(new_event_path) %>
+      <div id='navbar-event' class="navbar navbar-expand-sm navbar-light navbar-lewagon">
+  <% elsif current_page?(dashboard_path) %>
+      <div id='navbar-dashboard' class="navbar navbar-expand-sm navbar-light navbar-lewagon">
   <% else %>
       <div class="navbar navbar-expand-sm navbar-light navbar-lewagon">
   <% end %>
@@ -24,7 +28,10 @@
       <% if user_signed_in? %>
 
         <li class="nav-item active">
-          <%= link_to "See My Events", dashboard_path, class: "nav-link" %>
+          <%= link_to 'Plan Your Meeting Now', new_event_path, class: "btn-event" %>
+        </li>
+        <li class="nav-item active">
+          <%= link_to "See My Events", dashboard_path, class: "nav-link", id: "event-link" %>
         </li>
         <li class="nav-item active">
           <%= link_to "Edit profile", edit_user_registration_path, method: :get, class: "nav-link" %>
@@ -32,9 +39,6 @@
         <li class="nav-item active">
           <%= link_to "Sign out", destroy_user_session_path, method: :delete, class: "nav-link" %>
           <%#= link_to raw('<i class="fas fa-sign-out-alt mr-1"></i> Sign out'), destroy_user_session_path, method: :delete, class: "btn btn-primary mr-3" %>
-        </li>
-        <li class="nav-item active">
-          <%= link_to 'Plan Your Meeting Now', new_event_path, class: "btn-event" %>
         </li>
 
       <% else %>
