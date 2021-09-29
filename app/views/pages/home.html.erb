@@ -19,20 +19,21 @@
 
     <div class="carousel-inner">
       <div class="carousel-item active">
-          <video controls autoplay muted class="video" id="video1" >
-            <source src="https://res.cloudinary.com/dvpavvw1u/video/upload/v1632835715/Carousel1video_dvzshk.mp4" type="video/mp4">  <%# class="d-block w-100" %>
+          <video autoplay muted class="video" id="video1" >
+            <source src="https://res.cloudinary.com/dvpavvw1u/video/upload/v1632874661/Carousel1_oexgyf.mp4" type="video/mp4">  <%# class="d-block w-100" %>
           </video>
       </div>
 
       <div class="carousel-item">
-          <video controls autoplay muted class="video" id="video2" >
-            <source src="https://res.cloudinary.com/dvpavvw1u/video/upload/v1632835750/Carousel2video_iiv2gc.mp4" type="video/mp4">
+          <%# <video controls autoplay muted class="video" id="video2" > %>
+          <video autoplay muted class="video" id="video2" >
+            <source src="https://res.cloudinary.com/dvpavvw1u/video/upload/v1632874673/Carousel2_pgbx7k.mp4" type="video/mp4">
           </video>
       </div>
 
       <div class="carousel-item">
-          <video controls autoplay muted class="video" id="video3" >
-            <source src="https://res.cloudinary.com/dvpavvw1u/video/upload/v1632834864/Carousel3video_hjegj5.mp4" type="video/mp4">
+          <video autoplay muted class="video" id="video3" >
+            <source src="https://res.cloudinary.com/dvpavvw1u/video/upload/v1632874681/Carousel3_vg7rtj.mp4" type="video/mp4">
           </video>
       </div>
     </div>
@@ -50,6 +51,7 @@
 </div>
 
 <script>
+
   $('.carousel').carousel({
     interval: 7000
   })
@@ -62,6 +64,7 @@
         vids[0].play();
     }
   })
+
 </script>
 
 <%#   $("#carouselExampleIndicators").carousel({

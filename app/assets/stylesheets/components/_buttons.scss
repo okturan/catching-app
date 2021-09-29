@@ -23,19 +23,20 @@
   border: 2px solid #061219;
   border-radius: 20px;
   padding: 5px 10px;
-  font-family: 'europa', sans-serif;
+  font-family: 'Caveat';
   font-style: normal;
-  font-weight: 400;
-  font-size : clamp(16px, 2vw, 20px);
+  font-weight: 600;
+  font-size : clamp(14px, 2vw, 20px);
   text-align: center;
   display: flex;
   justify-content: center;
   margin: auto;
 }
 .btn-event:hover {
-  border-color: red;
+  border-color: white;
   border-style: solid 1px;
-  color: red;
+  color: white;
+  font-weight: 100;
   background-color:transparent;
   text-decoration: none;
   transform: scale(1.1);
