@@ -1,15 +1,41 @@
+
 .navbar-lewagon {
   justify-content: space-between;
   z-index: 10;
-  font-size: 22px;
   position: sticky;
   top: 0;
-  font-size : clamp(16px, 2vw, 20px);
+  font-size: clamp(14px, 2vw, 20px);
+  font-family: 'Caveat';
+  font-style: normal;
+  font-weight: 600;
+  background-color: #cadbf9;
+  padding-right: 50px;
 }
-/* .navbar-home {
-  position: relative !important;
-} */
 
+.nav-item {
+  padding-left: 20px;
+}
+
+#navbar-home {
+  background-color: transparent !important;
+  color: black !important;
+}
+
+#navbar-event .btn-event {
+  visibility: hidden;
+}
+
+#navbar-event .nav-link {
+  padding-right: 0px;
+}
+
+#navbar-dashboard #event-link {
+  visibility: hidden;
+}
+
+#navbar-dashboard .btn-event {
+  visibility: hidden;
+}
 .navbar-lewagon .navbar-collapse {
   flex-grow: 0;
 }

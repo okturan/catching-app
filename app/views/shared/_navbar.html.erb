@@ -1,7 +1,25 @@
-<div class="navbar navbar-expand-sm navbar-light navbar-lewagon">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500&display=swap" rel="stylesheet">
+
+  <% if current_page?(root_path) %>
+      <div id='navbar-home' class="navbar navbar-expand-sm navbar-light navbar-lewagon">
+  <% elsif current_page?(new_event_path) %>
+      <div id='navbar-event' class="navbar navbar-expand-sm navbar-light navbar-lewagon">
+  <% elsif current_page?(dashboard_path) %>
+      <div id='navbar-dashboard' class="navbar navbar-expand-sm navbar-light navbar-lewagon">
+  <% else %>
+      <div class="navbar navbar-expand-sm navbar-light navbar-lewagon">
+  <% end %>
+
+
   <%= link_to root_path, class: "navbar-brand" do %>
     <%= image_tag "Sadelogo.png" %>
     <% end %>
+
 <%#   <form class="form-inline my-2 my-lg-0">
     <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
     <button class="btn btn-outline-primary my-2 my-sm-0" type="submit">Search</button>
@@ -16,22 +34,20 @@
     <ul class="navbar-nav mr-auto">
       <% if user_signed_in? %>
 
-        <li class="nav-item">
-
-          <%#= link_to "Home", root_path, class: "nav-link" %>
+        <li class="nav-item active">
+          <%= link_to 'PLAN YOUR MEETING NOW', new_event_path, class: "btn-event" %>
         </li>
         <li class="nav-item active">
-          <%= link_to "See My Events", dashboard_path, class: "nav-link" %>
+          <%= link_to "SEE MY EVENTS", dashboard_path, class: "nav-link", id: "event-link" %>
         </li>
-        <li class="nav-item dropdown">
-          <%= image_tag "Useravatar.png", class: "avatar dropdown-toggle", id: "navbarDropdown", data: { toggle: "dropdown" }, 'aria-haspopup': true, 'aria-expanded': false %>
+        <li class="nav-item active">
+          <%= link_to "EDIT PROFILE", edit_user_registration_path, method: :get, class: "nav-link" %>
+        </li>
+        <li class="nav-item active">
+          <%= link_to "SIGN OUT", destroy_user_session_path, method: :delete, class: "nav-link" %>
+          <%#= link_to raw('<i class="fas fa-sign-out-alt mr-1"></i> Sign out'), destroy_user_session_path, method: :delete, class: "btn btn-primary mr-3" %>
+        </li>
 
-          <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
-          <%= current_user.email %>
-            <%= link_to link_to "Edit profile", edit_user_registration_path, method: :get, class: "dropdown-item" %>
-            <%= link_to "Log out", destroy_user_session_path, method: :delete, class: "dropdown-item" %>
-          </div>
-        </li>
       <% else %>
         <li class="nav-item">
        <%= link_to raw('<i class="fas fa-sign-in-alt mr-1"></i> Login'), new_user_session_path, class: "btn btn-outline-primary mr-3" %>
