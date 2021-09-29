@@ -1,16 +1,18 @@
+import moment from "moment-timezone";
+
 const initTimeSlotDefiner = () => {
-  if (!document.querySelector(".time-slot-definer")) {
+  if (!document.querySelector("#time-grid-define")) {
     return;
   }
 
   // Div selectors
   // const beginShow = document.getElementById("begin-show");
   // const endShow = document.getElementById("end-show");
-  const daysShow = document.getElementById("days-show");
-  const calendar = document.getElementById("calendar");
-
+  // const daysShow = document.getElementById("days-show");
+  const timeGrid = document.querySelector("#time-grid-define");
+  
   // Inputs
-  const searchList = document.getElementById("timezone-picker");
+  const tzpicker = document.querySelector("#timezone-picker-new");
   const beginDateInput = document.querySelector("#event-begin");
   const endDateInput = document.querySelector("#event-end");
 
@@ -19,85 +21,52 @@ const initTimeSlotDefiner = () => {
   let date2;
   let difference;
 
-  // Create a grid based on the number of days between dates
-  function makeRows(rows, cols) {
-    calendar.style.setProperty("--grid-rows", rows);
-    calendar.style.setProperty("--grid-cols", cols);
+  // Call all necessary functions
+  function drawTimeGrid() {
+    timeGrid.innerHTML = "";
+    updateDateAndTz();
+    fillDays();
+    makeRows(25, difference + 1);
+  }
+
+  function updateDateAndTz() {
+    moment.tz.setDefault(tzpicker.value);
+    date1 = moment(beginDateInput.value).startOf("day");
+    date2 = moment(endDateInput.value).startOf("day");
+    difference = date2.diff(date1, "days");
   }
 
   // Fill days as headers
   function fillDays() {
     for (let c = 0; c <= difference; c++) {
-      let options = {
-        weekday: "long",
-        month: "short",
-        day: "numeric",
-        timeZone: `${searchList.value}`,
-      };
       let cell = document.createElement("div");
-      cell.innerText = date1.toLocaleString(getLang(), options);
-      calendar.appendChild(cell).className = "grid-header";
+      cell.innerText = moment(date1).format("MMM Do ddd zz");
+      timeGrid.appendChild(cell).className = "grid-item header";
       // Fill hour info for each day
       fillHours(date1);
       // Advance onto next day
-      date1.setDate(date1.getDate() + 1);
+      date1 = date1.add(1, "day");
     }
   }
 
   function fillHours(date) {
     for (let i = 0; i < 24; i++) {
+      // Create grid cells
       let cell = document.createElement("div");
-      if (i < 10) {
-        cell.innerText = "0" + i + ":00";
-      } else {
-        cell.innerText = i + ":00";
-      }
+      cell.innerText = date.format("HH:mm");
       cell.style.gridRow = i + 2;
-      calendar.appendChild(cell);
-      cell.className = "grid-item";
-
-      // Format time for UTC through chosen locale
-      const now = new Date(date.setHours(i));
-
-      const utcNow = now.toLocaleString("en-US", {
-        timeZone: searchList.value,
-        timeZoneName: "short",
-      });
-
-      let dateString = new Date(utcNow);
-
-      // Set cell id with hour-date info
-      cell.dataset.date = `${dateString.toISOString()}`;
+      timeGrid.appendChild(cell);
+      cell.className = "grid-item hour";
+      cell.dataset.date = date.toISOString();
+      // Increment hour
+      date = moment(date).add(1, "hour");
     }
-  }
-
-  // Call grid creating function with updated information
-  function drawCalendar() {
-    calendar.innerHTML = "";
-    dateInfo();
-    updateInfoDivs();
-    fillDays();
-    makeRows(24, difference);
-  }
-
-  // Show calculations on test box
-  function updateInfoDivs() {
-    // beginShow.innerText = beginDateInput.value;
-    // endShow.innerText = endDateInput.value;
-    daysShow.innerText = difference + 1;
-  }
-
-  // Get current values of inputs and calculate days
-  function dateInfo() {
-    date1 = new Date(beginDateInput.value);
-    date2 = new Date(endDateInput.value);
-    difference = (date2 - date1) / 1000 / 60 / 60 / 24;
   }
 
   // Make cells listen for mouseover
   function highlightCell(event) {
     let greenCells = document.querySelectorAll(".active");
-    let allCells = document.querySelectorAll(".grid-item");
+    let allCells = document.querySelectorAll(".hour");
 
     if (event.target.classList.contains("active")) {
       greenCells.forEach((element) => {
@@ -124,14 +93,14 @@ const initTimeSlotDefiner = () => {
   }
 
   function toggleActive(event) {
-    if (event.target.classList.contains("grid-item")) {
+    if (event.target.classList.contains("hour")) {
       event.target.classList.toggle("active");
     }
   }
 
   // Stop cells listening for mouseover
   function resetListeners() {
-    let hourInputs = document.querySelectorAll(".grid-item");
+    let hourInputs = document.querySelectorAll(".hour");
     hourInputs.forEach((element) => {
       element.removeEventListener("mouseover", toggleActive);
       element.removeEventListener("mouseover", addSlots);
@@ -143,36 +112,53 @@ const initTimeSlotDefiner = () => {
   // Select active cells
   function getActiveCells() {
     let slots = [];
-    let activeCells = calendar.querySelectorAll(".active");
+    let activeCells = timeGrid.querySelectorAll(".active");
     activeCells.forEach((cell) => {
       slots.push(cell.dataset.date);
     });
     document.querySelector("#time_slot_array").value = slots;
   }
 
-  // Get timezone
-  function inferUserTimezone() {
-    searchList.value = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  // Set a grid columns and rows based on input
+  function makeRows(rows, cols) {
+    timeGrid.style.setProperty("--grid-rows", rows);
+    timeGrid.style.setProperty("--grid-cols", cols);
   }
 
-  // Get locale
-  const getLang = () =>
-    navigator.language ||
-    navigator.browserLanguage ||
-    (navigator.languages || ["en"])[0];
+  // Set a range of 4 days
+  function initialDatesSet() {
+    date1 = moment().startOf("day");
+    date2 = moment(date1).add(4, "day");
+    difference = date2.diff(date1, "days");
+  }
+
+  function populateTimezones() {
+    moment.tz.names().forEach((tzone) => {
+      if (tzone == moment.tz.guess()) {
+        tzpicker.innerHTML += `<option value="${tzone}" selected>${tzone}</option>`;
+      } else {
+        tzpicker.innerHTML += `<option value="${tzone}">${tzone}</option>`;
+      }
+    });
+  }
 
   // Event listeners
-  searchList.addEventListener("change", drawCalendar);
-  beginDateInput.addEventListener("change", drawCalendar);
-  endDateInput.addEventListener("change", drawCalendar);
-  calendar.addEventListener("mousedown", highlightCell);
-  calendar.addEventListener("mousedown", toggleActive);
-  calendar.addEventListener("mouseup", resetListeners);
+  tzpicker.addEventListener("change", drawTimeGrid);
+  beginDateInput.addEventListener("change", drawTimeGrid);
+  endDateInput.addEventListener("change", drawTimeGrid);
+  timeGrid.addEventListener("mousedown", highlightCell);
+  timeGrid.addEventListener("mousedown", toggleActive);
+  timeGrid.addEventListener("mouseup", resetListeners);
 
   // Pre fill with values
-  inferUserTimezone();
-  drawCalendar();
+  populateTimezones();
+  moment.tz.setDefault(tzpicker.value);
+  initialDatesSet();
+  beginDateInput.value = date1.format("Y-MM-DD");
+  endDateInput.value = date2.format("Y-MM-DD");
+  drawTimeGrid();
 };
+
 export { initTimeSlotDefiner };
 
 // TODO
@@ -188,5 +174,4 @@ export { initTimeSlotDefiner };
 // Infer timezone from browser ✅
 // Make user select it ✅
 // Convert ids to UTC based on user timezone ✅
-
-// Convert these states into ranges and post to controller
+// Convert these states into ranges and post to controller ✅

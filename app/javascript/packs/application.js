@@ -29,10 +29,11 @@ import "bootstrap";
 // import { initSelect2 } from '../components/init_select2';
 import { initDashboardTabs } from '../components/dashboard_tabs';
 import { initTimeSlotDefiner } from '../components/time_slot_definer';
+import { initTimeSlotShow } from '../components/time_slot_show';
 
 document.addEventListener('turbolinks:load', () => {
   // Call your functions here, e.g:
-  // initSelect2();
   initDashboardTabs();
   initTimeSlotDefiner();
+  initTimeSlotShow();
 });
