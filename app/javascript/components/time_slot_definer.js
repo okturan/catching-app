@@ -1,13 +1,16 @@
+import { addDays, startOfDay } from 'date-fns';
+import { zonedTimeToUtc, toDate, utcToZonedTime } from 'date-fns-tz';
+
 const initTimeSlotDefiner = () => {
-  if (!document.querySelector(".time-slot-definer")) {
+  if (!document.querySelector("#time-slots")) {
     return;
   }
-
+  
   // Div selectors
   // const beginShow = document.getElementById("begin-show");
   // const endShow = document.getElementById("end-show");
   const daysShow = document.getElementById("days-show");
-  const calendar = document.getElementById("calendar");
+  const calendar = document.getElementById("time-slots");
 
   // Inputs
   const searchList = document.getElementById("timezone-picker");
@@ -15,6 +18,7 @@ const initTimeSlotDefiner = () => {
   const endDateInput = document.querySelector("#event-end");
 
   // Global variables
+  let now;
   let date1;
   let date2;
   let difference;
@@ -29,14 +33,14 @@ const initTimeSlotDefiner = () => {
   function fillDays() {
     for (let c = 0; c <= difference; c++) {
       let options = {
-        weekday: "long",
         month: "short",
+        weekday: "short",
         day: "numeric",
         timeZone: `${searchList.value}`,
       };
       let cell = document.createElement("div");
       cell.innerText = date1.toLocaleString(getLang(), options);
-      calendar.appendChild(cell).className = "grid-header";
+      calendar.appendChild(cell).className = "grid-item header";
       // Fill hour info for each day
       fillHours(date1);
       // Advance onto next day
@@ -54,7 +58,7 @@ const initTimeSlotDefiner = () => {
       }
       cell.style.gridRow = i + 2;
       calendar.appendChild(cell);
-      cell.className = "grid-item";
+      cell.className = "grid-item hour";
 
       // Format time for UTC through chosen locale
       const now = new Date(date.setHours(i));
@@ -82,22 +86,30 @@ const initTimeSlotDefiner = () => {
 
   // Show calculations on test box
   function updateInfoDivs() {
-    // beginShow.innerText = beginDateInput.value;
-    // endShow.innerText = endDateInput.value;
     daysShow.innerText = difference + 1;
   }
 
   // Get current values of inputs and calculate days
   function dateInfo() {
-    date1 = new Date(beginDateInput.value);
-    date2 = new Date(endDateInput.value);
+    now = new Date()
+    console.log(now)
+    console.log(now.toISOString())
+    console.log("startofdaynow", startOfDay(now).toISOString())
+
+    let okan = utcToZonedTime(now, 'Asia/Shanghai')
+    console.log(okan)
+    console.log(okan.toISOString())
+    console.log("startofdayokan",startOfDay(okan).toISOString())
+
+    console.log(okan.getTimezoneOffset())
+
     difference = (date2 - date1) / 1000 / 60 / 60 / 24;
   }
 
   // Make cells listen for mouseover
   function highlightCell(event) {
     let greenCells = document.querySelectorAll(".active");
-    let allCells = document.querySelectorAll(".grid-item");
+    let allCells = document.querySelectorAll(".hour");
 
       if (event.target.classList.contains("active")) {
         greenCells.forEach((element) => {
@@ -124,14 +136,14 @@ const initTimeSlotDefiner = () => {
   }
 
   function toggleActive(event) {
-    if (event.target.classList.contains("grid-item")) {
+    if (event.target.classList.contains("hour")) {
       event.target.classList.toggle("active");
     }
   }
 
   // Stop cells listening for mouseover
   function resetListeners() {
-    let hourInputs = document.querySelectorAll(".grid-item");
+    let hourInputs = document.querySelectorAll(".hour");
     hourInputs.forEach((element) => {
       element.removeEventListener("mouseover", toggleActive);
       element.removeEventListener("mouseover", addSlots);
@@ -173,6 +185,7 @@ const initTimeSlotDefiner = () => {
   inferUserTimezone();
   drawCalendar();
 };
+
 export { initTimeSlotDefiner };
 
 // TODO
@@ -188,5 +201,4 @@ export { initTimeSlotDefiner };
 // Infer timezone from browser ✅
 // Make user select it ✅
 // Convert ids to UTC based on user timezone ✅
-
-// Convert these states into ranges and post to controller
+// Convert these states into ranges and post to controller ✅

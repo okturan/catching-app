@@ -1,31 +1,5 @@
-// :root {
-//   --grid-cols: 1;
-//   --grid-rows: 1;
-// }
-
-// html {
-//   -webkit-box-sizing: border-box;
-//   -moz-box-sizing: border-box;
-//   box-sizing: border-box;
-// }
-// *,
-// *:before,
-// *:after {
-//   -webkit-box-sizing: inherit;
-//   -moz-box-sizing: inherit;
-//   box-sizing: inherit;
-// }
-
-.timezone-picker {
-  font-size: 1.2em;
-  display: flex;
-  align-items: baseline;
-  width: fit-content;
-  margin: auto;
-  padding: 20px;
-}
-
-.time-slot-definer, .time-slot-show {
+.time-slot-definer,
+.time-slot-show {
   p,
   h1,
   h2,
@@ -36,6 +10,15 @@
     margin: 0;
   }
 
+  .timezone-picker {
+    font-size: 1.2em;
+    display: flex;
+    align-items: baseline;
+    width: fit-content;
+    margin: auto;
+    padding: 20px;
+  }
+  
   #calendar {
     width: 95%;
     display: grid;
@@ -53,29 +36,41 @@
     user-select: none;
   }
 
-  .grid-header {
-    grid-row: 1;
-    padding: 1em;
-    text-align: center;
-    width: fit-content;
-    border-radius: 15px;
-    margin-bottom: 10px;
-    background: rgb(255,255,255);
-    box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 6px -1px, rgba(0, 0, 0, 0.06) 0px 2px 4px -1px;
-    background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 100%);
-  }
   .grid-item {
-    font-size: 16px;
-    line-height: 1.7em;
-    margin-top: 3px;
-    border: 1px solid #ddd;
-    text-align: center;
-    border-radius: 20px;
+    &.hour {
+      font-size: 16px;
+      line-height: 1.7em;
+      margin-top: 3px;
+      border: 1px solid #ddd;
+      text-align: center;
+      border-radius: 20px;
+    }
+
+    &.header {
+      grid-row: 1;
+      padding: 1em;
+      text-align: center;
+      width: fit-content;
+      border-radius: 15px;
+      margin-bottom: 10px;
+      background: rgb(255, 255, 255);
+      box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 6px -1px,
+        rgba(0, 0, 0, 0.06) 0px 2px 4px -1px;
+      background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.4) 0%,
+        rgba(255, 255, 255, 0.1) 100%
+      );
+    }
   }
 
   .active {
-    background: rgb(0,250,154);
-    background: radial-gradient(circle, rgba(0,250,154,1) 0%, rgb(0, 235, 156) 100%);
+    background: rgb(0, 250, 154);
+    background: radial-gradient(
+      circle,
+      rgba(0, 250, 154, 1) 0%,
+      rgb(0, 235, 156) 100%
+    );
     animation: pulse 0.3s;
     animation-timing-function: ease-in;
   }
