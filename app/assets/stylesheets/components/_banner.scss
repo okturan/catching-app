@@ -10,6 +10,32 @@
   background-image: asset-url("Homepage.png");
   background-color: #A2BFF1;
 }
+.banner-activities {
+  background-size: cover;
+  padding: 0;
+  position: relative;
+  top: 0;
+  z-index: 2;
+  right: 0;
+  left: 0;
+/*   width: 200px;
+  height: 100px; */
+  border: 3px solid #73AD21;
+  width: 100vw;
+  height: 50vh;
+  background-color: red;
+}
+
+.banner-activities h2 {
+  margin: 1rem 0;
+  color: black;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+  font-size: 2em;
+  font-weight: bold;
+  transform: skew(8deg, 358deg);
+  padding-left: 30px;
+  padding-top: 50px;
+}
 
 .banner-logo {
   position: absolute;

@@ -1,4 +1,4 @@
-import moment from "moment-timezone";
+import moment from "moment";
 
 const initTimeSlotDefiner = () => {
   if (!document.querySelector("#time-grid-define")) {
@@ -10,7 +10,7 @@ const initTimeSlotDefiner = () => {
   // const endShow = document.getElementById("end-show");
   // const daysShow = document.getElementById("days-show");
   const timeGrid = document.querySelector("#time-grid-define");
-  
+
   // Inputs
   const tzpicker = document.querySelector("#timezone-picker-new");
   const beginDateInput = document.querySelector("#event-begin");

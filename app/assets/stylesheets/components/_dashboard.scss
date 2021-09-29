@@ -3,7 +3,6 @@
 $dashboardTabPrimaryColor: #185ee0;
 $dashboardTabSecondaryColor: #e6eef9;
 
-
 .tabs-container {
   *,
   *:after,
@@ -13,6 +12,8 @@ $dashboardTabSecondaryColor: #e6eef9;
 }
 
 .tabs-container {
+  position: relative;
+  z-index: 2;
 /* 	position: absolute;
 	left: 0;
 	top: 0;
