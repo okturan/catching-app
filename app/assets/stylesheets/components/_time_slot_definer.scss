@@ -1,5 +1,6 @@
-.time-slot-definer,
-.time-slot-show {
+
+#time-grid-define,
+#time-grid-show {
   p,
   h1,
   h2,
@@ -10,31 +11,21 @@
     margin: 0;
   }
 
-  .timezone-picker {
-    font-size: 1.2em;
-    display: flex;
-    align-items: baseline;
-    width: fit-content;
-    margin: auto;
-    padding: 20px;
-  }
-  
-  #calendar {
-    width: 95%;
-    display: grid;
-    justify-content: center;
-    margin: 0 auto;
-    overflow: scroll;
-    column-gap: 4px;
-    grid-template-columns: repeat(var(--grid-cols), auto);
-    grid-template-rows: repeat(var(--grid-rows), auto);
-
-    -moz-user-select: -moz-none;
-    -khtml-user-select: none;
-    -webkit-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-  }
+  max-width: 80vw;
+  display: grid;
+  justify-content: center;
+  margin: 0 auto;
+  column-gap: 4px;
+  grid-template-columns: repeat(
+    var(--grid-cols),
+    minmax(75px, calc(30% / var(--grid-cols)))
+  );
+  grid-template-rows: repeat(var(--grid-rows), auto);
+  -moz-user-select: -moz-none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 
   .grid-item {
     &.hour {
@@ -50,7 +41,6 @@
       grid-row: 1;
       padding: 1em;
       text-align: center;
-      width: fit-content;
       border-radius: 15px;
       margin-bottom: 10px;
       background: rgb(255, 255, 255);

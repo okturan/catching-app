@@ -1,7 +1,4 @@
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nice-select2@1/dist/css/nice-select2.min.css"/>
-<script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/moment-timezone@0.5.33/builds/moment-timezone-with-data-10-year-range.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/nice-select2@1/dist/js/nice-select2.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
 <% @time_slots_array = [] %>
 
@@ -13,165 +10,13 @@
 <input id="end-date" type="hidden" value="<%= @time_slots.last.start_time.iso8601 %>">
 <input id="received-time-slots" type="hidden" value="<%= @time_slots_array.to_s %>">
 
-<div class="timezone-picker">
-  <label for="timezones">I am in:&nbsp&nbsp</label>
-  <select id="timezones"></select>
-
+<div class="row justify-content-md-center">
+  <div class="form-group col-5">
+    <label for="timezone-picker-show"></label>
+    <select class="form-control" id="timezone-picker-show"></select>
+  </div>
 </div>
 
-<div class="time-slot-show">
-  <div id="calendar"></div>
+<div id="time-slot-show">
+  <div id="time-grid-show"></div>
 </div>
-
-<script>
-  const receivedTimeSlots = document.querySelector("#received-time-slots");
-  const beginDateInput = document.querySelector("#begin-date");
-  const endDateInput = document.querySelector("#end-date");
-  const calendar = document.querySelector("#calendar");
-  let receivedSlotsArray = [];
-  const tzpicker = document.querySelector("#timezones");
-
-  function drawCalendar() {
-    calendar.innerHTML = "";
-    receivedSlotsArray = isoToMoment();
-    dateInfo(); // 1
-    fillDays(); // 2
-    updateCells(); // 3
-  }
-
-  // 1
-  function dateInfo() {
-    receivedDate1 = moment.min(receivedSlotsArray)
-    date1 = moment(receivedDate1).startOf('day');
-    receivedDate2 = moment.max(receivedSlotsArray)
-    date2 = moment(receivedDate2).startOf('day');
-    difference = date2.diff(date1, 'days')
-  }
-
-  // 2
-  function fillDays() {
-    for (let c = 0; c <= difference; c++) {
-      let cell = document.createElement("div");
-      cell.innerText = moment(date1).format("MMM Do, ddd");
-      calendar.appendChild(cell).className = "grid-header";
-      // Fill hour info for each day
-      fillHours(date1);
-      // Advance onto next day
-      date1 = date1.add(1, "day")
-    }
-  }
-  // 2.1
-  function fillHours(date) {
-    for (let i = 0; i < 24; i++) {
-      // Create grid cells  
-      let cell = document.createElement("div");
-      cell.innerText = date.format("HH:mm");
-      cell.style.gridRow = i + 2;
-      calendar.appendChild(cell);
-      cell.className = "grid-item";
-      cell.dataset.date = date.toISOString();
-      // Increment hour
-      date = moment(date).add(1, 'hour');
-    }
-  }
-
-  // 3
-  function updateCells() {
-    receivedSlotsArray.forEach((receivedSlot) => {
-      let receivedSlotISO = receivedSlot.toISOString()
-      let query = `[data-date="` + receivedSlotISO + `"]`
-      let targetCell = calendar.querySelector(query)
-
-      if (targetCell != null) {
-        targetCell.classList.toggle("active")
-      }
-    });
-
-    let inactiveCells = calendar.querySelectorAll(":not(.active).grid-item")
-    inactiveCells.forEach(inactiveCell => {
-      inactiveCell.classList.toggle("inactive")
-    });
-  };
-
-  // Make cells listen for mouseover
-  function highlightCell(event) {
-    let greenCells = document.querySelectorAll(".active");
-    let allCells = document.querySelectorAll(":not(.inactive).grid-item");
-
-    if (event.target.classList.contains("active")) {
-      greenCells.forEach((element) => {
-        element.addEventListener("mouseover", removeSlots);
-      });
-    } else {
-      allCells.forEach((element) => {
-        element.addEventListener("mouseover", addSlots);
-      });
-    }
-  }
-  // Actual highlighting and removing
-  function addSlots(event) {
-    if (!event.target.classList.contains("active")) {
-      event.target.classList.toggle("active");
-    }
-  }
-
-  function removeSlots(event) {
-    if (event.target.classList.contains("active")) {
-      event.target.classList.toggle("active");
-    }
-  }
-
-  function toggleActive(event) {
-    if (!event.target.classList.contains("inactive") && event.target.classList.contains("grid-item")) {
-      event.target.classList.toggle("active");
-    }
-  }
-
-  // Stop cells listening for mouseover
-  function resetListeners() {
-    let hourInputs = document.querySelectorAll(".grid-item");
-    hourInputs.forEach((element) => {
-      element.removeEventListener("mouseover", toggleActive);
-      element.removeEventListener("mouseover", addSlots);
-      element.removeEventListener("mouseover", removeSlots);
-    });
-    //getActiveCells();
-  }
-  
-  function populateTimezones() {
-    moment.tz.names().forEach((tzone) => {
-      if (tzone == moment.tz.guess()) {
-        tzpicker.innerHTML += `<option value="${tzone}" selected>${tzone}</option>`
-      } else {
-        tzpicker.innerHTML += `<option value="${tzone}">${tzone}</option>`
-      }
-    });
-    NiceSelect.bind(tzpicker, { searchable: true });
-  }
-
-  function changeTimezone() {
-    moment.tz.setDefault(tzpicker.value);
-    drawCalendar();
-  }
-
-  function isoToMoment() {
-    const iso_regex = (/[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)*/g);
-    let array = receivedTimeSlots.value.match(iso_regex);
-    return array.map(slot => moment(slot));
-  }
-
-  function getLang() {
-    navigator.language ||
-    navigator.browserLanguage ||
-    (navigator.languages || ["en"])[0];
-  }
-
-  calendar.addEventListener("mousedown", highlightCell);
-  calendar.addEventListener("mousedown", toggleActive);
-  calendar.addEventListener("mouseup", resetListeners);
-  tzpicker.addEventListener("change", changeTimezone);
-
-  populateTimezones();
-  moment.tz.setDefault(tzpicker.value);
-  drawCalendar();
-</script>
