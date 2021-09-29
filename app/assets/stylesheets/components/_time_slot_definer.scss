@@ -35,16 +35,6 @@
   h6 {
     margin: 0;
   }
-  .top {
-    height: max-content;
-    width: max-content;
-    margin: 20px auto;
-    border: black dotted 2px;
-    border-radius: 5px;
-    -webkit-box-sizing: border-box;
-    -moz-box-sizing: border-box;
-    box-sizing: border-box;
-  }
 
   #calendar {
     width: 95%;
@@ -52,17 +42,13 @@
     justify-content: center;
     margin: 0 auto;
     overflow: scroll;
-    column-gap: 2px;
+    column-gap: 4px;
     grid-template-columns: repeat(var(--grid-cols), auto);
     grid-template-rows: repeat(var(--grid-rows), auto);
 
     -moz-user-select: -moz-none;
     -khtml-user-select: none;
     -webkit-user-select: none;
-    /*
-    Introduced in IE 10.
-    See http://ie.microsoft.com/testdrive/HTML5/msUserSelect/
-  */
     -ms-user-select: none;
     user-select: none;
   }
@@ -70,10 +56,13 @@
   .grid-header {
     grid-row: 1;
     padding: 1em;
-    border: 3px double rgb(194, 191, 191);
     text-align: center;
-    width: 115px;
-    border-radius: 2px;
+    width: fit-content;
+    border-radius: 15px;
+    margin-bottom: 10px;
+    background: rgb(255,255,255);
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 6px -1px, rgba(0, 0, 0, 0.06) 0px 2px 4px -1px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.1) 100%);
   }
   .grid-item {
     font-size: 16px;
@@ -81,27 +70,20 @@
     margin-top: 3px;
     border: 1px solid #ddd;
     text-align: center;
-    width: 115px;
-    border-radius: 2px;
-  }
-
-  .info {
-    align-items: center;
-    display: flex;
-    justify-content: space-between;
-    width: 250px;
-    margin: 2vh;
+    border-radius: 20px;
   }
 
   .active {
-    background-color: rgba(0, 128, 0, 0.418);
+    background: rgb(0,250,154);
+    background: radial-gradient(circle, rgba(0,250,154,1) 0%, rgb(0, 235, 156) 100%);
     animation: pulse 0.3s;
     animation-timing-function: ease-in;
   }
 
-  .disabled {
-    filter: blur(0.5px) grayscale(100%);
-    opacity: 0.6
+  .inactive {
+    filter: grayscale(100%);
+    opacity: 0.2;
+    border: none;
   }
 
   @-webkit-keyframes pulse {
