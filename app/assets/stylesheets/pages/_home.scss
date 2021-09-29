@@ -15,6 +15,12 @@
   position:absolute !important;
   top: 0;
 }
+.carousel-control-prev {
+  visibility: hidden;
+}
+.carousel-control-next {
+  visibility: hidden;
+}
 
 video {
   width: 100%;

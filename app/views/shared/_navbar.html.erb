@@ -35,9 +35,6 @@
       <% if user_signed_in? %>
 
         <li class="nav-item active">
-          <%= link_to 'PLAN YOUR MEETING NOW', new_event_path, class: "btn-event" %>
-        </li>
-        <li class="nav-item active">
           <%= link_to "SEE MY EVENTS", dashboard_path, class: "nav-link", id: "event-link" %>
         </li>
         <li class="nav-item active">
@@ -46,6 +43,9 @@
         <li class="nav-item active">
           <%= link_to "SIGN OUT", destroy_user_session_path, method: :delete, class: "nav-link" %>
           <%#= link_to raw('<i class="fas fa-sign-out-alt mr-1"></i> Sign out'), destroy_user_session_path, method: :delete, class: "btn btn-primary mr-3" %>
+        </li>
+        <li class="nav-item active">
+          <%= link_to 'PLAN YOUR MEETING NOW', new_event_path, class: "btn-event" %>
         </li>
 
       <% else %>
