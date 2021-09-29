@@ -18,9 +18,9 @@ okan = User.create(email: "okan@okan.com", password: "123456")
 event1 = Event.create(name: 'meeting online', user: okan)
 event2 = Event.create(name: 'meeting outside', user: okan)
 
-netflix = { name: 'Netflix', duration: 12, description: 'binge watching your favorite tv series', event: event1 }
-gaming = { name: 'Gaming', duration: 1, description: 'discover a vast variety of online games', event: event1 }
-kareoke = { name: 'Kareoke', duration: 2, description: 'unleash your inner rockstar!', event: event1 }
+netflix = { name: 'Movies', duration: 12, description: 'Binge watching your favorite tv series', event: event1 }
+gaming = { name: 'Gaming', duration: 1, description: 'Discover a vast variety of online games', event: event1 }
+kareoke = { name: 'Kareoke', duration: 2, description: 'Unleash your inner rockstar!', event: event1 }
 
 [netflix, gaming, kareoke].each do |attributes|
   activity = Activity.create!(attributes)
