@@ -10,15 +10,13 @@
   h6 {
     margin: 0;
   }
-
   max-width: 80vw;
   display: grid;
   justify-content: center;
-  margin: 0 auto;
   column-gap: 4px;
   grid-template-columns: repeat(
     var(--grid-cols),
-    minmax(75px, calc(30% / var(--grid-cols)))
+    minmax(120px, calc(30% / var(--grid-cols)))
   );
   grid-template-rows: repeat(var(--grid-rows), auto);
   -moz-user-select: -moz-none;
@@ -71,6 +69,19 @@
     border: none;
   }
 
+  .disabled {
+    display: none;
+  }
+
+  .received {
+    background: #68bef9;
+    background: radial-gradient(
+      circle,
+      #4ca1da(0, 250, 154, 1) 0%,
+      #529cce(0, 235, 156) 100%
+    );
+  }
+
   @-webkit-keyframes pulse {
     0% {
       -webkit-transform: scale(1);
@@ -121,4 +132,9 @@
     -o-animation-name: pulse;
     animation-name: pulse;
   }
+}
+
+.time-grid-show-wrapper {
+  margin-top: 20px;
+  margin-right: 1vw;
 }

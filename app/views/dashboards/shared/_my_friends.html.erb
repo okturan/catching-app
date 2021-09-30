@@ -1,2 +1,7 @@
-<h1>My Friends</h1>
-<div class="push"></div>
+<div class="friends-list">
+  <% @friends.each do |friend| %>
+    <div class="friend-card">
+      <p><%= friend.email %></p>
+    </div>
+  <% end %>
+</div>

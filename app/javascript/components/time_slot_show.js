@@ -8,6 +8,7 @@ const initTimeSlotShow = () => {
   const receivedTimeSlots = document.querySelector("#received-time-slots");
   const timeGrid = document.querySelector("#time-grid-show");
   const tzpicker = document.querySelector("#timezone-picker-show");
+  const disableCheckbox = document.querySelector("#hide-disabled-cells");
 
   let receivedSlotsArray = [];
   let receivedDate1;
@@ -25,7 +26,6 @@ const initTimeSlotShow = () => {
     updateCells();
   }
 
-  
   function initialDatesGetSet() {
     receivedDate1 = moment.min(receivedSlotsArray);
     date1 = moment(receivedDate1).startOf("day");
@@ -69,11 +69,11 @@ const initTimeSlotShow = () => {
       let targetCell = timeGrid.querySelector(query);
 
       if (targetCell != null) {
-        targetCell.classList.toggle("active");
+        targetCell.classList.toggle("received");
       }
     });
 
-    let inactiveCells = timeGrid.querySelectorAll(":not(.active).hour");
+    let inactiveCells = timeGrid.querySelectorAll(":not(.received).hour");
     inactiveCells.forEach((inactiveCell) => {
       inactiveCell.classList.toggle("inactive");
     });
@@ -97,13 +97,13 @@ const initTimeSlotShow = () => {
   // Actual highlighting and removing
   function addSlots(event) {
     if (!event.target.classList.contains("active")) {
-      event.target.classList.toggle("active");
+      event.target.classList.toggle("received");
     }
   }
 
   function removeSlots(event) {
     if (event.target.classList.contains("active")) {
-      event.target.classList.toggle("active");
+      event.target.classList.toggle("received");
     }
   }
 
@@ -112,7 +112,7 @@ const initTimeSlotShow = () => {
       !event.target.classList.contains("inactive") &&
       event.target.classList.contains("hour")
     ) {
-      event.target.classList.toggle("active");
+      event.target.classList.toggle("received");
     }
   }
 
@@ -160,10 +160,26 @@ const initTimeSlotShow = () => {
     timeGrid.style.setProperty("--grid-cols", cols);
   }
 
+  function hideDisabled(event) {
+    let inactiveCells = document.querySelectorAll(":not(.active).hour");
+
+    if (event.target.checked == false) {
+      inactiveCells.forEach((inactiveCell) => {
+      inactiveCell.classList.toggle("disabled");
+      });
+    } else if (event.target.checked == true) {
+      inactiveCells.forEach((inactiveCell) => {
+      inactiveCell.classList.toggle("disabled");
+      })
+    };
+  }
+
   timeGrid.addEventListener("mousedown", highlightCell);
   timeGrid.addEventListener("mousedown", toggleActive);
   timeGrid.addEventListener("mouseup", resetListeners);
   tzpicker.addEventListener("change", changeTimezone);
+  disableCheckbox.addEventListener("change", hideDisabled);
+
 
   populateTimezones();
   moment.tz.setDefault(tzpicker.value);

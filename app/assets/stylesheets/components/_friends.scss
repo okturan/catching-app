@@ -1,0 +1,25 @@
+.friend-card {
+  display: flex;
+  place-items: center;
+  width: 220px;
+  border-radius: 40px;
+  box-shadow: 0 8px 32px 0 rgba( 31, 38, 135, 0.37 );
+  backdrop-filter: blur( 3px );
+  -webkit-backdrop-filter: blur( 3px );
+  border: 1px solid rgba( 255, 255, 255, 0.34 );
+  margin: 20px;
+  justify-content: center;
+  
+  p {
+    margin: 0;
+    padding: 15px;
+    font-size: 16px;
+  }
+}
+
+.friends-list {
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}

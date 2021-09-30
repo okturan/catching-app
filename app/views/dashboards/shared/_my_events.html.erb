@@ -1,90 +1,23 @@
-<%#   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-beta/js/bootstrap.min.js"></script>
-  <script src="https://darsa.in/sly/examples/js/vendor/plugins.js"></script>
-  <script src="https://darsa.in/sly/js/sly.min.js"></script> %>
-<div class= "main-container">
+<div class="events-index-cards-grid">
   <% @events.each do |event| %>
-   <%#  <div id="forcecentered"> %>
-
-      <div class="event-list bd-highlight">
-
-          <div class="card event-dash-card">
-
-            <div class="card-body">
-              <h1 class="card-title"><span class="event-dash-card-icon"><i class="fa fa-calendar"></i> </span><span class="day"><%= event.start_time %> </span>
-              <small>OCT <br/>
-                <%= event.end_time %></small>
-              </h1>
-              <p class="card-text">
-                <%= event.name %><br>
-                <%= event.description %>
-              </p>
+    <div class="card text-white card-has-bg click-col" style="background-image:url('https://source.unsplash.com/600x900/?nature,forest');">
+      <img class="card-img d-none" src="https://source.unsplash.com/600x900/?nature,forest">
+      <div class="card-img-overlay d-flex flex-column">
+        <div class="card-body"> <small class="card-meta mb-2"><%= event.name %></small>
+          <h4 class="card-title mt-0 "><%= link_to event.description, event_path(event), :class => "text-white" %></h4>
+          <small><i class="far fa-clock"></i> October 20, 2021</small>
+        </div>
+        <div class="card-footer">
+          <div class="media">
+            <img class="mr-3 rounded-circle" src="https://cdn0.iconfinder.com/data/icons/user-pictures/100/male-512.png"
+                  alt="Generic placeholder image" style="max-width:50px">
+            <div class="media-body">
+              <h6 class="my-0 text-white d-block">Tom Bombadil</h6>
+              <small>The first moss gatherer</small>
             </div>
-              <div class="card-footer">
-                <ul class="guest-list">
-                  <li>
-                    <a href="#"><img src="https://randomuser.me/api/portraits/women/36.jpg" alt="Guests" /></a>
-                  </li>
-                  <li>
-                    <a href="#"><img src="https://randomuser.me/api/portraits/men/15.jpg" alt="Guests" /></a>
-                  </li>
-                  <li>
-                    <a href="#"><img src="https://randomuser.me/api/portraits/women/27.jpg" alt="Guests" /></a>
-                  </li>
-                  <li>
-                    <a href="#"><img src="https://randomuser.me/api/portraits/women/46.jpg" alt="Guests" /></a>
-                  </li>
-                  <li><a href="#"><span>+80</span></a></li>
-                </ul>
-              </div>
           </div>
-      <%# </div> %>
-
+        </div>
+      </div>
     </div>
-
   <% end %>
 </div>
-
-
-
-<%#
- <a class="btn nextbtn" href="#"><i class="fa fa-chevron-right"></i></a>
-<script>
-  // -------------------------------------------------------------
-	//   Centered Navigation
-	// -------------------------------------------------------------
-	(function () {
-		var $frame = $('#forcecentered');
-		var $wrap  = $frame.parent();
-
-		// Call Sly on frame
-		$frame.sly({
-			horizontal: 1,
-			itemNav: 'centered',
-			smart: 1,
-			activateOn: 'click',
-			mouseDragging: 1,
-			touchDragging: 1,
-			releaseSwing: 1,
-			startAt: 3,
-			scrollBar: $wrap.find('.scrollbar'),
-			scrollBy: 1,
-			speed: 300,
-			elasticBounds: 1,
-			easing: 'easeOutExpo',
-			dragHandle: 1,
-			dynamicHandle: 1,
-			clickBar: 1,
-
-			// Buttons
-			prev: $wrap.find('.prev'),
-			next: $wrap.find('.nextbtn'),
-      // Cycling
-			cycleBy: 'items',
-			cycleInterval: 3000,
-			pauseOnHover: 1,
-		});
-	}());
-</script>
- %>

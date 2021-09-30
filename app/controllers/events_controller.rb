@@ -3,14 +3,14 @@ class EventsController < ApplicationController
     # Create new event with only event_params
     @event = Event.new(event_params)
     @event.user = current_user
-    @event.save!
+    @event.save
 
     # Create timeslots with time_slot_array_params and with the event created above
     @time_slot_array = time_slot_array_params[:time_slot_array]
     @time_slots = @time_slot_array.split(',')
     @time_slots.each do |slot|
       time_slot = TimeSlot.new(start_time: slot, user: current_user, event: @event)
-      time_slot.save!
+      time_slot.save
     end
     invited_user = User.find(user_info_params[:user_id])
     @event.invite(invited_user)
@@ -20,7 +20,6 @@ class EventsController < ApplicationController
 
   def show
     @time_slots = Event.find(params[:id]).time_slots
-
   end
 
   def new

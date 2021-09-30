@@ -1,22 +1,43 @@
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-
 <% @time_slots_array = [] %>
-
 <% @time_slots.each do |slot| %>
   <% @time_slots_array << slot.start_time.iso8601 %>
 <% end %>
-
 <input id="begin-date" type="hidden" value="<%= @time_slots.first.start_time.iso8601 %>">
 <input id="end-date" type="hidden" value="<%= @time_slots.last.start_time.iso8601 %>">
 <input id="received-time-slots" type="hidden" value="<%= @time_slots_array.to_s %>">
-
-<div class="row justify-content-md-center">
-  <div class="form-group col-5">
-    <label for="timezone-picker-show"></label>
-    <select class="form-control" id="timezone-picker-show"></select>
+<div class="event-show-grid">
+  <div class="event-form-and-card">
+    <div class="event-form-and-toggle">
+      <div class="form-group rounded" id="event-show-select">
+        <label for="timezone-picker-show"></label>
+        <select class="form-control" id="timezone-picker-show"></select>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="hide-disabled-cells">
+        <span class="slider round"></span>
+      </label>
+    </div>
+    <div class="card text-white card-has-bg click-col" style="background-image:url('https://source.unsplash.com/600x900/?nature,forest');">
+      <img class="card-img d-none" src="https://source.unsplash.com/600x900/?nature,forest">
+      <div class="card-img-overlay d-flex flex-column">
+        <div class="card-body">
+          <small class="card-meta mb-2">Upcoming event</small>
+          <h4 class="card-title mt-0 "><a class="text-white" herf="#">Hop along, my hearties! Hobbits! Ponies all! We are fond of parties.</a></h4>
+          <small><i class="far fa-clock"></i> October 20, 2021</small>
+        </div>
+        <div class="card-footer">
+          <div class="media">
+            <img class="mr-3 rounded-circle" src="https://cdn0.iconfinder.com/data/icons/user-pictures/100/male-512.png" alt="Generic placeholder image" style="max-width:50px">
+            <div class="media-body">
+              <h6 class="my-0 text-white d-block">Tom Bombabil</h6>
+              <small>The first moss gatherer</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
-</div>
-
-<div id="time-slot-show">
-  <div id="time-grid-show"></div>
+  <div class="time-grid-show-wrapper">
+    <div id="time-grid-show"></div>
+  </div>
 </div>
