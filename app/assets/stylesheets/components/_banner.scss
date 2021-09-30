@@ -10,6 +10,33 @@
   background-image: asset-url("Homepage.png");
   background-color: #A2BFF1;
 }
+.banner-activities {
+  background-size: cover;
+  padding: 0;
+ /*  position: relative; */
+  /*  z-index: 2; */
+  right: 0;
+  left: 0;
+  margin-top: -81px;
+/*   width: 200px;
+  height: 100px; */
+  width: 100vw;
+  height: 45vh;
+  background-color: red;
+}
+
+.banner-activities h1 {
+  margin: 1rem 0;
+  margin-top: 60px;
+  color: black;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+  font-size: 3em;
+  font-weight: bold;
+  font-family: 'Caveat';
+  transform: skew(8deg, 358deg);
+  padding-left: 30px;
+  padding-top: 50px;
+}
 
 .banner-logo {
   position: absolute;

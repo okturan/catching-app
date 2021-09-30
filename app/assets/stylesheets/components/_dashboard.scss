@@ -1,8 +1,7 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap");
+/* @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"); */
 
-$dashboardTabPrimaryColor: #185ee0;
+$dashboardTabPrimaryColor: #5DB6F9;
 $dashboardTabSecondaryColor: #e6eef9;
-
 
 .tabs-container {
   *,
@@ -13,26 +12,29 @@ $dashboardTabSecondaryColor: #e6eef9;
 }
 
 .tabs-container {
+
 /* 	position: absolute;
 	left: 0;
 	top: 0;
 	right: 0;
 	bottom: 0; */
+  position: relative;
 	display: flex;
 	align-items: center;
 	justify-content: center;
   flex-direction: column;
-  margin: 0 auto;
-  //background-color: purple;
+  margin-top: 3vh;
+  margin-bottom: 0;
 }
+
 .tabs-container {
   .tabs {
     display: flex;
-    position: relative;
+    top: 259px;
+    position: absolute;
     background-color: #fff;
     box-shadow: 0 0 1px 0 rgba($dashboardTabPrimaryColor, 0.15), 0 6px 12px 0 rgba($dashboardTabPrimaryColor, 0.15);
     padding: 0.75rem;
-    //background-color: yellow;
     border-radius: 99px; // just a high number to create pill effect
     * {
       z-index: 2;
