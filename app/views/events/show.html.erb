@@ -43,10 +43,11 @@
           <small class="card-meta"><%= @event.name %></small>
           <h4 class="card-title mt-2 "><a class="text-white" herf="#"><%= @event.description %></a></h4>
           <small><i class="far fa-clock"></i> pending</small>
-          <div class="dropdown-divider w-50 mb-4"></div>
+          <div class="dropdown-divider w-50 mb-2"></div>
+          <small>Attending:</small>
           <div>
             <% @guests.each do |guest| %>
-              <small class="card-meta my-3"><%= guest.email %></small>
+              <small class="card-meta my-3"><%= guest.first_name + " " + guest.last_name %> 🙋‍♀️</small><br>
             <% end %>
           </div>
         </div>
@@ -55,8 +56,14 @@
             <img class="mr-3 rounded-circle" src="https://cdn0.iconfinder.com/data/icons/user-pictures/100/male-512.png" alt="Generic placeholder image" style="max-width:50px">
             <div class="media-body">
               <small>an event by</small>
-              <h5 class="my-1 text-white d-block"><%= @host == current_user ? "you, " : @host.email %><%= @host.email %></h6>
-              <small>good fellow</small>
+              <h5 class="my-1 text-white d-block">
+                <% if @host == current_user %>
+                  <%= "you, " + @host.first_name  %>
+                <% else %>
+                  <%= current_user.first_name %>
+                <% end %>
+              </h5>
+              <small><%= @host.email %></small>
             </div>
           </div>
         </div>
