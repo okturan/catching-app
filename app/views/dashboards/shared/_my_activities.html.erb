@@ -1,16 +1,67 @@
-<div class="container-cards">
-  <% @activities.each do |activity| %>
-  <div class="card__container">
-    <div class="card">
-      <div class="card__content">
-          <h2><%= activity.name %></h2> <br>
-          <h6>Description: <%= activity.description %></h6><br>
-          <h6>Duration: <%= activity.duration %></h6><br>
-      </div>
-    </div>
-  </div>
-  <% end %>
+<div class="banner-activities" style="background-image:url(https://res.cloudinary.com/dvpavvw1u/image/upload/v1632905004/banner2_b1wiuz.png);">
+  <h1>ENJOY THE TIME SPENT TOGETHER. <br> EVEN WHEN YOU ARE NOT TOGETHER! </h1>
 </div>
-<div class="push"></div>
 
-<%#= link_to "New Activity", new_activity_path %>
+<div class="header-activity">
+  <h2>MOST POPULAR ACTIVITIES</h2>
+</div>
+
+<div class="container-activities">
+  <div class="card text-white card-has-bg click-col" style="background-image:url('https://res.cloudinary.com/dvpavvw1u/image/upload/v1632921912/12_1_vqcoeo.png');">
+      <img class="card-img d-none" src="https://res.cloudinary.com/dvpavvw1u/image/upload/v1632921912/12_1_vqcoeo.png">
+      <div class="card-img-overlay d-flex flex-column">
+          <div class="card-body"> <small class="card-meta mb-2">MOVIES</small>
+            <h4 class="card-title mt-0 "><a class="text-white" herf="#">Binge watching your favorite tv series!</a></h4>
+          </div>
+<%#           <div class="card-footer">
+              <div class="media">
+                  <img class="mr-3 rounded-circle" src="https://cdn0.iconfinder.com/data/icons/user-pictures/100/male-512.png"
+                  alt="Generic placeholder image" style="max-width:50px">
+                  <div class="media-body">
+                      <h6 class="my-0 text-white d-block">Tom Bombabil</h6>
+  <small>The first moss gatherer</small>
+                  </div>
+              </div>
+          </div> %>
+      </div>
+  </div>
+
+  <div class="card text-white card-has-bg click-col" style="background-image:url('https://res.cloudinary.com/dvpavvw1u/image/upload/v1632923785/13_anlx3l.png');">
+      <img class="card-img d-none" src="https://res.cloudinary.com/dvpavvw1u/image/upload/v1632923785/13_anlx3l.png">
+      <div class="card-img-overlay d-flex flex-column">
+          <div class="card-body"> <small class="card-meta mb-2">GAMES</small>
+            <h4 class="card-title mt-0 "><a class="text-white" herf="#">Discover a vast variety of online games!</a></h4>
+          </div>
+<%#           <div class="card-footer">
+              <div class="media">
+                  <img class="mr-3 rounded-circle" src="https://cdn0.iconfinder.com/data/icons/user-pictures/100/male-512.png"
+                  alt="Generic placeholder image" style="max-width:50px">
+                  <div class="media-body">
+                      <h6 class="my-0 text-white d-block">Tom Bombabil</h6>
+  <small>The first moss gatherer</small>
+                  </div>
+              </div>
+          </div> %>
+      </div>
+  </div>
+
+  <div class="card text-white card-has-bg click-col" style="background-image:url('https://res.cloudinary.com/dvpavvw1u/image/upload/v1632921887/11_1_ckstoe.png');">
+      <img class="card-img d-none" src="https://res.cloudinary.com/dvpavvw1u/image/upload/v1632921887/11_1_ckstoe.png">
+      <div class="card-img-overlay d-flex flex-column">
+          <div class="card-body"> <small class="card-meta mb-2">KARAOKE</small>
+            <h4 class="card-title mt-0 "><a class="text-white" herf="#">Unleash your inner rockstar!</a></h4>
+          </div>
+<%#           <div class="card-footer">
+              <div class="media">
+                  <img class="mr-3 rounded-circle" src="https://cdn0.iconfinder.com/data/icons/user-pictures/100/male-512.png"
+                  alt="Generic placeholder image" style="max-width:50px">
+                  <div class="media-body">
+                      <h6 class="my-0 text-white d-block">Tom Bombabil</h6>
+  <small>The first moss gatherer</small>
+                  </div>
+              </div>
+          </div> %>
+      </div>
+  </div>
+  <div class="push"></div>
+</div>

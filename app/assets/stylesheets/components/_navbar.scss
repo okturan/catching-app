@@ -8,8 +8,10 @@
   font-family: 'Caveat';
   font-style: normal;
   font-weight: 600;
-  background-color: #cadbf9;
+  background-color: #5DB6F9;
   padding-right: 50px;
+  padding-bottom: 0;
+  padding-top: 0;
 }
 
 .nav-item {
@@ -22,7 +24,7 @@
 }
 
 #navbar-event .btn-event {
-  visibility: hidden;
+  display: none;
 }
 
 #navbar-event .nav-link {
@@ -30,12 +32,12 @@
 }
 
 #navbar-dashboard #event-link {
-  visibility: hidden;
+  display: none;
 }
 
-#navbar-dashboard .btn-event {
-  visibility: hidden;
-}
+/* #navbar-dashboard .btn-event {
+  display: none;
+} */
 .navbar-lewagon .navbar-collapse {
   flex-grow: 0;
 }

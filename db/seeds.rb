@@ -13,16 +13,16 @@ User.destroy_all
 
 ege = User.create(email: "ege@ege.com", password: "123456")
 sedef = User.create(email: "sedef@sedef.com", password: "123456")
-okan= User.create(email: "okan@okan.com", password: "123456")
+okan = User.create(email: "okan@okan.com", password: "123456")
 
 event1 = Event.create(name: 'meeting online', description: 'a merry gathering', user: okan)
 event2 = Event.create(name: 'meeting outside', description: 'a joyful evening', user: okan)
 
+netflix = { name: 'Movies', duration: 12, description: 'Binge watching your favorite tv series', event: event1 }
+gaming = { name: 'Gaming', duration: 1, description: 'Discover a vast variety of online games', event: event1 }
+kareoke = { name: 'Kareoke', duration: 2, description: 'Unleash your inner rockstar!', event: event1 }
 
-netflix = { name: 'Netflix', duration: 12, description: 'so much fun', event: event1 }
-gaming = { name: 'Gaming', duration: 1, description: 'fun times', event: event1 }
-
-[netflix, gaming].each do |attributes|
+[netflix, gaming, kareoke].each do |attributes|
   activity = Activity.create!(attributes)
   puts "created #{activity.name}"
 end
