@@ -12,14 +12,13 @@ $dashboardTabSecondaryColor: #e6eef9;
 }
 
 .tabs-container {
-/*   position: relative;
-  z-index: 2; */
 
 /* 	position: absolute;
 	left: 0;
 	top: 0;
 	right: 0;
 	bottom: 0; */
+  position: relative;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -31,7 +30,8 @@ $dashboardTabSecondaryColor: #e6eef9;
 .tabs-container {
   .tabs {
     display: flex;
-    position: relative;
+    top: 259px;
+    position: absolute;
     background-color: #fff;
     box-shadow: 0 0 1px 0 rgba($dashboardTabPrimaryColor, 0.15), 0 6px 12px 0 rgba($dashboardTabPrimaryColor, 0.15);
     padding: 0.75rem;
