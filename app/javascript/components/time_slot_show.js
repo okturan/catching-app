@@ -6,11 +6,13 @@ const initTimeSlotShow = () => {
   }
 
   const receivedTimeSlots = document.querySelector("#received-time-slots");
+  const guestTimeSlots = document.querySelector("#guest-time-slots");
   const timeGrid = document.querySelector("#time-grid-show");
   const tzpicker = document.querySelector("#timezone-picker-show");
   const disableCheckbox = document.querySelector("#hide-disabled-cells");
 
-  let receivedSlotsArray = [];
+  let receivedSlotsArray;
+  let guestSlotsArray;
   let receivedDate1;
   let receivedDate2;
   let date1;
@@ -24,6 +26,10 @@ const initTimeSlotShow = () => {
     fillDays();
     makeRows(25, difference + 1);
     updateCells();
+    if (guestTimeSlots.value != "[]" ) {
+      guestSlotsArray = isoToMomentGuest();
+      updateGuestCells();
+    }
     disableCheckbox.checked = false
   }
 
@@ -34,7 +40,6 @@ const initTimeSlotShow = () => {
     date2 = moment(receivedDate2).startOf("day");
     difference = date2.diff(date1, "days");
   }
-
   
   function fillDays() {
     for (let c = 0; c <= difference; c++) {
@@ -63,6 +68,17 @@ const initTimeSlotShow = () => {
     }
   }
 
+  function updateGuestCells() {
+    guestSlotsArray.forEach((receivedSlot) => {
+      let receivedSlotISO = receivedSlot.toISOString();
+      let query = `[data-date="` + receivedSlotISO + `"]`;
+      let targetCell = timeGrid.querySelector(query);
+
+      if (targetCell != null) {
+        targetCell.insertAdjacentHTML("afterbegin", '🙋');
+      }
+    });
+  }
   
   function updateCells() {
     receivedSlotsArray.forEach((receivedSlot) => {
@@ -111,7 +127,7 @@ const initTimeSlotShow = () => {
   }
 
   function toggleActive(event) {
-    if (event.target.classList.contains("hour")) {
+    if (!event.target.classList.contains("inactive")) {
       event.target.classList.toggle("active");
     }
   }
@@ -133,7 +149,7 @@ const initTimeSlotShow = () => {
     activeCells.forEach((cell) => {
       slots.push(cell.dataset.date);
     });
-    document.querySelector("#time_slot_array").value = slots;
+    document.querySelector("#new-time-slot-array").value = slots;
   }
 
   function populateTimezones() {
@@ -155,6 +171,13 @@ const initTimeSlotShow = () => {
     const iso_regex =
       /[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)*/g;
     let array = receivedTimeSlots.value.match(iso_regex);
+    return array.map((slot) => moment(slot));
+  }
+
+  function isoToMomentGuest() {
+    const iso_regex =
+      /[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)*/g;
+    let array = guestTimeSlots.value.match(iso_regex);
     return array.map((slot) => moment(slot));
   }
 
@@ -183,10 +206,15 @@ const initTimeSlotShow = () => {
     };
   }
 
+// <input id="guest-list" 
+
+  if (document.querySelector("#is-host").value == "no") {
   timeGrid.addEventListener("mousedown", highlightCell);
   timeGrid.addEventListener("mousedown", toggleActive);
   timeGrid.addEventListener("mouseup", resetListeners);
-  tzpicker.addEventListener("change", changeTimezone);
+  tzpicker.addEventListener("change", changeTimezone); 
+  }
+
   disableCheckbox.addEventListener("change", hideDisabled);
 
 
