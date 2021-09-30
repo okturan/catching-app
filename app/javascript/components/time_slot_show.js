@@ -8,6 +8,7 @@ const initTimeSlotShow = () => {
   const receivedTimeSlots = document.querySelector("#received-time-slots");
   const timeGrid = document.querySelector("#time-grid-show");
   const tzpicker = document.querySelector("#timezone-picker-show");
+  const disableCheckbox = document.querySelector("#hide-disabled-cells");
 
   let receivedSlotsArray = [];
   let receivedDate1;
@@ -23,9 +24,9 @@ const initTimeSlotShow = () => {
     fillDays();
     makeRows(25, difference + 1);
     updateCells();
+    disableCheckbox.checked = false
   }
 
-  
   function initialDatesGetSet() {
     receivedDate1 = moment.min(receivedSlotsArray);
     date1 = moment(receivedDate1).startOf("day");
@@ -40,19 +41,20 @@ const initTimeSlotShow = () => {
       let cell = document.createElement("div");
       cell.innerText = moment(date1).format("MMM Do ddd");
       timeGrid.appendChild(cell).className = "grid-item header";
+      cell.style.gridColumn = c + 1
       // Fill hour info for each day
-      fillHours(date1);
+      fillHours(date1, c);
       // Advance onto next day
       date1 = date1.add(1, "day");
     }
   }
   
-  function fillHours(date) {
+  function fillHours(date, c) {
     for (let i = 0; i < 24; i++) {
       // Create grid cells
       let cell = document.createElement("div");
       cell.innerText = date.format("HH:mm");
-      cell.style.gridRow = i + 2;
+      cell.style.gridColumn = c + 1
       timeGrid.appendChild(cell);
       cell.className = "grid-item hour";
       cell.dataset.date = date.toISOString();
@@ -69,11 +71,11 @@ const initTimeSlotShow = () => {
       let targetCell = timeGrid.querySelector(query);
 
       if (targetCell != null) {
-        targetCell.classList.toggle("active");
+        targetCell.classList.toggle("received");
       }
     });
 
-    let inactiveCells = timeGrid.querySelectorAll(":not(.active).hour");
+    let inactiveCells = timeGrid.querySelectorAll(":not(.received).hour");
     inactiveCells.forEach((inactiveCell) => {
       inactiveCell.classList.toggle("inactive");
     });
@@ -81,11 +83,11 @@ const initTimeSlotShow = () => {
 
   // Make cells listen for mouseover
   function highlightCell(event) {
-    let greenCells = document.querySelectorAll(".active");
+    let receivedCells = document.querySelectorAll(".received");
     let allCells = document.querySelectorAll(":not(.inactive).hour");
 
     if (event.target.classList.contains("active")) {
-      greenCells.forEach((element) => {
+      receivedCells.forEach((element) => {
         element.addEventListener("mouseover", removeSlots);
       });
     } else {
@@ -94,9 +96,10 @@ const initTimeSlotShow = () => {
       });
     }
   }
+
   // Actual highlighting and removing
   function addSlots(event) {
-    if (!event.target.classList.contains("active")) {
+    if (!event.target.classList.value.includes("active")) {
       event.target.classList.toggle("active");
     }
   }
@@ -108,10 +111,7 @@ const initTimeSlotShow = () => {
   }
 
   function toggleActive(event) {
-    if (
-      !event.target.classList.contains("inactive") &&
-      event.target.classList.contains("hour")
-    ) {
+    if (event.target.classList.contains("hour")) {
       event.target.classList.toggle("active");
     }
   }
@@ -124,7 +124,16 @@ const initTimeSlotShow = () => {
       element.removeEventListener("mouseover", addSlots);
       element.removeEventListener("mouseover", removeSlots);
     });
-    //getActiveCells();
+    getActiveCells();
+  }
+
+  function getActiveCells() {
+    let slots = [];
+    let activeCells = timeGrid.querySelectorAll(".active");
+    activeCells.forEach((cell) => {
+      slots.push(cell.dataset.date);
+    });
+    document.querySelector("#time_slot_array").value = slots;
   }
 
   function populateTimezones() {
@@ -160,10 +169,26 @@ const initTimeSlotShow = () => {
     timeGrid.style.setProperty("--grid-cols", cols);
   }
 
+  function hideDisabled(event) {
+    let inactiveCells = document.querySelectorAll(":not(.received).hour");
+
+    if (event.target.checked == false) {
+      inactiveCells.forEach((inactiveCell) => {
+      inactiveCell.classList.toggle("disabled");
+      });
+    } else if (event.target.checked == true) {
+      inactiveCells.forEach((inactiveCell) => {
+      inactiveCell.classList.toggle("disabled");
+      })
+    };
+  }
+
   timeGrid.addEventListener("mousedown", highlightCell);
   timeGrid.addEventListener("mousedown", toggleActive);
   timeGrid.addEventListener("mouseup", resetListeners);
   tzpicker.addEventListener("change", changeTimezone);
+  disableCheckbox.addEventListener("change", hideDisabled);
+
 
   populateTimezones();
   moment.tz.setDefault(tzpicker.value);

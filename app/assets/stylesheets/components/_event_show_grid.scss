@@ -1,0 +1,35 @@
+.event-show-grid {
+  display: flex;
+  justify-content: center;
+  flex-direction: row;
+  flex-flow: wrap;
+  padding: 1% 5%;
+}
+
+.event-new-grid {
+  display: flex;
+  justify-content: center;
+  flex-direction: row;
+  flex-flow: wrap;
+  padding: 5%;
+}
+
+#event-show-select {
+  width: 65%;
+}
+
+.event-show-card {
+  align-self: flex-start;
+  justify-content: space-evenly;
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  margin-right: 3vw;
+}
+
+.event-show-card-top {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  margin-top: 6px;
+}

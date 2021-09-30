@@ -1,42 +1,40 @@
 
-<div class="container">
-  <div class="row justify-content">
-    <div class="col">
-      <%= simple_form_for(@event) do |f| %>
-        <input name="time_slots[time_slot_array]" id="time_slot_array" type="hidden">
-        <div class="form-events">
-          <%= f.input :name, placeholder: "A Fabulous Meeting!" %>
-          <%= f.input :description, as: :text, placeholder: "Do whatever!" %>
-          <%# Using regular HTML forms to escape model validation %>
-          <div class="form-group">
-            <label for="user_info[user_id]">Choose friends</label>
-            <select class="form-control select required" name="user_info[user_id]">
-              <% @users.each do |user| %>
-                <option value="<%= user.id %>"><%= user.email %></option>
-              <% end %>
-            </select>
-          </div>
-          <div class="form-group">
-              <label for="timezone-picker-new">I am in:&nbsp&nbsp</label>
-              <select class="form-control" id="timezone-picker-new"></select>
-          </div>
-          <div class="form-group">
-            <label for="start">Start date:</label>
-            <input class="form-control" type="date" name="start" id="event-begin" value="" />
-          </div>
-          <div class="form-group">
-            <label for="end">End date:</label>
-            <input class="form-control" type="date" name="end" id="event-end" value="" />
-          </div>
-          <div class="form-group">
-            <p>Pick hours from a range of * days</p>
-          </div>
-          <%= f.submit "Submit", class: "btn btn-primary" %>
-        </div>
-      <% end %>
+<div class="event-new-grid">
+<div>
+  <%= simple_form_for(@event) do |f| %>
+    <input name="time_slots[time_slot_array]" id="time_slot_array" type="hidden">
+    <div class="form-events">
+      <%= f.input :name, placeholder: "A Fabulous Meeting!" %>
+      <%= f.input :description, as: :text, placeholder: "Do whatever!" %>
+      <%# Using regular HTML forms to escape model validation %>
+      <div class="form-group">
+        <label for="user_info[user_id]">Choose friends</label>
+        <select class="form-control select required" name="user_info[user_id]">
+          <% @users.each do |user| %>
+            <option value="<%= user.id %>"><%= user.email %></option>
+          <% end %>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="timezone-picker-new">I am in:&nbsp&nbsp</label>
+        <select class="form-control" id="timezone-picker-new"></select>
+      </div>
+      <div class="form-group">
+        <label for="start">Start date:</label>
+        <input class="form-control" type="date" name="start" id="event-begin" value="" />
+      </div>
+      <div class="form-group">
+        <label for="end">End date:</label>
+        <input class="form-control" type="date" name="end" id="event-end" value="" />
+      </div>
+      <div class="form-group" id="range-tooltip">
+      </div>
+      <%= f.submit "Submit", class: "btn btn-primary" %>
     </div>
-    <div class="col">
-      <div id="time-grid-define"></div>
-    </div>
-  </div>
+  <% end %>
+</div>
+
+<div class="time-grid-define-wrapper">
+  <div id="time-grid-define"></div>
+</div>
 </div>

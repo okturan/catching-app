@@ -15,8 +15,8 @@ ege = User.create(email: "ege@ege.com", password: "123456")
 sedef = User.create(email: "sedef@sedef.com", password: "123456")
 okan = User.create(email: "okan@okan.com", password: "123456")
 
-event1 = Event.create(name: 'meeting online', user: okan)
-event2 = Event.create(name: 'meeting outside', user: okan)
+event1 = Event.create(name: 'meeting online', description: 'a merry gathering', user: okan)
+event2 = Event.create(name: 'meeting outside', description: 'a joyful evening', user: okan)
 
 netflix = { name: 'Movies', duration: 12, description: 'Binge watching your favorite tv series', event: event1 }
 gaming = { name: 'Gaming', duration: 1, description: 'Discover a vast variety of online games', event: event1 }
