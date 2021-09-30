@@ -19,7 +19,15 @@ class EventsController < ApplicationController
   end
 
   def show
-    @time_slots = Event.find(params[:id]).time_slots
+    # Seperate time slots by user
+    # @time_slots sort by user_id
+
+    @event = Event.find(params[:id])
+    @host = @event.user
+    @host_time_slots = @event.time_slots.where(user: @host)
+
+    @time_slots = Event.find(params[:id]).time_slots - @host_time_slots
+
   end
 
   def new

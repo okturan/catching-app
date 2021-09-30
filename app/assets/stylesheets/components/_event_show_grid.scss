@@ -3,7 +3,7 @@
   justify-content: center;
   flex-direction: row;
   flex-flow: wrap;
-  padding: 5%;
+  padding: 1% 5%;
 }
 
 .event-new-grid {
@@ -18,19 +18,18 @@
   width: 65%;
 }
 
-.event-form-and-card {
+.event-show-card {
   align-self: flex-start;
   justify-content: space-evenly;
   align-items: center;
   display: flex;
   flex-direction: column;
+  margin-right: 3vw;
 }
 
-.event-form-and-toggle {
+.event-show-card-top {
   display: flex;
   justify-content: space-evenly;
   align-items: center;
-  margin-right: 20px;
-  margin-bottom: -15px;
   margin-top: 6px;
 }

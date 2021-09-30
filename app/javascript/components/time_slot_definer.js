@@ -6,11 +6,11 @@ const initTimeSlotDefiner = () => {
   }
 
   // Div selectors
-  // const beginShow = document.getElementById("begin-show");
-  // const endShow = document.getElementById("end-show");
-  // const daysShow = document.getElementById("days-show");
   const timeGrid = document.querySelector("#time-grid-define");
-  
+
+  // Some description
+  const rangeTooltip = document.querySelector("#range-tooltip")
+
   // Inputs
   const tzpicker = document.querySelector("#timezone-picker-new");
   const beginDateInput = document.querySelector("#event-begin");
@@ -110,14 +110,14 @@ const initTimeSlotDefiner = () => {
   }
 
   // Select active cells
-  function getActiveCells() {
-    let slots = [];
-    let activeCells = timeGrid.querySelectorAll(".active");
-    activeCells.forEach((cell) => {
-      slots.push(cell.dataset.date);
-    });
-    document.querySelector("#time_slot_array").value = slots;
-  }
+    function getActiveCells() {
+      let slots = [];
+      let activeCells = timeGrid.querySelectorAll(".active");
+      activeCells.forEach((cell) => {
+        slots.push(cell.dataset.date);
+      });
+      document.querySelector("#time_slot_array").value = slots;
+    }
 
   // Set a grid columns and rows based on input
   function makeRows(rows, cols) {

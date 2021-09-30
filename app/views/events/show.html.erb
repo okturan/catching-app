@@ -1,13 +1,25 @@
-<% @time_slots_array = [] %>
-<% @time_slots.each do |slot| %>
-  <% @time_slots_array << slot.start_time.iso8601 %>
+<%# Seperating host slots %>
+<% @host_time_slots_array = [] %>
+
+<% if current_user == @host %>
+  <p>This is hosted by the current_user</p>
+<% else %>
+  <% @host_time_slots.each do |slot| %>
+    <% @host_time_slots_array << slot.start_time.iso8601 %>
+  <% end %>
+ 
 <% end %>
-<input id="begin-date" type="hidden" value="<%= @time_slots.first.start_time.iso8601 %>">
-<input id="end-date" type="hidden" value="<%= @time_slots.last.start_time.iso8601 %>">
-<input id="received-time-slots" type="hidden" value="<%= @time_slots_array.to_s %>">
+
+<input id="begin-date" type="hidden" value="<%= @host_time_slots.first.start_time.iso8601 %>">
+<input id="end-date" type="hidden" value="<%= @host_time_slots.last.start_time.iso8601 %>">
+<input id="received-time-slots" type="hidden" value="<%= @host_time_slots_array.to_s %>">
+<input name="time_slots[time_slot_array]" id="time_slot_array" type="hidden">
+
+
+
 <div class="event-show-grid">
-  <div class="event-form-and-card">
-    <div class="event-form-and-toggle">
+  <div class="event-show-card">
+    <div class="event-show-card-top">
       <div class="form-group rounded" id="event-show-select">
         <label for="timezone-picker-show"></label>
         <select class="form-control" id="timezone-picker-show"></select>
@@ -21,21 +33,25 @@
       <img class="card-img d-none" src="https://source.unsplash.com/600x900/?nature,forest">
       <div class="card-img-overlay d-flex flex-column">
         <div class="card-body">
-          <small class="card-meta mb-2">Upcoming event</small>
-          <h4 class="card-title mt-0 "><a class="text-white" herf="#">Hop along, my hearties! Hobbits! Ponies all! We are fond of parties.</a></h4>
-          <small><i class="far fa-clock"></i> October 20, 2021</small>
+          <small class="card-meta mb-2"><%= @event.name %></small>
+          <h4 class="card-title mt-0 "><a class="text-white" herf="#"><%= @event.description %></a></h4>
+          <small><i class="far fa-clock"></i> To be decided</small>
         </div>
         <div class="card-footer">
           <div class="media">
             <img class="mr-3 rounded-circle" src="https://cdn0.iconfinder.com/data/icons/user-pictures/100/male-512.png" alt="Generic placeholder image" style="max-width:50px">
             <div class="media-body">
-              <h6 class="my-0 text-white d-block">Tom Bombabil</h6>
-              <small>The first moss gatherer</small>
+              <small>an event by</small>
+              <h5 class="my-1 text-white d-block"><%= @host.email %></h6>
+              <small>good fellow</small>
             </div>
           </div>
         </div>
       </div>
     </div>
+    <% if current_user != @host %>
+        <button type="button" class="btn btn-confirm mt-3">Confirm your availability</button>
+    <% end %>
   </div>
   <div class="time-grid-show-wrapper">
     <div id="time-grid-show"></div>
