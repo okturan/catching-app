@@ -24,6 +24,31 @@
   padding-top: 18px;
 }
 
+.banner-events {
+  background-size: cover;
+  padding: 20px;
+
+  right: 0;
+  left: 0;
+  margin-top: -112px;
+
+  width: 100vw;
+  height: 400px;
+}
+
+.banner-events h1 {
+  margin: 1rem 0;
+  margin-top: 90px;
+  color: white;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+  font-size: 3em;
+  font-weight: bold;
+  font-family: 'Caveat';
+  transform: skew(8deg, 358deg);
+  padding-left: 85px;
+  padding-top: 18px;
+}
+
 .banner-logo {
   position: absolute;
   bottom: 7%;
