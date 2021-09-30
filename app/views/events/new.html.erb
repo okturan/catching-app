@@ -4,7 +4,7 @@
 
   <%= simple_form_for(@event) do |f| %>
     <input name="time_slots[time_slot_array]" id="time_slot_array" type="hidden">
-    <div class="form-events">
+    <div class="form-events" style="background-image:url(https://res.cloudinary.com/dvpavvw1u/image/upload/v1633004095/meetingform2_puuthd.png);">
       <%= f.input :name, placeholder: "A Fabulous Meeting!" %>
       <%= f.input :description, as: :text, placeholder: "Do whatever!" %>
       <%# Using regular HTML forms to escape model validation %>
@@ -30,7 +30,7 @@
       </div>
       <div class="form-group" id="range-tooltip">
       </div>
-      <%= f.submit "Catch.App with your Friends", class: "btn-meeting" %>
+      <%= f.submit "Catch.App with your Friends!", class: "btn-meeting" %>
     </div>
   <% end %>
 </div>
