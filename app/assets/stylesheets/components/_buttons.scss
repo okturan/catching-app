@@ -63,3 +63,18 @@
   border-radius: 20px;
   padding: 5px 10px;
 }
+.btn-meeting {
+  border-radius: 15px;
+  padding: 10px 20px;
+  width: 100%;
+  background: rgb(185, 139, 255);
+  background: radial-gradient(
+    circle,
+    rgba(0, 235, 156, 1) 0%,
+    rgb(185, 139, 255) 100%
+  );
+
+  &:hover {
+    animation: pulse 1s;
+  }
+}
