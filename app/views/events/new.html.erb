@@ -36,20 +36,20 @@
         </div>
         <div class="form-group" id="range-tooltip">
         </div>
-   
+
         <%= f.submit "Catch.App with your Friends!", class: "btn-meeting" %>
       </div>
     <% end %>
   </div>
 
-  <div class="time-grid-define-wrapper">
+  <div class="time-grid-define-wrapper"  style="background-image:url(https://res.cloudinary.com/dvpavvw1u/image/upload/v1633009159/timeslots1_mf8mpx.png);">
     <div id="time-grid-define"></div>
   </div>
 </div>
 
 
 <script>
-  
+
   document.getElementById('user-list').onchange = function multipleFriends() {
   var options = document.getElementById('user-list').selectedOptions;
   var values = Array.from(options).map(({ value }) => value);
@@ -60,4 +60,3 @@
   placeholder: ''
   })
 </script>
-
