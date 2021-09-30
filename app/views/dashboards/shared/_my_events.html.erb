@@ -8,11 +8,7 @@
 
 <div class="container-activities">
   <% @events.each do |event| %>
-<<<<<<< HEAD
-    <div class="card text-white card-has-bg click-col" style="background-image:url('https://res.cloudinary.com/dvpavvw1u/image/upload/v1633027044/sigmund-eTgMFFzroGc-unsplash_1_jmroab-c_scale_h_900_w_600_uma1d2.jpg');">
-=======
     <div onclick="location.href='<%= event_path(event) %>'" class="card text-white card-has-bg click-col" style="background-image:url('https://source.unsplash.com/600x900/?nature,forest');">
->>>>>>> master
       <img class="card-img d-none" src="https://source.unsplash.com/600x900/?nature,forest">
       <div class="card-img-overlay d-flex flex-column">
         <div class="card-body"> <small class="card-meta mb-2"><%= event.name %></small>
