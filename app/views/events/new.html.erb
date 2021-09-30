@@ -1,40 +1,63 @@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/multiple-select-js/dist/css/multiple-select.css">
+<script src="https://cdn.jsdelivr.net/npm/multiple-select-js/dist/js/multiple-select.js"></script>
 
 <div class="event-new-grid">
 <div>
-  <%= simple_form_for(@event) do |f| %>
-    <input name="time_slots[time_slot_array]" id="time_slot_array" type="hidden">
-    <div class="form-events">
-      <%= f.input :name, placeholder: "A Fabulous Meeting!" %>
-      <%= f.input :description, as: :text, placeholder: "Do whatever!" %>
-      <%# Using regular HTML forms to escape model validation %>
-      <div class="form-group">
-        <label for="user_info[user_id]">Choose friends</label>
-        <select class="form-control select required" name="user_info[user_id]">
-          <% @users.each do |user| %>
-            <option value="<%= user.id %>"><%= user.email %></option>
-          <% end %>
-        </select>
+    <%= simple_form_for(@event) do |f| %>
+      <input name="time_slots[time_slot_array]" id="time_slot_array" type="hidden">
+      <div class="form-events" style="background-image:url(https://res.cloudinary.com/dvpavvw1u/image/upload/v1633004095/meetingform2_puuthd.png);">
+        <%= f.input :name, placeholder: "A Fabulous Meeting!" %>
+        <%= f.input :description, as: :text, placeholder: "Do whatever!" %>
+        <%# Using regular HTML forms to escape model validation %>
+
+        <div class="form-group">
+          <label for="user-list">Invite friends</label>
+          <select id="user-list" multiple>
+            <% @users.each do |user| %>
+              <option value="<%= user.id %>"><%= user.email %></option>
+            <% end %>
+          </select>
+          <input name="user_list[user_list_array]" id="user-list-hidden" type="hidden">
+
+        </div>
+
+        <div class="form-group">
+          <label for="timezone-picker-new">I am in:&nbsp&nbsp</label>
+          <select class="form-control" id="timezone-picker-new"></select>
+        </div>
+
+        <div class="form-group">
+          <label for="start">Start date:</label>
+          <input class="form-control" type="date" name="start" id="event-begin" value="" />
+        </div>
+        <div class="form-group">
+          <label for="end">End date:</label>
+          <input class="form-control" type="date" name="end" id="event-end" value="" />
+        </div>
+        <div class="form-group" id="range-tooltip">
+        </div>
+   
+        <%= f.submit "Catch.App with your Friends!", class: "btn-meeting" %>
       </div>
-      <div class="form-group">
-        <label for="timezone-picker-new">I am in:&nbsp&nbsp</label>
-        <select class="form-control" id="timezone-picker-new"></select>
-      </div>
-      <div class="form-group">
-        <label for="start">Start date:</label>
-        <input class="form-control" type="date" name="start" id="event-begin" value="" />
-      </div>
-      <div class="form-group">
-        <label for="end">End date:</label>
-        <input class="form-control" type="date" name="end" id="event-end" value="" />
-      </div>
-      <div class="form-group" id="range-tooltip">
-      </div>
-      <%= f.submit "Submit", class: "btn btn-primary" %>
-    </div>
-  <% end %>
+    <% end %>
+  </div>
+
+  <div class="time-grid-define-wrapper">
+    <div id="time-grid-define"></div>
+  </div>
 </div>
 
-<div class="time-grid-define-wrapper">
-  <div id="time-grid-define"></div>
-</div>
-</div>
+
+<script>
+  
+  document.getElementById('user-list').onchange = function multipleFriends() {
+  var options = document.getElementById('user-list').selectedOptions;
+  var values = Array.from(options).map(({ value }) => value);
+  document.querySelector("#user-list-hidden").value = values.join()
+  }
+
+  new MultipleSelect('#user-list', {
+  placeholder: ''
+  })
+</script>
+

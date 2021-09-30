@@ -43,6 +43,8 @@
       border-radius: 15px;
       margin-bottom: 10px;
       background: rgb(255, 255, 255);
+           /*  background: rgb(185,139,255) !important; */
+
       box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 6px -1px,
         rgba(0, 0, 0, 0.06) 0px 2px 4px -1px;
       background: linear-gradient(
@@ -87,5 +89,18 @@
 
 .time-grid-show-wrapper {
   margin-top: 20px;
+  border-radius: 20px;
   margin-right: 1vw;
+  padding: 20px;
+  background-image: url("https://res.cloudinary.com/dvpavvw1u/image/upload/v1633010870/blurry-gradient-haikei_1_voybj5.png");
+}
+}
+
+.time-grid-define-wrapper {
+  background-size: cover;
+  border-radius: 15px;
+}
+#time-grid-define {
+  margin-top: 20px;
+  margin-bottom: 20px;
 }
