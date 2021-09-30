@@ -8,8 +8,8 @@
 
 <div class="container-activities">
   <% @events.each do |event| %>
-    <div onclick="location.href='<%= event_path(event) %>'" class="card text-white card-has-bg click-col" style="background-image:url('https://source.unsplash.com/600x900/?nature,forest');">
-      <img class="card-img d-none" src="https://source.unsplash.com/600x900/?nature,forest">
+    <div onclick="location.href='<%= event_path(event) %>'" class="card text-white card-has-bg click-col" style="background-image:url('https://res.cloudinary.com/dvpavvw1u/image/upload/v1633026904/gabriel-benois-qnWPjzewewA-unsplash_1_ccwnb8-c_scale_h_900_w_600_kbdkhq.jpg');">
+      <img class="card-img d-none" src="https://res.cloudinary.com/dvpavvw1u/image/upload/v1633026904/gabriel-benois-qnWPjzewewA-unsplash_1_ccwnb8-c_scale_h_900_w_600_kbdkhq.jpg">
       <div class="card-img-overlay d-flex flex-column">
         <div class="card-body"> <small class="card-meta mb-2"><%= event.name %></small>
           <h4 class="card-title mt-0 "><%= link_to event.description, event_path(event), :class => "text-white" %></h4>
