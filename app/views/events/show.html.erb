@@ -15,9 +15,10 @@
     <% @guest_time_slots_array << slot.start_time.iso8601 %>
   <% end %>
 
-
+<% unless @host_time_slots.empty? %>
 <input id="begin-date" type="hidden" value="<%= @host_time_slots.first.start_time.iso8601 %>">
 <input id="end-date" type="hidden" value="<%= @host_time_slots.last.start_time.iso8601 %>">
+<% end %>
 <input id="received-time-slots" type="hidden" value="<%= @host_time_slots_array.to_s %>">
 <input id="guest-time-slots" type="hidden" value="<%= @guest_time_slots_array.to_s %>">
 <input id="is-host" type="hidden" value="<%= @host == current_user ? "yes" : "no" %>">
@@ -42,12 +43,12 @@
         <div class="card-body">
           <small class="card-meta"><%= @event.name %></small>
           <h4 class="card-title mt-2 "><a class="text-white" herf="#"><%= @event.description %></a></h4>
-          <small><i class="far fa-clock"></i> pending</small>
+          <small><i class="far fa-clock"></i><%= @event.status == true ? @event.start_time.strftime("  %b %e, %l:%M %p") : " pending" %>></small>
           <div class="dropdown-divider w-50 mb-2"></div>
-          <small>Attending:</small>
+          <small>Who's invited?</small>
           <div>
             <% @guests.each do |guest| %>
-              <small class="card-meta my-3"><%= guest.first_name + " " + guest.last_name %> 🙋‍♀️</small><br>
+              <small class="card-meta my-3"><%= guest.first_name + " " + guest.last_name %> 🙋</small><br>
             <% end %>
           </div>
         </div>
@@ -69,25 +70,33 @@
         </div>
       </div>
     </div>
+    <div>
+      <% if current_user != @host %>
+        <%= form_with url: "/time_slots", method: :post do |form| %>
+        <input name="time_slots[time_slot_array]" id="new-time-slot-array" type="hidden">
+        <input name="time_slots[event_id]" id="event_id" type="hidden" value="<%= Event.find(params[:id]).id %>">
+        <%= form.submit "Confirm", class: "btn-meeting mt-2 px-5" %>
+        <% end %>
+      <% elsif @event.status == false %>
 
-    <% if current_user != @host %>
-      <%= form_with url: "/time_slots", method: :post do |form| %>
-      <input name="time_slots[time_slot_array]" id="new-time-slot-array" type="hidden">
-      <input name="time_slots[event_id]" id="event_id" type="hidden" value="<%= Event.find(params[:id]).id %>">
-      <%= form.submit "Confirm" %>
+        <%= form_with model: @article, method: "patch" do |form| %>
+          <input id="final-time-slot-array" name="time_slots[time_slot_array]" type="hidden" value="">
+        <%= form.submit "Set in stone", class: "btn-meeting mt-2 px-5" %>
+          
+        <% end %>
+
       <% end %>
-    <% end %>
+    </div>
+
 
 
   </div>
 
     <% if current_user == @host %>
-
   <% end %>
   <div class="time-grid-show-wrapper">
     <div id="time-grid-show"></div>
   </div>
-
 
 
 

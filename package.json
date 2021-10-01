@@ -12,6 +12,7 @@
     "moment-locales-webpack-plugin": "^1.2.0",
     "moment-timezone": "^0.5.33",
     "moment-timezone-data-webpack-plugin": "^1.5.0",
+    "multiple-select-js": "^1.2.6",
     "popper.js": "^1.16.1",
     "select2": "^4.1.0-rc.0",
     "turbolinks": "^5.2.0"

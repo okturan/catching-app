@@ -128,7 +128,7 @@ const initTimeSlotDefiner = () => {
   // Set a range of 4 days
   function initialDatesSet() {
     date1 = moment().startOf("day");
-    date2 = moment(date1).add(4, "day");
+    date2 = moment(date1).add(2, "day");
     difference = date2.diff(date1, "days");
   }
 
