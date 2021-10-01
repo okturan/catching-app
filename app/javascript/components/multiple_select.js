@@ -1,9 +1,12 @@
 import MultipleSelect from 'multiple-select-js'
 
 const initMultipleSelect = () => {
-  new MultipleSelect('#user-list', {
-    placeholder: ''
-    })
+  let user = document.querySelector("#user-list")
+  if (user) {
+    new MultipleSelect('#user-list', {
+      placeholder: ''
+      })
+  }
 }
 
 export { initMultipleSelect }
