@@ -11,9 +11,9 @@ UserEvent.destroy_all
 Event.destroy_all
 User.destroy_all
 
-ege = User.create(email: "ege@ege.com", password: "123456")
-sedef = User.create(email: "sedef@sedef.com", password: "123456")
-okan = User.create(email: "okan@okan.com", password: "123456")
+ege = User.create(email: "ege@ege.com", password: "123456", first_name: "Ege", last_name: "Çakmak")
+sedef = User.create(email: "sedef@sedef.com", password: "123456", first_name: "Sedef", last_name: "Çakmak")
+okan = User.create(email: "okan@okan.com", password: "123456", first_name: "Okan", last_name: "Erturan")
 
 event1 = Event.create(name: 'meeting online', description: 'a merry gathering', user: okan)
 event2 = Event.create(name: 'meeting outside', description: 'a joyful evening', user: okan)

@@ -30,10 +30,13 @@ import "bootstrap";
 import { initDashboardTabs } from '../components/dashboard_tabs';
 import { initTimeSlotDefiner } from '../components/time_slot_definer';
 import { initTimeSlotShow } from '../components/time_slot_show';
+import { initMultipleSelect} from '../components/multiple_select';
+
 
 document.addEventListener('turbolinks:load', () => {
   // Call your functions here, e.g:
   initDashboardTabs();
   initTimeSlotDefiner();
   initTimeSlotShow();
+  initMultipleSelect();
 });

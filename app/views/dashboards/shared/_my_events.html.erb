@@ -8,12 +8,28 @@
 
 <div class="container-activities">
   <% @events.each do |event| %>
+  
     <div onclick="location.href='<%= event_path(event) %>'" class="card text-white card-has-bg click-col" style="background-image:url('https://res.cloudinary.com/dvpavvw1u/image/upload/v1633026904/gabriel-benois-qnWPjzewewA-unsplash_1_ccwnb8-c_scale_h_900_w_600_kbdkhq.jpg');">
       <img class="card-img d-none" src="https://res.cloudinary.com/dvpavvw1u/image/upload/v1633026904/gabriel-benois-qnWPjzewewA-unsplash_1_ccwnb8-c_scale_h_900_w_600_kbdkhq.jpg">
       <div class="card-img-overlay d-flex flex-column">
         <div class="card-body"> <small class="card-meta mb-2"><%= event.name %></small>
+          <% if event.status == true %>
+            <div class="event-finalized-emoji">
+              👍
+            </div>
+          <% end %>
+        
           <h4 class="card-title mt-0 "><%= link_to event.description, event_path(event), :class => "text-white" %></h4>
-          <small><i class="far fa-clock"></i> October 20, 2021</small>
+          <small><i class="far fa-clock"></i><%= event.status == true ? event.start_time.strftime("  %b %e, %l:%M %p") : " pending" %></small>
+          <div class="dropdown-divider w-50 mb-2"></div>
+          <div>
+          <% unless event.invited_users.empty? %>
+          <small>Who's invited?</small><br>
+            <% event.invited_users.each do |guest| %>
+              <small class="card-meta my-3"><%= guest.first_name + " " + guest.last_name %></small><br>
+            <% end %>
+          <% end %>
+          </div>
         </div>
         <div class="card-footer">
           <div class="media">

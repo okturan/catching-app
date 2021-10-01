@@ -44,7 +44,7 @@ const initTimeSlotShow = () => {
   function fillDays() {
     for (let c = 0; c <= difference; c++) {
       let cell = document.createElement("div");
-      cell.innerText = moment(date1).format("MMM Do ddd");
+      cell.innerText = moment(date1).format("MMM Do ddd zz");
       timeGrid.appendChild(cell).className = "grid-item header";
       cell.style.gridColumn = c + 1
       // Fill hour info for each day
@@ -152,6 +152,15 @@ const initTimeSlotShow = () => {
     document.querySelector("#new-time-slot-array").value = slots;
   }
 
+  function getActiveCellsFinalize() {
+    let slots = [];
+    let activeCells = timeGrid.querySelectorAll(".active");
+    activeCells.forEach((cell) => {
+      slots.push(cell.dataset.date);
+    });
+    document.querySelector("#final-time-slot-array").value = slots;
+  }
+
   function populateTimezones() {
     moment.tz.names().forEach((tzone) => {
       if (tzone == moment.tz.guess()) {
@@ -206,13 +215,16 @@ const initTimeSlotShow = () => {
     };
   }
 
-// <input id="guest-list" 
+// <input id="guest-list"
 
   if (document.querySelector("#is-host").value == "no") {
-  timeGrid.addEventListener("mousedown", highlightCell);
-  timeGrid.addEventListener("mousedown", toggleActive);
-  timeGrid.addEventListener("mouseup", resetListeners);
-  tzpicker.addEventListener("change", changeTimezone); 
+    timeGrid.addEventListener("mousedown", highlightCell);
+    timeGrid.addEventListener("mousedown", toggleActive);
+    timeGrid.addEventListener("mouseup", resetListeners);
+    tzpicker.addEventListener("change", changeTimezone);
+  } else {
+    timeGrid.addEventListener("mousedown", toggleActive);
+    timeGrid.addEventListener("mouseup", getActiveCellsFinalize);
   }
 
   disableCheckbox.addEventListener("change", hideDisabled);
