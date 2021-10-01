@@ -12,8 +12,7 @@ class EventsController < ApplicationController
       time_slot = TimeSlot.new(start_time: slot, user: current_user, event: @event)
       time_slot.save
     end
-    @user_list_array = user_info_params[:user_list_array]
-    @user_list = @user_list_array.split(',')
+    @user_list = event_params[:user_id][1..-1]
     @user_list.each do |user|
       invited_user = User.find(user)
       @event.invite(invited_user)
@@ -27,7 +26,6 @@ class EventsController < ApplicationController
     #   else
     #     @arr << "nay"
     #   end
-
     # end
 
     redirect_to dashboard_path
@@ -66,16 +64,16 @@ class EventsController < ApplicationController
   end
 
   private
-
+## ref "user_id"=>["", "1", "3"]},
   def event_params
-    params.require(:event).permit(:name, :description)
+    params.require(:event).permit(:name, :description, user_id: [])
   end
 
   def time_slot_array_params
     params.require(:time_slots).permit(:time_slot_array)
   end
 
-  def user_info_params
-    params.require(:user_list).permit(:user_list_array)
-  end
+  # def user_info_params
+  #   params.require(:user_list).permit(:user_list_array)
+  # end
 end

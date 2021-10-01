@@ -15,8 +15,6 @@
           
           <input name="user_list[user_list_array]" id="user-list-hidden" type="hidden">
 
-
-
         <div class="form-group">
           <label for="timezone-picker-new">I am in:&nbsp&nbsp</label>
           <select class="form-control" id="timezone-picker-new"></select>
@@ -43,13 +41,3 @@
   </div>
 </div>
 
-
-<script>
-
-  document.getElementById('user-list').onchange = function multipleFriends() {
-  var options = document.getElementById('user-list').selectedOptions;
-  var values = Array.from(options).map(({ value }) => value);
-  document.querySelector("#user-list-hidden").value = values.join()
-  }
-
-</script>
