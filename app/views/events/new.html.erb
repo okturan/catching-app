@@ -12,7 +12,6 @@
         <%# Using regular HTML forms to escape model validation %>
 
         <%= f.association:user, collection: @users, label_method: :first_name, input_html: { multiple: true }  %>
-          <label for="user-list">Invite friends</label>
           
           <input name="user_list[user_list_array]" id="user-list-hidden" type="hidden">
 
