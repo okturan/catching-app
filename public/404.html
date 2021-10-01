@@ -1,67 +1,145 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>The page you were looking for doesn't exist (404)</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
+
+  <div id="mainC">
+    <div class="message404">
+      <h1>404</h1>
+      <h3>The page you seek is not here!</h3>
+    </div>
+    <div class="footer404">
+      <a href="/" title="home"><i class="fas fa-users mr-1"></i>Take Me Home!</i></a>
+      <p class="legal">CATCHING.APP 2012</p>
+    </div>
+  </div>
+
   <style>
-  .rails-default-error-page {
-    background-color: #EFEFEF;
-    color: #2E2F30;
+body, html {
+  background: #000;
+  position: relative;
+  margin: 0;
+  width: 100%;
+  height: 100%;
+}
+#mainC {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  font-family: sans-serif;
+  max-width: 340px;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -o-user-select: none;
+  user-select: none;
+}
+  .message404 {
+    font-size: 16px;
     text-align: center;
-    font-family: arial, sans-serif;
-    margin: 0;
+  }
+  .message404 h1 {
+      margin: 0;
+      padding: 0;
+      font-size: 11em;
+      transform: skewY(-5deg);
+      transition: 0.4s ease-in-out all;
+  }
+      .message404 h1 :hover {
+        text-shadow: 20px 20px 0 fade(#afd33d, 10%);
+      }
+/*       @media (max-width: 300px) {
+        font-size: 50vw;
+      }
+    } */
+    .message404 h3 {
+      color: #afd33d;
+      font-size: 0.9em;
+      font-weight: lighter;
+      line-height: 1;
+/*       @media (max-width: 300px) {
+        font-size: 5vw;
+      } */
+    }
+
+  .footer404 {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    width: 100%;
   }
 
-  .rails-default-error-page div.dialog {
-    width: 95%;
-    max-width: 33em;
-    margin: 4em auto 0;
+  .footer404 a {
+      position: relative;
+      flex: 1;
+      color: rgba(255, 255, 255, 0.6);
+      text-decoration: none;
+      border-radius: 3px;
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      margin: 0 20px;
+      text-align: center;
+      padding: 10px 0;
+      overflow: hidden;
+      transition: all 0.2s ease-in-out;
+      z-index:3;
   }
+/*       @media (max-width: 300px) {
+        flex: 5 100%;
+        width: 100%;
+      } */
 
-  .rails-default-error-page div.dialog > div {
-    border: 1px solid #CCC;
-    border-right-color: #999;
-    border-left-color: #999;
-    border-bottom-color: #BBB;
-    border-top: #B00100 solid 4px;
-    border-top-left-radius: 9px;
-    border-top-right-radius: 9px;
-    background-color: white;
-    padding: 7px 12% 0;
-    box-shadow: 0 3px 8px rgba(50, 50, 50, 0.17);
-  }
+    .footer404 a:hover {
+        border: 1px solid rgba(255, 255, 255, 1);
+        color: #121212;
+        -webkit-transform: scale(1.3);
+        transform: scale(1.3);
+        background: rgb(185, 139, 255);
+        background: radial-gradient(
+            circle,
+            rgba(0, 235, 156, 1) 0%,
+            rgb(185, 139, 255) 100%
 
-  .rails-default-error-page h1 {
-    font-size: 100%;
-    color: #730E15;
-    line-height: 1.5em;
-  }
+/*         span {
+          width: 310px;
+          height: 310px;
+        } */
+      }
+     .footer404 span {
+        content:'';
+        position: absolute;
+        background: #afd33d;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        transition: all 0.5s ease;
+        z-index: -1;
+     }
+/*         @media (max-width: 300px) {
+          transition: all 0.2s ease-in;
+        } */
 
-  .rails-default-error-page div.dialog > p {
-    margin: 0 0 1em;
-    padding: 1em;
-    background-color: #F7F7F7;
-    border: 1px solid #CCC;
-    border-right-color: #999;
-    border-left-color: #999;
-    border-bottom-color: #999;
-    border-bottom-left-radius: 4px;
-    border-bottom-right-radius: 4px;
-    border-top-color: #DADADA;
-    color: #666;
-    box-shadow: 0 3px 8px rgba(50, 50, 50, 0.17);
-  }
+        a:active {
+          background: lighten(#afd33d, 10%);
+        }
+
+    .legal {
+      text-align: center;
+      flex: 3;
+      color: fade(#ccc, 50%);
+
+/*     @media (max-width: 300px) {
+      font-size: 4vw;
+      flex: 5 100%;
+      padding: 5px 10px;
+      }
+    }
+  } */
+}
   </style>
 </head>
 
-<body class="rails-default-error-page">
-  <!-- This file lives in public/404.html -->
-  <div class="dialog">
-    <div>
-      <h1>The page you were looking for doesn't exist.</h1>
-      <p>You may have mistyped the address or the page may have moved.</p>
-    </div>
-    <p>If you are the application owner check the logs for more information.</p>
-  </div>
-</body>
 </html>
