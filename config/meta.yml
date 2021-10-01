@@ -1,0 +1,5 @@
+meta_product_name: "Catching App"
+meta_title: "We have some catching app to do!"
+meta_description: "A free platform to set meetings with friends across different timezones"
+meta_image: "cover.jpg" # should exist in `app/assets/images/`
+twitter_account: "@lewagon"   # required for Twitter Cards
