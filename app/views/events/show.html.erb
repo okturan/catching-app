@@ -24,6 +24,9 @@
 <input id="is-host" type="hidden" value="<%= @host == current_user ? "yes" : "no" %>">
 <input id="guest-list" type="hidden" value="<%= @guests_array.to_s %>">
 
+<div class="banner-events mb-2" style="height: 285px; background-image:url(https://res.cloudinary.com/dvpavvw1u/image/upload/v1633029501/blob-scene-haikei_2_fkcf9o.png);">
+  <h1>WE HAVE SO MUCH CATCHING.APP TO DO!</h1>
+</div>
 
 <div class="event-show-grid">
   <div class="event-show-card">
@@ -58,11 +61,7 @@
             <div class="media-body">
               <small>an event by</small>
               <h5 class="my-1 text-white d-block">
-                <% if @host == current_user %>
-                  <%= "you, " + @host.first_name  %>
-                <% else %>
-                  <%= current_user.first_name %>
-                <% end %>
+                <%= @host.first_name %>
               </h5>
               <small><%= @host.email %></small>
             </div>

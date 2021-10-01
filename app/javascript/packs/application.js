@@ -38,5 +38,5 @@ document.addEventListener('turbolinks:load', () => {
   initDashboardTabs();
   initTimeSlotDefiner();
   initTimeSlotShow();
-  initMultipleSelect();
+  // initMultipleSelect();
 });

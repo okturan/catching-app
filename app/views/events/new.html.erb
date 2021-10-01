@@ -1,3 +1,6 @@
+<div class="banner-events mb-1" style="height: 285px; background-image:url(https://res.cloudinary.com/dvpavvw1u/image/upload/v1633029501/blob-scene-haikei_2_fkcf9o.png);">
+  <h1>WE HAVE SO MUCH CATCHING.APP TO DO!</h1>
+</div>
 
 <div class="event-new-grid">
 <div>
@@ -8,16 +11,12 @@
         <%= f.input :description, as: :text, placeholder: "Do whatever!" %>
         <%# Using regular HTML forms to escape model validation %>
 
-        <div class="form-group">
+        <%= f.association:user, collection: @users, label_method: :first_name, input_html: { multiple: true }  %>
           <label for="user-list">Invite friends</label>
-          <select id="user-list" multiple>
-            <% @users.each do |user| %>
-              <option value="<%= user.id %>"><%= user.email %></option>
-            <% end %>
-          </select>
+          
           <input name="user_list[user_list_array]" id="user-list-hidden" type="hidden">
 
-        </div>
+
 
         <div class="form-group">
           <label for="timezone-picker-new">I am in:&nbsp&nbsp</label>
@@ -40,7 +39,7 @@
     <% end %>
   </div>
 
-  <div class="time-grid-define-wrapper"  style="background-image:url(https://res.cloudinary.com/dvpavvw1u/image/upload/v1633009159/timeslots1_mf8mpx.png);">
+  <div class="time-grid-define-wrapper">
     <div id="time-grid-define"></div>
   </div>
 </div>
