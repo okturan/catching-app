@@ -1,6 +1,6 @@
 /* @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"); */
 
-$dashboardTabPrimaryColor: #5DB6F9;
+$dashboardTabPrimaryColor: #70bbf4;
 $dashboardTabSecondaryColor: #e6eef9;
 
 .tabs-container {
@@ -30,7 +30,7 @@ $dashboardTabSecondaryColor: #e6eef9;
 .tabs-container {
   .tabs {
     display: flex;
-    top: 263px;
+    top: 245px;
     position: absolute;
     background-color: #fff;
     box-shadow: 0 0 1px 0 rgba($dashboardTabPrimaryColor, 0.15), 0 6px 12px 0 rgba($dashboardTabPrimaryColor, 0.15);
