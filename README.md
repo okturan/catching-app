@@ -1,65 +1,47 @@
 # Catching App
 
-Catching App is a web application designed to facilitate event planning and scheduling among friends. Users can create events, invite friends, and define available time slots for meetings, making it easier to coordinate schedules.
+> **Status:** completed collaborative Rails bootcamp project from 2021. It is preserved as team and learning evidence; its historical dependency graph has known security advisories and must not be exposed or deployed without a dedicated modernization.
 
-## Features
+Catching App coordinates a meeting across friends: a host creates an event, invites users, proposes time slots, guests submit their availability, and the host finalizes the agreed window from an authenticated dashboard.
 
-- User authentication with Devise
-- Create and manage events
-- Invite friends to events
-- Define and visualize available time slots
-- Responsive design with Bootstrap
-- User-friendly interface
+## What it demonstrates
 
-## Technologies Used
+- Devise authentication and user profiles.
+- Host-owned events and many-to-many guest invitations.
+- Per-user availability through event-scoped time slots.
+- Host-only final scheduling and invitee-only availability submission.
+- PostgreSQL associations, server-rendered Rails views, and Bootstrap-era frontend assets.
+- Dashboard aggregation of hosted and invited events.
 
-- Ruby on Rails
-- PostgreSQL
-- ActionCable for real-time features
-- Bootstrap for styling
-- JavaScript and jQuery for interactivity
-- Moment.js for date and time manipulation
+## Ownership and collaboration
 
-## Setup Instructions
+This was a three-person Le Wagon project with [Sedef Çakmak](https://github.com/sedcakmak) and [Ege Çakmak](https://github.com/Egecak). GitHub attributes substantial implementation work to Okan, including 11 merged pull requests and 47 of the newest 100 commits at the 2026-07-18 audit. [Okan's merged pull-request history](https://github.com/okturan/catching-app/pulls?q=is%3Apr+is%3Amerged+author%3Aokturan) is the durable attribution source; the repository is not presented as solo work.
 
-To set up the application locally, follow these steps:
+## Historical local setup
 
-1. **Clone the repository:**
+The lockfile targets Ruby 2.7.3 and Rails 6.0.4 with PostgreSQL. This is a preserved historical toolchain, not a current support claim. If inspected, use an isolated local environment only and do not connect it to production credentials, real user data, or a public network.
 
 ```bash
-git clone https://github.com/yourusername/catching-app.git
+git clone https://github.com/okturan/catching-app.git
 cd catching-app
-```
-
-2. **Install dependencies:***
-
-Ensure you have Ruby and Rails installed. Then run:
-
-```bash
 bundle install
 yarn install
+bin/rails db:setup
+bin/rails server
 ```
 
-3. **Set up the database:**
+The seeded accounts and passwords are fictional local sample data, not production credentials.
 
-Create and migrate the database:
+## Security boundary
+
+The current source limits event viewing to hosts and invitees, final scheduling to the host, and availability submission to invited guests. Account and event deletion also clean dependent invitations and time slots. Run the dependency-free source contract without installing the legacy Rails stack:
 
 ```bash
-rails db:create
-rails db:migrate
+ruby script/verify_archive_contract.rb
 ```
 
-4. **Run the application:**
+This static contract does not make the historical dependencies safe. The repository should stay unpinned and undeployed until the owner chooses either GitHub archival or a supported Ruby/Rails modernization with real model, request, and system tests plus zero critical/high dependency alerts.
 
-Start the Rails server:
+## Origin
 
-```bash
-rails server
-```
-You can now access the application at http://localhost:3000.
-
-## Usage
-
-Sign up for a new account or log in with an existing account.
-Navigate to the dashboard to create new events or view your existing events.
-Invite friends to your events and define available time slots for meetings.
+Created during the [Le Wagon coding bootcamp](https://www.lewagon.com).
