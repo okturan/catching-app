@@ -13,29 +13,23 @@
     <%= image_tag "Sadelogo.png" %>
     <% end %>
 
-<%#   <form class="form-inline my-2 my-lg-0">
-    <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
-    <button class="btn btn-outline-primary my-2 my-sm-0" type="submit">Search</button>
-  </form> %>
-
-  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+  <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
   </button>
 
 
   <div class="collapse navbar-collapse" id="navbarSupportedContent">
-    <ul class="navbar-nav mr-auto">
+    <ul class="navbar-nav me-auto">
       <% if user_signed_in? %>
 
         <li class="nav-item active">
           <%= link_to "SEE MY EVENTS", dashboard_path, class: "nav-link", id: "event-link" %>
         </li>
         <li class="nav-item active">
-          <%= link_to "EDIT PROFILE", edit_user_registration_path, method: :get, class: "nav-link" %>
+          <%= link_to "EDIT PROFILE", edit_user_registration_path, class: "nav-link" %>
         </li>
         <li class="nav-item active">
-          <%= link_to "SIGN OUT", destroy_user_session_path, method: :delete, class: "nav-link" %>
-          <%#= link_to raw('<i class="fas fa-sign-out-alt mr-1"></i> Sign out'), destroy_user_session_path, method: :delete, class: "btn btn-primary mr-3" %>
+          <%= link_to "SIGN OUT", destroy_user_session_path, data: { turbo_method: :delete }, class: "nav-link" %>
         </li>
         <li class="nav-item active">
           <%= link_to 'PLAN YOUR MEETING NOW', new_event_path, class: "btn-event" %>
@@ -43,8 +37,7 @@
 
       <% else %>
         <li class="nav-item">
-       <%= link_to raw('<i class="fas fa-sign-in-alt mr-1"></i> Login'), new_user_session_path, class: "btn btn-outline-primary mr-3" %>
-       <%#= link_to "Login", new_user_session_path, class: "btn btn-outline-primary" %>
+       <%= link_to "Login", new_user_session_path, class: "btn btn-outline-primary me-3" %>
         </li>
         <li class="nav-item">
           <%= link_to "Sign up for free", new_user_registration_path, class: 'btn btn-md btn-primary' %>

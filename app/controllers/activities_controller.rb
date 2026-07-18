@@ -1,33 +1,43 @@
 class ActivitiesController < ApplicationController
+  before_action :set_accessible_event, only: %i[index show]
+  before_action :set_owned_event, only: %i[new create]
+  before_action :set_activity, only: :show
+
+  def index
+    @activities = @event.activities.order(created_at: :desc)
+  end
+
+  def show; end
+
   def new
-    @activity = Activity.new
+    @activity = @event.activities.build
   end
 
   def create
-    @activity = Activity.new(activity_params)
-    @activity.event = current_event
-    @activity.save
-    redirect_to dashboard_path
-  end
+    @activity = @event.activities.build(activity_params)
 
-  def edit
-  end
-
-  def show
-  end
-
-  def index
-    @activities = Activity.all
-  end
-
-  def destroy
-    @activity = Activity.find(params[:id])
-    @activity.destroy
+    if @activity.save
+      redirect_to event_activity_path(@event, @activity), notice: "Activity added."
+    else
+      render :new, status: :unprocessable_entity
+    end
   end
 
   private
 
+  def set_accessible_event
+    @event = Event.accessible_to(current_user).find(params[:event_id])
+  end
+
+  def set_owned_event
+    @event = current_user.events.find(params[:event_id])
+  end
+
+  def set_activity
+    @activity = @event.activities.find(params[:id])
+  end
+
   def activity_params
-    params.require(:activity).permit(:name, :activity_type, :start_time, :end_time)
+    params.require(:activity).permit(:name, :description, :duration)
   end
 end

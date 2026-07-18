@@ -1,0 +1,213 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scan_ruby:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Scan Rails code
+        run: bin/brakeman --quiet --no-pager --exit-on-warn --exit-on-error
+
+      - name: Audit Ruby dependencies
+        run: bin/bundler-audit check --update
+
+  scan_js:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Verify Node.js and npm versions
+        run: |
+          test "$(node --version)" = "v$(cat .node-version)"
+          expected_npm="$(node --print "require('./package.json').packageManager.split('@')[1]")"
+          test "$(npm --version)" = "$expected_npm"
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Audit JavaScript dependencies
+        run: npm audit --audit-level=high
+
+  lint:
+    runs-on: ubuntu-latest
+    env:
+      RUBOCOP_CACHE_ROOT: tmp/rubocop
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Lint Ruby
+        run: bin/rubocop --format github
+
+  test:
+    runs-on: ubuntu-latest
+    env:
+      APP_HOST: example.test
+      CI: true
+      DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/catching_app_test
+      RAILS_ENV: test
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: catching_app_test
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d catching_app_test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+          cache: npm
+
+      - name: Prepare application
+        run: bin/setup --skip-server
+
+      - name: Build assets
+        run: npm run check
+
+      - name: Verify eager loading
+        run: bin/rails zeitwerk:check
+
+      - name: Run Rails tests
+        run: bin/rails test
+
+      - name: Run system tests
+        run: bin/rails test:system
+
+      - name: Keep screenshots from failed system tests
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: system-test-screenshots
+          path: ${{ github.workspace }}/tmp/screenshots
+          if-no-files-found: ignore
+
+  container:
+    needs: [scan_ruby, scan_js, lint, test]
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: catching_app_production
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres -d catching_app_production"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Build production image
+        run: docker build --tag catching-app:ci .
+
+      - name: Smoke-test production image
+        run: |
+          test "$(docker image inspect catching-app:ci --format '{{.Config.User}}')" = "1000:1000"
+
+          docker run --detach --name catching-app-ci \
+            --add-host=host.docker.internal:host-gateway \
+            --publish 127.0.0.1:3080:80 \
+            --env APP_HOST=localhost \
+            --env DATABASE_URL=postgresql://postgres:postgres@host.docker.internal:5432/catching_app_production \
+            --env MAILER_FROM=no-reply@example.invalid \
+            --env SECRET_KEY_BASE=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef \
+            --env SMTP_ADDRESS=localhost \
+            catching-app:ci
+
+          for _ in {1..45}; do
+            if response="$(curl --fail --silent http://127.0.0.1:3080/up)"; then
+              test "$(docker exec catching-app-ci id -u)" = "1000"
+              grep --quiet "background-color: green" <<<"$response"
+
+              page="$(curl --fail --silent \
+                --header 'Host: localhost' \
+                --header 'X-Forwarded-Proto: https' \
+                http://127.0.0.1:3080/)"
+              grep --quiet "<title>We have some catching app to do!</title>" <<<"$page"
+
+              assets="$(
+                grep --only-matching --extended-regexp '/assets/application-[^"[:space:]]+\.(css|js)' <<<"$page" |
+                  sort --unique
+              )"
+              test "$(wc -l <<<"$assets" | tr -d ' ')" = "2"
+              while IFS= read -r asset; do
+                curl --fail --silent --output /dev/null \
+                  --header 'Host: localhost' \
+                  --header 'X-Forwarded-Proto: https' \
+                  "http://127.0.0.1:3080${asset}"
+              done <<<"$assets"
+
+              exit 0
+            fi
+
+            if [ "$(docker inspect catching-app-ci --format '{{.State.Running}}')" != "true" ]; then
+              docker logs catching-app-ci
+              exit 1
+            fi
+
+            sleep 1
+          done
+
+          docker logs catching-app-ci
+          exit 1
+
+      - name: Clean up production container
+        if: always()
+        run: docker rm --force catching-app-ci || true

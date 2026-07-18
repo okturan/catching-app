@@ -1,8 +1,9 @@
-<div class= 'form-container'>
-<%= simple_form_for(@activity) do |f| %>
-<%= f.input :name %>
-<%= f.input :description, as: :text %>
-<%= f.input :duration %>
-<%= f.submit "Submit", class: "btn btn-primary" %>
-<% end %>
+<div class="form-container">
+  <%= simple_form_for [@event, @activity] do |form| %>
+    <%= form.error_notification %>
+    <%= form.input :name %>
+    <%= form.input :description, as: :text %>
+    <%= form.input :duration %>
+    <%= form.submit "Submit", class: "btn btn-primary" %>
+  <% end %>
 </div>

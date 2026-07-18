@@ -1,28 +1,11 @@
-<%# Seperating host slots %>
-<% @host_time_slots_array = [] %>
-<% @guest_time_slots_array = [] %>
-<% @guests_array = [] %>
+<% host_time_slots = @host_time_slots.map { |slot| slot.start_time.iso8601 } %>
+<% guest_time_slots = @guest_time_slots.map { |slot| slot.start_time.iso8601 } %>
+<% consensus_time_slots = @event.mutually_available_start_times.map(&:iso8601) %>
 
-  <% @guests.each do |guest| %>
-    <% @guests_array << guest.email %>
-  <% end %>
-
-  <% @host_time_slots.each do |slot| %>
-    <% @host_time_slots_array << slot.start_time.iso8601 %>
-  <% end %>
-
-  <% @guest_time_slots.each do |slot| %>
-    <% @guest_time_slots_array << slot.start_time.iso8601 %>
-  <% end %>
-
-<% unless @host_time_slots.empty? %>
-<input id="begin-date" type="hidden" value="<%= @host_time_slots.first.start_time.iso8601 %>">
-<input id="end-date" type="hidden" value="<%= @host_time_slots.last.start_time.iso8601 %>">
-<% end %>
-<input id="received-time-slots" type="hidden" value="<%= @host_time_slots_array.to_s %>">
-<input id="guest-time-slots" type="hidden" value="<%= @guest_time_slots_array.to_s %>">
+<input id="received-time-slots" type="hidden" value="<%= host_time_slots.to_json %>">
+<input id="guest-time-slots" type="hidden" value="<%= guest_time_slots.to_json %>">
+<input id="consensus-time-slots" type="hidden" value="<%= consensus_time_slots.to_json %>">
 <input id="is-host" type="hidden" value="<%= @host == current_user ? "yes" : "no" %>">
-<input id="guest-list" type="hidden" value="<%= @guests_array.to_s %>">
 
 <div class="banner-events mb-2" style="height: 285px; background-image:url(https://res.cloudinary.com/dvpavvw1u/image/upload/v1633029501/blob-scene-haikei_2_fkcf9o.png);">
   <h1>WE HAVE SO MUCH CATCHING.APP TO DO!</h1>
@@ -31,72 +14,65 @@
 <div class="event-show-grid">
   <div class="event-show-card">
     <div class="event-show-card-top">
-      <div class="form-group rounded" id="event-show-select">
-        <label for="timezone-picker-show"></label>
-        <select class="form-control" id="timezone-picker-show"></select>
+      <div class="mb-3 rounded" id="event-show-select">
+        <label class="visually-hidden" for="timezone-picker-show">Display time zone</label>
+        <select class="form-select" id="timezone-picker-show"></select>
       </div>
       <label class="switch">
         <input type="checkbox" id="hide-disabled-cells">
         <span class="slider round"></span>
       </label>
     </div>
-    <div class="card text-white card-has-bg click-col" style="background-image:url('https://source.unsplash.com/600x900/?nature,forest');">
-      <img class="card-img d-none" src="https://source.unsplash.com/600x900/?nature,forest">
+    <div class="card text-white card-has-bg click-col" style="background-image:url('<%= asset_path("cover.jpg") %>');">
+      <%= image_tag "cover.jpg", class: "card-img d-none", alt: "" %>
       <div class="card-img-overlay d-flex flex-column">
         <div class="card-body">
           <small class="card-meta"><%= @event.name %></small>
-          <h4 class="card-title mt-2 "><a class="text-white" herf="#"><%= @event.description %></a></h4>
-          <small><i class="far fa-clock"></i><%= @event.status == true ? @event.start_time.strftime("  %b %e, %l:%M %p") : " pending" %>></small>
+          <h4 class="card-title mt-2 text-white"><%= @event.description %></h4>
+          <small><span aria-hidden="true">🕒</span><%= @event.status? ? @event.start_time.strftime("  %b %e, %l:%M %p") : " pending" %></small>
           <div class="dropdown-divider w-50 mb-2"></div>
           <small>Who's invited?</small>
           <div>
             <% @guests.each do |guest| %>
-              <small class="card-meta my-3"><%= guest.first_name + " " + guest.last_name %> 🙋</small><br>
+              <small class="card-meta my-3"><%= guest.full_name %> 🙋</small><br>
             <% end %>
           </div>
         </div>
         <div class="card-footer">
-          <div class="media">
-            <img class="mr-3 rounded-circle" src="https://cdn0.iconfinder.com/data/icons/user-pictures/100/male-512.png" alt="Generic placeholder image" style="max-width:50px">
-            <div class="media-body">
+          <div class="d-flex align-items-center">
+            <%= image_tag "Useravatar.png", class: "me-3 rounded-circle", alt: "", style: "max-width:50px" %>
+            <div class="flex-grow-1">
               <small>an event by</small>
               <h5 class="my-1 text-white d-block">
-                <%= @host.first_name %>
+                <%= @host.full_name %>
               </h5>
-              <small><%= @host.email %></small>
             </div>
           </div>
         </div>
       </div>
     </div>
     <div>
-      <% if current_user != @host %>
-        <%= form_with url: "/time_slots", method: :post do |form| %>
-        <input name="time_slots[time_slot_array]" id="new-time-slot-array" type="hidden">
-        <input name="time_slots[event_id]" id="event_id" type="hidden" value="<%= Event.find(params[:id]).id %>">
-        <%= form.submit "Confirm", class: "btn-meeting mt-2 px-5" %>
+      <% if current_user != @host && !@event.status? %>
+        <%= form_with url: event_time_slots_path(@event), method: :post do |form| %>
+          <input name="time_slots[time_slot_array]" id="new-time-slot-array" type="hidden">
+          <%= form.submit "Confirm", class: "btn-meeting mt-2 px-5" %>
         <% end %>
-      <% elsif @event.status == false %>
-
-        <%= form_with model: @article, method: "patch" do |form| %>
+      <% elsif !@event.status? %>
+        <%= form_with model: @event, method: :patch do |form| %>
           <input id="final-time-slot-array" name="time_slots[time_slot_array]" type="hidden" value="">
-        <%= form.submit "Set in stone", class: "btn-meeting mt-2 px-5" %>
-          
+          <%= form.submit "Set in stone", class: "btn-meeting mt-2 px-5" %>
         <% end %>
 
       <% end %>
     </div>
-
-
-
+    <div class="mt-3 d-flex gap-2">
+      <%= link_to "View activities", event_activities_path(@event), class: "btn btn-outline-primary" %>
+      <% if current_user == @host %>
+        <%= link_to "Add an activity", new_event_activity_path(@event), class: "btn btn-primary" %>
+      <% end %>
+    </div>
   </div>
-
-    <% if current_user == @host %>
-  <% end %>
   <div class="time-grid-show-wrapper">
     <div id="time-grid-show"></div>
   </div>
-
-
-
 </div>

@@ -1,0 +1,29 @@
+planning_owner_consensus:
+  user: owner
+  event: planning
+  start_time: 2030-01-15 10:00:00 UTC
+
+planning_invitee_consensus:
+  user: invitee
+  event: planning
+  start_time: 2030-01-15 10:00:00 UTC
+
+planning_owner_only:
+  user: owner
+  event: planning
+  start_time: 2030-01-15 11:00:00 UTC
+
+planning_invitee_only:
+  user: invitee
+  event: planning
+  start_time: 2030-01-15 12:00:00 UTC
+
+finalized_owner:
+  user: owner
+  event: finalized
+  start_time: 2030-01-15 10:00:00 UTC
+
+finalized_invitee:
+  user: invitee
+  event: finalized
+  start_time: 2030-01-15 10:00:00 UTC

@@ -1,0 +1,23 @@
+owner:
+  email: owner@example.com
+  encrypted_password: <%= Devise::Encryptor.digest(User, "correct horse battery staple") %>
+  first_name: Olivia
+  last_name: Owner
+
+invitee:
+  email: invitee@example.com
+  encrypted_password: <%= Devise::Encryptor.digest(User, "correct horse battery staple") %>
+  first_name: Ian
+  last_name: Invitee
+
+outsider:
+  email: outsider@example.com
+  encrypted_password: <%= Devise::Encryptor.digest(User, "correct horse battery staple") %>
+  first_name: Oscar
+  last_name: Outsider
+
+other_owner:
+  email: other-owner@example.com
+  encrypted_password: <%= Devise::Encryptor.digest(User, "correct horse battery staple") %>
+  first_name: Uma
+  last_name: Organizer

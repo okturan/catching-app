@@ -1,237 +1,191 @@
-import moment from "moment-timezone";
+import { DateTime } from "luxon";
+
+import {
+  browserTimeZone,
+  parseSerializedDateTimes,
+  populateTimeZoneSelect,
+  slotISO,
+} from "./time_zones";
+import {
+  localDayColumns,
+  localHourLabels,
+  timeGridDimensions,
+} from "../lib/time_grid";
 
 const initTimeSlotShow = () => {
-  if (!document.querySelector("#time-grid-show")) {
-    return;
-  }
+  const timeGrid = document.querySelector("#time-grid-show");
+  if (!timeGrid) return;
 
   const receivedTimeSlots = document.querySelector("#received-time-slots");
   const guestTimeSlots = document.querySelector("#guest-time-slots");
-  const timeGrid = document.querySelector("#time-grid-show");
-  const tzpicker = document.querySelector("#timezone-picker-show");
+  const consensusTimeSlots = document.querySelector("#consensus-time-slots");
+  const timeZonePicker = document.querySelector("#timezone-picker-show");
   const disableCheckbox = document.querySelector("#hide-disabled-cells");
+  const isHost = document.querySelector("#is-host").value === "yes";
 
-  let receivedSlotsArray;
-  let guestSlotsArray;
-  let receivedDate1;
-  let receivedDate2;
-  let date1;
-  let date2;
-  let difference;
+  let selectedTimeZone = browserTimeZone;
 
-  function drawTimeGrid() {
-    timeGrid.innerHTML = "";
-    receivedSlotsArray = isoToMoment();
-    initialDatesGetSet();
-    fillDays();
-    makeRows(25, difference + 1);
-    updateCells();
-    if (guestTimeSlots.value != "[]" ) {
-      guestSlotsArray = isoToMomentGuest();
-      updateGuestCells();
-    }
-    disableCheckbox.checked = false
-  }
-
-  function initialDatesGetSet() {
-    receivedDate1 = moment.min(receivedSlotsArray);
-    date1 = moment(receivedDate1).startOf("day");
-    receivedDate2 = moment.max(receivedSlotsArray);
-    date2 = moment(receivedDate2).startOf("day");
-    difference = date2.diff(date1, "days");
-  }
-  
-  function fillDays() {
-    for (let c = 0; c <= difference; c++) {
-      let cell = document.createElement("div");
-      cell.innerText = moment(date1).format("MMM Do ddd zz");
-      timeGrid.appendChild(cell).className = "grid-item header";
-      cell.style.gridColumn = c + 1
-      // Fill hour info for each day
-      fillHours(date1, c);
-      // Advance onto next day
-      date1 = date1.add(1, "day");
-    }
-  }
-  
-  function fillHours(date, c) {
-    for (let i = 0; i < 24; i++) {
-      // Create grid cells
-      let cell = document.createElement("div");
-      cell.innerText = date.format("HH:mm");
-      cell.style.gridColumn = c + 1
-      timeGrid.appendChild(cell);
-      cell.className = "grid-item hour";
-      cell.dataset.date = date.toISOString();
-      // Increment hour
-      date = moment(date).add(1, "hour");
-    }
-  }
-
-  function updateGuestCells() {
-    guestSlotsArray.forEach((receivedSlot) => {
-      let receivedSlotISO = receivedSlot.toISOString();
-      let query = `[data-date="` + receivedSlotISO + `"]`;
-      let targetCell = timeGrid.querySelector(query);
-
-      if (targetCell != null) {
-        targetCell.insertAdjacentHTML("afterbegin", '🙋');
-      }
-    });
-  }
-  
-  function updateCells() {
-    receivedSlotsArray.forEach((receivedSlot) => {
-      let receivedSlotISO = receivedSlot.toISOString();
-      let query = `[data-date="` + receivedSlotISO + `"]`;
-      let targetCell = timeGrid.querySelector(query);
-
-      if (targetCell != null) {
-        targetCell.classList.toggle("received");
-      }
-    });
-
-    let inactiveCells = timeGrid.querySelectorAll(":not(.received).hour");
-    inactiveCells.forEach((inactiveCell) => {
-      inactiveCell.classList.toggle("inactive");
-    });
-  }
-
-  // Make cells listen for mouseover
-  function highlightCell(event) {
-    let receivedCells = document.querySelectorAll(".received");
-    let allCells = document.querySelectorAll(":not(.inactive).hour");
-
-    if (event.target.classList.contains("active")) {
-      receivedCells.forEach((element) => {
-        element.addEventListener("mouseover", removeSlots);
-      });
-    } else {
-      allCells.forEach((element) => {
-        element.addEventListener("mouseover", addSlots);
-      });
-    }
-  }
-
-  // Actual highlighting and removing
-  function addSlots(event) {
-    if (!event.target.classList.value.includes("active")) {
-      event.target.classList.toggle("active");
-    }
-  }
-
-  function removeSlots(event) {
-    if (event.target.classList.contains("active")) {
-      event.target.classList.toggle("active");
-    }
-  }
-
-  function toggleActive(event) {
-    if (!event.target.classList.contains("inactive")) {
-      event.target.classList.toggle("active");
-    }
-  }
-
-  // Stop cells listening for mouseover
-  function resetListeners() {
-    let hourInputs = document.querySelectorAll(".hour");
-    hourInputs.forEach((element) => {
-      element.removeEventListener("mouseover", toggleActive);
-      element.removeEventListener("mouseover", addSlots);
-      element.removeEventListener("mouseover", removeSlots);
-    });
-    getActiveCells();
-  }
-
-  function getActiveCells() {
-    let slots = [];
-    let activeCells = timeGrid.querySelectorAll(".active");
-    activeCells.forEach((cell) => {
-      slots.push(cell.dataset.date);
-    });
-    document.querySelector("#new-time-slot-array").value = slots;
-  }
-
-  function getActiveCellsFinalize() {
-    let slots = [];
-    let activeCells = timeGrid.querySelectorAll(".active");
-    activeCells.forEach((cell) => {
-      slots.push(cell.dataset.date);
-    });
-    document.querySelector("#final-time-slot-array").value = slots;
-  }
-
-  function populateTimezones() {
-    moment.tz.names().forEach((tzone) => {
-      if (tzone == moment.tz.guess()) {
-        tzpicker.innerHTML += `<option value="${tzone}" selected>${tzone}</option>`;
-      } else {
-        tzpicker.innerHTML += `<option value="${tzone}">${tzone}</option>`;
-      }
-    });
-  }
-
-  function changeTimezone() {
-    moment.tz.setDefault(tzpicker.value);
-    drawTimeGrid();
-  }
-
-  function isoToMoment() {
-    const iso_regex =
-      /[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)*/g;
-    let array = receivedTimeSlots.value.match(iso_regex);
-    return array.map((slot) => moment(slot));
-  }
-
-  function isoToMomentGuest() {
-    const iso_regex =
-      /[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]+)?([zZ]|([\+-])([01]\d|2[0-3]):?([0-5]\d)?)*/g;
-    let array = guestTimeSlots.value.match(iso_regex);
-    return array.map((slot) => moment(slot));
-  }
-
-  function getLang() {
-    navigator.language ||
-      navigator.browserLanguage ||
-      (navigator.languages || ["en"])[0];
-  }
-
-  function makeRows(rows, cols) {
+  const makeRows = (rows, columns) => {
     timeGrid.style.setProperty("--grid-rows", rows);
-    timeGrid.style.setProperty("--grid-cols", cols);
-  }
+    timeGrid.style.setProperty("--grid-cols", columns);
+  };
 
-  function hideDisabled(event) {
-    let inactiveCells = document.querySelectorAll(":not(.received).hour");
+  const fillHours = (column, columnIndex) => {
+    const labels = localHourLabels(column.hours);
 
-    if (event.target.checked == false) {
-      inactiveCells.forEach((inactiveCell) => {
-      inactiveCell.classList.toggle("disabled");
-      });
-    } else if (event.target.checked == true) {
-      inactiveCells.forEach((inactiveCell) => {
-      inactiveCell.classList.toggle("disabled");
-      })
-    };
-  }
+    column.hours.forEach((hour, hourIndex) => {
+      const cell = document.createElement("div");
+      cell.textContent = labels[hourIndex];
+      cell.style.gridColumn = columnIndex + 1;
+      cell.style.gridRow = hourIndex + 2;
+      cell.className = "grid-item hour";
+      cell.dataset.date = slotISO(hour);
+      timeGrid.appendChild(cell);
+    });
+  };
 
-// <input id="guest-list"
+  const fillDays = (columns) => {
+    columns.forEach((column, columnIndex) => {
+      const header = document.createElement("div");
+      header.textContent = column.day.toFormat("MMM d ccc ZZZZ");
+      header.style.gridColumn = columnIndex + 1;
+      header.className = "grid-item header";
+      timeGrid.appendChild(header);
+      fillHours(column, columnIndex);
+    });
+  };
 
-  if (document.querySelector("#is-host").value == "no") {
+  const cellsByTime = () =>
+    new Map(
+      [...timeGrid.querySelectorAll(".hour")].map((cell) => [
+        cell.dataset.date,
+        cell,
+      ]),
+    );
+
+  const markReceivedCells = (slots) => {
+    const cells = cellsByTime();
+    slots.forEach((slot) => cells.get(slotISO(slot))?.classList.add("received"));
+
+    timeGrid.querySelectorAll(".hour:not(.received)").forEach((cell) => {
+      cell.classList.add("inactive");
+    });
+  };
+
+  const markGuestCells = (slots) => {
+    const cells = cellsByTime();
+    slots.forEach((slot) => {
+      cells.get(slotISO(slot))?.insertAdjacentText("afterbegin", "🙋");
+    });
+  };
+
+  const clearStoredSelections = () => {
+    ["#new-time-slot-array", "#final-time-slot-array"].forEach((selector) => {
+      const input = document.querySelector(selector);
+      if (input) input.value = "";
+    });
+  };
+
+  const drawTimeGrid = () => {
+    timeGrid.replaceChildren();
+    clearStoredSelections();
+    disableCheckbox.checked = false;
+
+    const hostSlots = parseSerializedDateTimes(receivedTimeSlots.value);
+    if (hostSlots.length === 0) return;
+
+    const firstDay = DateTime.min(...hostSlots)
+      .setZone(selectedTimeZone)
+      .startOf("day");
+    const lastDay = DateTime.max(...hostSlots)
+      .setZone(selectedTimeZone)
+      .startOf("day");
+    const columns = localDayColumns(firstDay, lastDay);
+    const dimensions = timeGridDimensions(columns);
+
+    fillDays(columns);
+    makeRows(dimensions.rows, dimensions.columns);
+    const selectableSlots = isHost
+      ? parseSerializedDateTimes(consensusTimeSlots.value)
+      : hostSlots;
+    markReceivedCells(selectableSlots);
+    markGuestCells(parseSerializedDateTimes(guestTimeSlots.value));
+  };
+
+  const addSlots = (event) => {
+    if (event.target.matches(".hour:not(.inactive)")) {
+      event.target.classList.add("active");
+    }
+  };
+
+  const removeSlots = (event) => {
+    if (event.target.matches(".hour:not(.inactive)")) {
+      event.target.classList.remove("active");
+    }
+  };
+
+  const highlightCell = (event) => {
+    if (!event.target.matches(".hour:not(.inactive)")) return;
+
+    const handler = event.target.classList.contains("active")
+      ? removeSlots
+      : addSlots;
+
+    timeGrid.querySelectorAll(".hour:not(.inactive)").forEach((cell) => {
+      cell.addEventListener("mouseover", handler);
+    });
+  };
+
+  const toggleActive = (event) => {
+    if (event.target.matches(".hour:not(.inactive)")) {
+      event.target.classList.toggle("active");
+    }
+  };
+
+  const activeSlots = () =>
+    [...timeGrid.querySelectorAll(".hour.active")].map(
+      (cell) => cell.dataset.date,
+    );
+
+  const storeGuestSlots = () => {
+    const input = document.querySelector("#new-time-slot-array");
+    if (input) input.value = activeSlots().join(",");
+  };
+
+  const storeFinalSlots = () => {
+    const input = document.querySelector("#final-time-slot-array");
+    if (input) input.value = activeSlots().join(",");
+  };
+
+  const resetListeners = () => {
+    timeGrid.querySelectorAll(".hour").forEach((cell) => {
+      cell.removeEventListener("mouseover", addSlots);
+      cell.removeEventListener("mouseover", removeSlots);
+    });
+    storeGuestSlots();
+  };
+
+  if (isHost) {
+    timeGrid.addEventListener("mousedown", toggleActive);
+    timeGrid.addEventListener("mouseup", storeFinalSlots);
+  } else {
     timeGrid.addEventListener("mousedown", highlightCell);
     timeGrid.addEventListener("mousedown", toggleActive);
     timeGrid.addEventListener("mouseup", resetListeners);
-    tzpicker.addEventListener("change", changeTimezone);
-  } else {
-    timeGrid.addEventListener("mousedown", toggleActive);
-    timeGrid.addEventListener("mouseup", getActiveCellsFinalize);
   }
 
-  disableCheckbox.addEventListener("change", hideDisabled);
+  disableCheckbox.addEventListener("change", (event) => {
+    timeGrid.querySelectorAll(".hour.inactive").forEach((cell) => {
+      cell.classList.toggle("disabled", event.target.checked);
+    });
+  });
 
+  timeZonePicker.addEventListener("change", () => {
+    selectedTimeZone = timeZonePicker.value;
+    drawTimeGrid();
+  });
 
-  populateTimezones();
-  moment.tz.setDefault(tzpicker.value);
+  selectedTimeZone = populateTimeZoneSelect(timeZonePicker);
   drawTimeGrid();
 };
 

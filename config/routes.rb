@@ -1,12 +1,17 @@
 Rails.application.routes.draw do
-  devise_for :users
-  root to: 'pages#home'
-  resources :activities, only: [ :index, :show, :new, :create ] do
-    resources :events, only: [ :new, :create, :show]
-  end
-  # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html
+  devise_for :users, controllers: {
+    sessions: "users/sessions",
+    registrations: "users/registrations",
+    passwords: "users/passwords"
+  }
 
-  resources :events, only: [ :index, :show, :new, :create, :update ]
-  resources :time_slots, only: [ :new, :create ]
+  get "up" => "rails/health#show", as: :rails_health_check
+
+  root "pages#home"
   resource :dashboard, only: :show
+
+  resources :events, only: %i[show new create update] do
+    resources :activities, only: %i[index show new create]
+    resources :time_slots, only: :create
+  end
 end

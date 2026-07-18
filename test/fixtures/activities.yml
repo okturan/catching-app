@@ -1,0 +1,5 @@
+planning_activity:
+  event: planning
+  name: Board games
+  description: Play a cooperative game
+  duration: 90

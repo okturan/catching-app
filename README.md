@@ -1,47 +1,96 @@
 # Catching App
 
-> **Status:** completed collaborative Rails bootcamp project from 2021. It is preserved as team and learning evidence; its historical dependency graph has known security advisories and must not be exposed or deployed without a dedicated modernization.
-
-Catching App coordinates a meeting across friends: a host creates an event, invites users, proposes time slots, guests submit their availability, and the host finalizes the agreed window from an authenticated dashboard.
-
-## What it demonstrates
-
-- Devise authentication and user profiles.
-- Host-owned events and many-to-many guest invitations.
-- Per-user availability through event-scoped time slots.
-- Host-only final scheduling and invitee-only availability submission.
-- PostgreSQL associations, server-rendered Rails views, and Bootstrap-era frontend assets.
-- Dashboard aggregation of hosted and invited events.
+Catching App helps a group find a mutually available time for an event. An organizer offers time slots, invites other users, and finalizes a continuous window after every participant has submitted availability.
 
 ## Ownership and collaboration
 
-This was a three-person Le Wagon project with [Sedef Çakmak](https://github.com/sedcakmak) and [Ege Çakmak](https://github.com/Egecak). GitHub attributes substantial implementation work to Okan, including 11 merged pull requests and 47 of the newest 100 commits at the 2026-07-18 audit. [Okan's merged pull-request history](https://github.com/okturan/catching-app/pulls?q=is%3Apr+is%3Amerged+author%3Aokturan) is the durable attribution source; the repository is not presented as solo work.
+The original 2021 application was a three-person Le Wagon project built with [Sedef Çakmak](https://github.com/sedcakmak) and [Ege Çakmak](https://github.com/Egecak). GitHub attributes substantial implementation work to Okan, including 11 merged pull requests and 47 of the newest 100 commits at the 2026-07-18 audit. [Okan's merged pull-request history](https://github.com/okturan/catching-app/pulls?q=is%3Apr+is%3Amerged+author%3Aokturan) is the durable attribution source; the project is not presented as solo work, and no project-wide license is asserted without all three authors' agreement.
 
-## Historical local setup
+## Historical UI
 
-The lockfile targets Ruby 2.7.3 and Rails 6.0.4 with PostgreSQL. This is a preserved historical toolchain, not a current support claim. If inspected, use an isolated local environment only and do not connect it to production credentials, real user data, or a public network.
+These original team screenshots preserve the 2021 product flow while the implementation is modernized.
+
+| Landing page | Event scheduling |
+|---|---|
+| ![Catching App landing page](docs/screenshots/legacy/Homepage.png) | ![Catching App scheduling flow](docs/screenshots/legacy/Carousel2.png) |
+
+The complete historical set is in [`docs/screenshots/legacy`](docs/screenshots/legacy).
+
+## Stack
+
+- Ruby 4.0.5 and Rails 8.1.3
+- PostgreSQL 18
+- Node.js 24.18.0 LTS and npm 11.16.0
+- Propshaft, esbuild, Dart Sass, Turbo, Bootstrap 5, and Luxon
+- Devise authentication
+- Minitest, RuboCop Rails Omakase, Brakeman, and bundler-audit
+
+Runtime versions are pinned in `.ruby-version`, `.node-version`, `Gemfile.lock`, and `package-lock.json`.
+
+## Local setup
+
+Install the pinned Ruby and Node.js versions, PostgreSQL, and Chrome or Chromium for system tests. Then run:
 
 ```bash
-git clone https://github.com/okturan/catching-app.git
-cd catching-app
-bundle install
-yarn install
-bin/rails db:setup
-bin/rails server
+cp .env.example .env
+bin/setup --skip-server
+bin/dev
 ```
 
-The seeded accounts and passwords are fictional local sample data, not production credentials.
+The app is available at <http://localhost:3000>. On a newly created development database, setup loads three demo users. Their shared password defaults to `development-password` and can be changed with `SEED_PASSWORD` before running setup.
 
-## Security boundary
-
-The current source limits event viewing to hosts and invitees, final scheduling to the host, and availability submission to invited guests. Account and event deletion also clean dependent invitations and time slots. Run the dependency-free source contract without installing the legacy Rails stack:
+To rebuild the database and development seed data:
 
 ```bash
-ruby script/verify_archive_contract.rb
+bin/setup --reset --skip-server
 ```
 
-This static contract does not make the historical dependencies safe. The repository should stay unpinned and undeployed until the owner chooses either GitHub archival or a supported Ruby/Rails modernization with real model, request, and system tests plus zero critical/high dependency alerts.
+## Verification
 
-## Origin
+Run the complete local gate:
 
-Created during the [Le Wagon coding bootcamp](https://www.lewagon.com).
+```bash
+bin/ci
+```
+
+The gate installs deterministic dependencies, lints Ruby, audits Ruby and JavaScript dependencies, runs Brakeman, checks eager loading, builds assets, and runs the Rails test suite. Individual commands are also available:
+
+```bash
+bin/rails test
+bin/rails test:system
+bin/rails zeitwerk:check
+bin/rubocop
+bin/brakeman --quiet --no-pager --exit-on-warn --exit-on-error
+bin/bundler-audit check --update
+npm run check
+npm audit --audit-level=high
+```
+
+GitHub Actions runs the same categories of checks with PostgreSQL 18 and also builds the production image. Dependabot tracks Bundler, npm, and Actions updates.
+
+## Production container
+
+Build the non-root production image:
+
+```bash
+docker build -t catching-app .
+```
+
+The runtime expects these environment variables:
+
+- `APP_HOST`: public hostname, without a scheme
+- `DATABASE_URL`: PostgreSQL connection URL
+- `SECRET_KEY_BASE` or `RAILS_MASTER_KEY`: Rails signing secret
+- `MAILER_FROM`: sender address
+- `SMTP_ADDRESS`: SMTP server address
+- `SMTP_PORT`, `SMTP_USERNAME`, and `SMTP_PASSWORD`: optional SMTP connection settings
+
+The container prepares the database before starting, listens through Thruster on port 80, and exposes `GET /up` as its health endpoint. It assumes TLS is terminated by the reverse proxy and forces HTTPS for application traffic.
+
+## Security model
+
+Event access is limited to the organizer and invited users. Only invitees can submit availability, only against organizer-offered slots, and only the organizer can finalize a continuous slot range shared by every participant. Scheduling writes are transactional, database constraints back the key uniqueness and range invariants, authentication endpoints are rate limited, and production enables TLS, origin checking, CSP, filtered sensitive parameters, and host authorization.
+
+Signed-in users can discover other members by display name so they can invite them to an event. Email addresses and other account details are not exposed in the member directory.
+
+See the official [Ruby releases](https://www.ruby-lang.org/en/downloads/releases/) and [Rails maintenance policy](https://guides.rubyonrails.org/maintenance_policy.html) for the support status behind the pinned baseline.
