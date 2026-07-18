@@ -2,6 +2,20 @@
 
 Catching App helps a group find a mutually available time for an event. An organizer offers time slots, invites other users, and finalizes a continuous window after every participant has submitted availability.
 
+## Ownership and collaboration
+
+The original 2021 application was a three-person Le Wagon project built with [Sedef Çakmak](https://github.com/sedcakmak) and [Ege Çakmak](https://github.com/Egecak). GitHub attributes substantial implementation work to Okan, including 11 merged pull requests and 47 of the newest 100 commits at the 2026-07-18 audit. [Okan's merged pull-request history](https://github.com/okturan/catching-app/pulls?q=is%3Apr+is%3Amerged+author%3Aokturan) is the durable attribution source; the project is not presented as solo work, and no project-wide license is asserted without all three authors' agreement.
+
+## Historical UI
+
+These original team screenshots preserve the 2021 product flow while the implementation is modernized.
+
+| Landing page | Event scheduling |
+|---|---|
+| ![Catching App landing page](docs/screenshots/legacy/Homepage.png) | ![Catching App scheduling flow](docs/screenshots/legacy/Carousel2.png) |
+
+The complete historical set is in [`docs/screenshots/legacy`](docs/screenshots/legacy).
+
 ## Stack
 
 - Ruby 4.0.5 and Rails 8.1.3
