@@ -1,24 +1,29 @@
 {
-  "name": "catching_app",
+  "name": "catching-app",
+  "version": "1.0.0",
   "private": true,
-  "dependencies": {
-    "@rails/actioncable": "^6.0.0",
-    "@rails/activestorage": "^6.0.0",
-    "@rails/ujs": "^6.0.0",
-    "@rails/webpacker": "4.3.0",
-    "bootstrap": "4.6",
-    "jquery": "^3.6.0",
-    "moment": "^2.29.1",
-    "moment-locales-webpack-plugin": "^1.2.0",
-    "moment-timezone": "^0.5.33",
-    "moment-timezone-data-webpack-plugin": "^1.5.0",
-    "multiple-select-js": "^1.2.6",
-    "popper.js": "^1.16.1",
-    "select2": "^4.1.0-rc.0",
-    "turbolinks": "^5.2.0"
+  "type": "module",
+  "packageManager": "npm@11.16.0",
+  "engines": {
+    "node": "24.18.0"
   },
-  "version": "0.1.0",
+  "scripts": {
+    "test": "node --test test/javascript/time_grid.test.js",
+    "build": "esbuild app/javascript/application.js --bundle --minify --format=esm --outdir=app/assets/builds --public-path=/assets",
+    "build:css": "sass app/assets/stylesheets/application.scss:app/assets/builds/application.css --no-source-map --load-path=node_modules --quiet-deps --silence-deprecation=import",
+    "check": "npm test && npm run build && npm run build:css"
+  },
+  "dependencies": {
+    "@hotwired/turbo-rails": "^8.0.23",
+    "bootstrap": "^5.3.8",
+    "luxon": "^3.7.2"
+  },
   "devDependencies": {
-    "webpack-dev-server": "^4.2.1"
+    "esbuild": "^0.28.1",
+    "sass": "^1.89.0"
+  },
+  "allowScripts": {
+    "@parcel/watcher@2.5.6": true,
+    "esbuild@0.28.1": true
   }
 }

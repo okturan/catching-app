@@ -1,0 +1,7 @@
+<div class="container py-5">
+  <p class="text-uppercase text-muted"><%= @event.name %></p>
+  <h1><%= @activity.name %></h1>
+  <p><%= @activity.description %></p>
+  <p><strong>Duration:</strong> <%= pluralize(@activity.duration, "minute") %></p>
+  <%= link_to "All activities", event_activities_path(@event), class: "btn btn-outline-primary" %>
+</div>

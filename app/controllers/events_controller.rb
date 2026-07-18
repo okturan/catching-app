@@ -1,79 +1,69 @@
 class EventsController < ApplicationController
-  def create
-    # Create new event with only event_params
-    @event = Event.new(event_params)
-    @event.user = current_user
-    @event.save
-
-    # Create timeslots with time_slot_array_params and with the event created above
-    @time_slot_array = time_slot_array_params[:time_slot_array]
-    @time_slots = @time_slot_array.split(',')
-    @time_slots.each do |slot|
-      time_slot = TimeSlot.new(start_time: slot, user: current_user, event: @event)
-      time_slot.save
-    end
-    @user_list = event_params[:user_id][1..-1]
-    @user_list.each do |user|
-      invited_user = User.find(user)
-      @event.invite(invited_user)
-    end
-
-    # if all the users invited to the event has cast a vote then change the status to true
-    # @arr = []
-    # @event.invited_users.each do |invited_user|
-    #   if @event.time_slots.include?(invited_user.time_slots)
-    #     @arr << "yay"
-    #   else
-    #     @arr << "nay"
-    #   end
-    # end
-
-    redirect_to dashboard_path
-  end
+  before_action :set_accessible_event, only: :show
+  before_action :set_owned_event, only: :update
 
   def show
-    # Seperate time slots by user
-    # @time_slots sort by user_id
-    @event = Event.find(params[:id])
     @host = @event.user
-    @host_time_slots = @event.time_slots.where(user: @host)
-
-    @guest_time_slots = @event.time_slots - @host_time_slots
-
-    @guests = @event.invited_users
+    @host_time_slots = @event.time_slots.where(user: @host).order(:start_time)
+    @guest_time_slots = @event.time_slots.where.not(user: @host).order(:start_time)
+    @guests = @event.invited_users.order(:first_name, :last_name)
   end
 
   def new
-    @users = User.all - [current_user]
-    @event = Event.new
+    @event = current_user.events.build
+    load_invitees
+  end
+
+  def create
+    @event = current_user.events.build(event_params)
+
+    Event.transaction do
+      @event.save!
+      @event.replace_time_slots!(user: current_user, starts_at: parsed_time_slots)
+      @event.invited_users = permitted_invitees
+    end
+
+    redirect_to @event, notice: "Event created."
+  rescue ActiveRecord::RecordInvalid, ArgumentError => error
+    @event.errors.add(:base, error.message) if @event.errors.empty?
+    load_invitees
+    render :new, status: :unprocessable_entity
   end
 
   def update
-    @event = Event.find(params[:id])
-    @final_time_slots = time_slot_array_params[:time_slot_array]
+    @event.finalize!(starts_at: parsed_time_slots)
 
-    @final_time_slot_array = @final_time_slots.split(',')
-
-    @event.start_time = @final_time_slot_array.first
-    @event.end_time = @final_time_slot_array.last
-    @event.status = true
-
-    @event.save!
-
-    redirect_to dashboard_path
+    redirect_to @event, notice: "Meeting time confirmed."
+  rescue ActiveRecord::RecordInvalid, ArgumentError, Event::ClosedError => error
+    redirect_to @event, alert: error.message, status: :see_other
   end
 
   private
-## ref "user_id"=>["", "1", "3"]},
+
+  def set_accessible_event
+    @event = Event.accessible_to(current_user).find(params[:id])
+  end
+
+  def set_owned_event
+    @event = current_user.events.find(params[:id])
+  end
+
+  def load_invitees
+    @users = User.where.not(id: current_user.id).order(:first_name, :last_name)
+  end
+
+  def permitted_invitees
+    ids = Array(params.dig(:event, :invited_user_ids)).compact_blank
+    User.where(id: ids).where.not(id: current_user.id)
+  end
+
   def event_params
-    params.require(:event).permit(:name, :description, user_id: [])
+    params.require(:event).permit(:name, :description)
   end
 
-  def time_slot_array_params
-    params.require(:time_slots).permit(:time_slot_array)
+  def parsed_time_slots
+    TimeSlotParser.call(params.require(:time_slots).fetch(:time_slot_array))
+  rescue KeyError, TypeError
+    raise ActionController::ParameterMissing, :time_slots
   end
-
-  # def user_info_params
-  #   params.require(:user_list).permit(:user_list_array)
-  # end
 end

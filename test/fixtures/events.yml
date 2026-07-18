@@ -1,0 +1,19 @@
+planning:
+  name: Planning session
+  description: Pick a time that works for everyone
+  user: owner
+  status: false
+
+other_event:
+  name: Private event
+  description: This event belongs to somebody else
+  user: other_owner
+  status: false
+
+finalized:
+  name: Finalized event
+  description: Availability is already closed
+  user: owner
+  status: true
+  start_time: 2030-01-15 10:00:00 UTC
+  end_time: 2030-01-15 11:00:00 UTC

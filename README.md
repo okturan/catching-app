@@ -1,65 +1,82 @@
 # Catching App
 
-Catching App is a web application designed to facilitate event planning and scheduling among friends. Users can create events, invite friends, and define available time slots for meetings, making it easier to coordinate schedules.
+Catching App helps a group find a mutually available time for an event. An organizer offers time slots, invites other users, and finalizes a continuous window after every participant has submitted availability.
 
-## Features
+## Stack
 
-- User authentication with Devise
-- Create and manage events
-- Invite friends to events
-- Define and visualize available time slots
-- Responsive design with Bootstrap
-- User-friendly interface
+- Ruby 4.0.5 and Rails 8.1.3
+- PostgreSQL 18
+- Node.js 24.18.0 LTS and npm 11.16.0
+- Propshaft, esbuild, Dart Sass, Turbo, Bootstrap 5, and Luxon
+- Devise authentication
+- Minitest, RuboCop Rails Omakase, Brakeman, and bundler-audit
 
-## Technologies Used
+Runtime versions are pinned in `.ruby-version`, `.node-version`, `Gemfile.lock`, and `package-lock.json`.
 
-- Ruby on Rails
-- PostgreSQL
-- ActionCable for real-time features
-- Bootstrap for styling
-- JavaScript and jQuery for interactivity
-- Moment.js for date and time manipulation
+## Local setup
 
-## Setup Instructions
-
-To set up the application locally, follow these steps:
-
-1. **Clone the repository:**
+Install the pinned Ruby and Node.js versions, PostgreSQL, and Chrome or Chromium for system tests. Then run:
 
 ```bash
-git clone https://github.com/yourusername/catching-app.git
-cd catching-app
+cp .env.example .env
+bin/setup --skip-server
+bin/dev
 ```
 
-2. **Install dependencies:***
+The app is available at <http://localhost:3000>. On a newly created development database, setup loads three demo users. Their shared password defaults to `development-password` and can be changed with `SEED_PASSWORD` before running setup.
 
-Ensure you have Ruby and Rails installed. Then run:
+To rebuild the database and development seed data:
 
 ```bash
-bundle install
-yarn install
+bin/setup --reset --skip-server
 ```
 
-3. **Set up the database:**
+## Verification
 
-Create and migrate the database:
+Run the complete local gate:
 
 ```bash
-rails db:create
-rails db:migrate
+bin/ci
 ```
 
-4. **Run the application:**
-
-Start the Rails server:
+The gate installs deterministic dependencies, lints Ruby, audits Ruby and JavaScript dependencies, runs Brakeman, checks eager loading, builds assets, and runs the Rails test suite. Individual commands are also available:
 
 ```bash
-rails server
+bin/rails test
+bin/rails test:system
+bin/rails zeitwerk:check
+bin/rubocop
+bin/brakeman --quiet --no-pager --exit-on-warn --exit-on-error
+bin/bundler-audit check --update
+npm run check
+npm audit --audit-level=high
 ```
-You can now access the application at http://localhost:3000.
 
-## Usage
+GitHub Actions runs the same categories of checks with PostgreSQL 18 and also builds the production image. Dependabot tracks Bundler, npm, and Actions updates.
 
-Sign up for a new account or log in with an existing account.
-Navigate to the dashboard to create new events or view your existing events.
-Invite friends to your events and define available time slots for meetings.
+## Production container
+
+Build the non-root production image:
+
+```bash
+docker build -t catching-app .
+```
+
+The runtime expects these environment variables:
+
+- `APP_HOST`: public hostname, without a scheme
+- `DATABASE_URL`: PostgreSQL connection URL
+- `SECRET_KEY_BASE` or `RAILS_MASTER_KEY`: Rails signing secret
+- `MAILER_FROM`: sender address
+- `SMTP_ADDRESS`: SMTP server address
+- `SMTP_PORT`, `SMTP_USERNAME`, and `SMTP_PASSWORD`: optional SMTP connection settings
+
+The container prepares the database before starting, listens through Thruster on port 80, and exposes `GET /up` as its health endpoint. It assumes TLS is terminated by the reverse proxy and forces HTTPS for application traffic.
+
+## Security model
+
+Event access is limited to the organizer and invited users. Only invitees can submit availability, only against organizer-offered slots, and only the organizer can finalize a continuous slot range shared by every participant. Scheduling writes are transactional, database constraints back the key uniqueness and range invariants, authentication endpoints are rate limited, and production enables TLS, origin checking, CSP, filtered sensitive parameters, and host authorization.
+
+Signed-in users can discover other members by display name so they can invite them to an event. Email addresses and other account details are not exposed in the member directory.
+
+See the official [Ruby releases](https://www.ruby-lang.org/en/downloads/releases/) and [Rails maintenance policy](https://guides.rubyonrails.org/maintenance_policy.html) for the support status behind the pinned baseline.
