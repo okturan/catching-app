@@ -1,4 +1,7 @@
 class EventsController < ApplicationController
+  before_action :set_accessible_event, only: [ :show ]
+  before_action :set_owned_event, only: [ :update ]
+
   def create
     # Create new event with only event_params
     @event = Event.new(event_params)
@@ -34,7 +37,6 @@ class EventsController < ApplicationController
   def show
     # Seperate time slots by user
     # @time_slots sort by user_id
-    @event = Event.find(params[:id])
     @host = @event.user
     @host_time_slots = @event.time_slots.where(user: @host)
 
@@ -49,7 +51,6 @@ class EventsController < ApplicationController
   end
 
   def update
-    @event = Event.find(params[:id])
     @final_time_slots = time_slot_array_params[:time_slot_array]
 
     @final_time_slot_array = @final_time_slots.split(',')
@@ -71,6 +72,16 @@ class EventsController < ApplicationController
 
   def time_slot_array_params
     params.require(:time_slots).permit(:time_slot_array)
+  end
+
+  def set_accessible_event
+    hosted = Event.where(id: current_user.events.select(:id))
+    invited = Event.where(id: current_user.invited_events.select(:id))
+    @event = hosted.or(invited).find(params[:id])
+  end
+
+  def set_owned_event
+    @event = current_user.events.find(params[:id])
   end
 
   # def user_info_params
