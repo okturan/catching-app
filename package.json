@@ -19,7 +19,7 @@
     "luxon": "^3.7.2"
   },
   "devDependencies": {
-    "esbuild": "^0.28.1",
+    "esbuild": "^0.28.2",
     "sass": "^1.102.0"
   },
   "allowScripts": {
