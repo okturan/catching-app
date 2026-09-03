@@ -64,7 +64,7 @@ After a successful plan the system SHALL enqueue exactly one `organizer_link` ma
 - **THEN** the page contains the organizer's address and the sentence explaining that guests receive nothing until the link is opened and Send is pressed
 
 ### Requirement: Creation is capped without leaking identities
-`POST /events` SHALL carry `rate_limit to: 5, within: 10.minutes` per IP as a courtesy layer. The system SHALL refuse creation when, for the canonical organizer email, five events whose organizer opened the link were created in the last 24 hours, or when three unopened events were created for that address in the last 24 hours, or when ten unopened events were created from the requesting IP in the last 24 hours. Refusals SHALL respond 303 to the form with the generic alert "Could not create the event right now. Try again later." and the response MUST be identical whether or not the address belongs to an account.
+`POST /events` SHALL carry `rate_limit to: 5, within: 10.minutes` per IP as a courtesy layer. The system SHALL refuse creation when, for the canonical organizer email, five events whose organizer opened the link were created in the last 24 hours, or when three unopened events were created for that address from the requesting IP in the last 24 hours, or when ten unopened events were created from the requesting IP in the last 24 hours. Refusals SHALL respond 303 to the form with the generic alert "Could not create the event right now. Try again later." and the response MUST be identical whether or not the address belongs to an account.
 
 #### Scenario: Sixth opened event in a day is refused
 - **WHEN** an organizer email already has five events created today whose organizer link was opened

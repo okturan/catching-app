@@ -47,13 +47,13 @@
 
 ## 5. Verify-by-click, transactional mail, recovery, log masking
 
-- [ ] 5.1 Make `events#new/#create/#pending` public with `rate_limit`, `organizer[name]/[email]` and the signed-in override, creation caps with the generic identical refusal, pending page copy
-- [ ] 5.2 `ParticipantMailer` with `organizer_link`, `invitation`, `response_confirmation`, `finalized` in HTML and text under the mailer layout; content hygiene (no description, fixed prefix, subject prefix and truncation, bare Reply-To, coalesced ranges, promise sentence); previews; development `:file` delivery
-- [ ] 5.3 `MailDeliveryJob` with `log_arguments = false`, `require "net/smtp"`, `retry_on`/`discard_on` marking the ledger; `config.action_mailer.delivery_job`; `after_deliver` sets `delivered_at`; enqueue after commit with the ledger row created first and `request_ip` recorded
-- [ ] 5.4 Wire `Caps` into `plan!`, invitations, resend, link reveal and recovery; `INVITATION_DAILY_BUDGET` with the warning; failed rows exempt from cooldown and lifetime cap
-- [ ] 5.5 `OrganizerLinksController` (`new`, `create`) with the constant response even when capped, pending organizer tokens with 24-hour expiry, `user_id` untouched; "Send the link again" on the session-family organizer page and the pending page
-- [ ] 5.6 `config.filter_redirect`, the `Rails::Rack::Logger` subclass masking `/p/<token>` in the Started line, and the Thruster access-log switch for 0.1.23 (disable or mask; if no switch exists record it in design.md Open Questions and `.env.example`)
-- [ ] 5.7 Tests: `participant_mailer_test.rb` per template with `MAILER_FROM` removed in setup, failing-delivery retry test, preview rendering test; controller tests for verify-by-click through both families, sends and caps (canonical, budget, IP, starter, victim exhaustion), resend after failure, pending-token GET/PATCH semantics, recovery identical responses and untouched `user_id`, log capture without raw token; integration test rewritten as the accountless story from anonymous create through finalize and a guest sign-up claim
+- [x] 5.1 Make `events#new/#create/#pending` public with `rate_limit`, `organizer[name]/[email]` and the signed-in override, creation caps with the generic identical refusal, pending page copy
+- [x] 5.2 `ParticipantMailer` with `organizer_link`, `invitation`, `response_confirmation`, `finalized` in HTML and text under the mailer layout; content hygiene (no description, fixed prefix, subject prefix and truncation, bare Reply-To, coalesced ranges, promise sentence); previews; development `:file` delivery
+- [x] 5.3 `MailDeliveryJob` with `log_arguments = false`, `require "net/smtp"`, `retry_on`/`discard_on` marking the ledger; `config.action_mailer.delivery_job`; `after_deliver` sets `delivered_at`; enqueue after commit with the ledger row created first and `request_ip` recorded
+- [x] 5.4 Wire `Caps` into `plan!`, invitations, resend, link reveal and recovery; `INVITATION_DAILY_BUDGET` with the warning; failed rows exempt from cooldown and lifetime cap
+- [x] 5.5 `OrganizerLinksController` (`new`, `create`) with the constant response even when capped, pending organizer tokens with 24-hour expiry, `user_id` untouched; "Send the link again" on the session-family organizer page and the pending page
+- [x] 5.6 `config.filter_redirect`, the `Rails::Rack::Logger` subclass masking `/p/<token>` in the Started line, and the Thruster access-log switch for 0.1.23 (`LOG_REQUESTS=false` in the Dockerfile runtime environment, documented in `.env.example`)
+- [x] 5.7 Tests: `participant_mailer_test.rb` per template with `MAILER_FROM` removed in setup, failing-delivery retry test, preview rendering test; controller tests for verify-by-click through both families, sends and caps (canonical, budget, IP, starter, victim exhaustion), resend after failure, pending-token GET/PATCH semantics, recovery identical responses and untouched `user_id`, log capture without raw token; integration test rewritten as the accountless story from anonymous create through finalize and a guest sign-up claim
 
 ## 6. Accounts and claim
 

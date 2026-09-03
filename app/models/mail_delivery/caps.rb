@@ -61,7 +61,8 @@ module MailDelivery::Caps
 
   # Raises when creating another event for `organizer_email` from `request_ip`
   # must be refused. Opened events count per address; unopened ones count per
-  # address (small) and per IP, so a third party cannot exhaust a victim.
+  # IP and per (address, IP), so a third party cannot exhaust a victim from
+  # another network.
   def check_event_creation!(organizer_email:, request_ip:)
     day = 24.hours.ago
     canonical = MailDelivery.canonical(organizer_email)
@@ -70,13 +71,16 @@ module MailDelivery::Caps
     opened, unopened = recent.partition { |_email, opened_at| opened_at.present? }
 
     raise MailDelivery::CapExceeded, CREATION_MESSAGE if opened.size >= OPENED_EVENTS_PER_ORGANIZER_PER_DAY
-    raise MailDelivery::CapExceeded, CREATION_MESSAGE if unopened.size >= UNOPENED_EVENTS_PER_ADDRESS_PER_DAY
 
     if request_ip.present?
-      unopened_from_ip = MailDelivery.organizer_link.since(day).where(request_ip: request_ip)
-        .joins(:participant).merge(Participant.where(link_opened_at: nil)).count
-      raise MailDelivery::CapExceeded, CREATION_MESSAGE if unopened_from_ip >= UNOPENED_EVENTS_PER_IP_PER_DAY
+      unopened_links = MailDelivery.organizer_link.since(day).where(request_ip: request_ip)
+        .joins(:participant).merge(Participant.where(link_opened_at: nil))
+      raise MailDelivery::CapExceeded, CREATION_MESSAGE if unopened_links.count >= UNOPENED_EVENTS_PER_IP_PER_DAY
+      if unopened_links.where(canonical_recipient_email: canonical).count >= UNOPENED_EVENTS_PER_ADDRESS_PER_DAY
+        raise MailDelivery::CapExceeded, CREATION_MESSAGE
+      end
     end
+    unopened
   end
 
   def organizer_has_finalized?(organizer)

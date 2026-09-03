@@ -34,6 +34,6 @@ module ParticipationsHelper
     zone = ActiveSupport::TimeZone[zone_name] || ActiveSupport::TimeZone["UTC"]
     start_time = event.start_time.in_time_zone(zone)
     end_time = event.end_time.in_time_zone(zone)
-    "#{start_time.strftime('%a %-d %b %H:%M')}–#{end_time.strftime('%H:%M')} (#{zone.tzinfo.name})"
+    "#{start_time.strftime('%a %-d %b %H:%M')}–#{end_time.strftime('%H:%M')} (#{zone.name})"
   end
 end

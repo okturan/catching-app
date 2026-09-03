@@ -1,0 +1,7 @@
+<%= mail_safe(@event.name) %> is set.
+
+<%= @recipient_window %>
+<% if @recipient_window != @event_window %>
+In the event's zone: <%= @event_window %>
+<% end %>
+Use the link from your invitation for details. This is the last message about this event.

@@ -12,7 +12,7 @@
 - **THEN** a retry is enqueued after the first attempt and after the third the ledger row has `failed_at` and an `error` set
 
 ### Requirement: Four templates with defined triggers and recipients
-`ParticipantMailer` SHALL provide, each in HTML and text: `organizer_link` (to the organizer; after `Event.plan!` commits and from the recovery form; subject "Catching App: your organizer link"; constant content with no organizer-supplied text), `invitation` (to a guest; on send and resend; subject "Catching App: <organizer name> invited you to <event>"), `response_confirmation` (to a guest; first reply only, including decline; subject "Catching App: your reply to <event> is saved"; contiguous instants coalesced into per-day ranges in the guest's zone and the event zone, capped with "and N more days"), and `finalized` (one job per participant with a live token; subject "Catching App: <event> is set for <date in recipient zone>"). Every mail SHALL state why the recipient got it and how to stop, and SHALL fall back to the event zone when the participant has no valid zone.
+`ParticipantMailer` SHALL provide, each in HTML and text: `organizer_link` (to the organizer; after `Event.plan!` commits and from the recovery form; subject "Catching App: your organizer link"; constant content with no organizer-supplied text), `invitation` (to a guest; on send and resend; subject "Catching App: <organizer name> invited you to <event>"), `response_confirmation` (to a guest; first reply only, including decline; subject "Catching App: your reply to <event> is saved"; contiguous instants coalesced into per-day ranges in the guest's zone and the event zone, capped with "and N more days"), and `finalized` (one job per participant with a live token; subject "Catching App: <event> is set for <date in recipient zone>"). Every mail SHALL state why the recipient got it and how to stop, and SHALL fall back to the event zone when the participant has no valid zone. Only `organizer_link` and `invitation` carry a link (they are the mails that issue a token); `response_confirmation` and `finalized` point the recipient to the link from their invitation.
 
 #### Scenario: Organizer link carries no organizer text
 - **WHEN** an event named "Buy crypto now http://evil.example" is planned
@@ -64,7 +64,7 @@ The system SHALL canonicalize addresses for caps by stripping a `+tag` from the 
 - **THEN** the `finalized` mail is enqueued
 
 ### Requirement: Mail behavior is tested per template
-`test/mailers/participant_mailer_test.rb` SHALL assert per template: recipient, subject, From fallback with `MAILER_FROM` removed in setup and restored in teardown, Reply-To, the link with the raw token in both parts, zone rendering, and the `organizer_link` freedom from organizer text; a test SHALL render every `ActionMailer::Preview`; controller and integration tests SHALL use `assert_enqueued_emails` and `perform_enqueued_jobs` to pull links from deliveries.
+`test/mailers/participant_mailer_test.rb` SHALL assert per template: recipient, subject, From fallback with `MAILER_FROM` removed in setup and restored in teardown, Reply-To, the link with the raw token in both parts of the two token-carrying templates, zone rendering, and the `organizer_link` freedom from organizer text; a test SHALL render every `ActionMailer::Preview`; controller and integration tests SHALL use `assert_enqueued_emails` and `perform_enqueued_jobs` to pull links from deliveries.
 
 #### Scenario: Preview rendering
 - **WHEN** the preview test iterates `ActionMailer::Preview.all`

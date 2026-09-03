@@ -10,59 +10,81 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
   def valid_params(overrides = {})
     {
       event: { name: "Project kickoff", description: "Find a kickoff time", slot_minutes: 30, time_zone: "Europe/Berlin" },
-      invitations: { emails: "Bob@example.com\ncy@example.com, owner@example.com" },
+      organizer: { name: "Ann Organizer", email: "Ann@example.com" },
+      invitations: { emails: "Bob@example.com\ncy@example.com, ann@example.com" },
       time_slots: { time_slot_array: @slots.map(&:iso8601).join(",") }
     }.deep_merge(overrides)
   end
 
-  test "the new form has the planning fields and no member directory" do
-    sign_in @owner
-
+  test "the new form is public and has the planning fields and no member directory" do
     get new_event_path
 
     assert_response :success
+    assert_select "input[name='organizer[name]']"
+    assert_select "input[name='organizer[email]']"
     assert_select "select#event_slot_minutes option[selected][value='30']"
     assert_select "textarea[name='invitations[emails]']"
     assert_select "select#timezone-picker-new[name='event[time_zone]']"
     assert_select "select[name='event[invited_user_ids][]']", count: 0
     assert_select "table#time-grid-define[data-slot-minutes='30']"
+
+    sign_in @owner
+    get new_event_path
+    assert_select "input[name='organizer[email]']", count: 0
   end
 
-  test "planning creates the event, organizer, offer and guests atomically" do
-    sign_in @owner
-
-    assert_difference({ "Event.count" => 1, "Participant.count" => 3, "TimeSlot.count" => 2 }) do
-      post events_path, params: valid_params
+  test "an anonymous organizer plans an event and gets only the organizer link" do
+    assert_difference({ "Event.count" => 1, "Participant.count" => 3, "TimeSlot.count" => 2, "MailDelivery.organizer_link.count" => 1 }) do
+      assert_enqueued_emails 1 do
+        post events_path, params: valid_params
+      end
     end
 
     event = Event.order(:id).last
     organizer = event.organizer
-    assert_redirected_to my_participation_path(organizer)
-    assert_equal @owner, organizer.user
-    assert organizer.link_opened_at.present?
+    assert_redirected_to pending_events_path
+    assert_equal "ann@example.com", organizer.email
+    assert_equal "Ann Organizer", organizer.name
+    assert_nil organizer.user
+    assert_nil organizer.link_opened_at
     assert organizer.token_digest.present?
     assert_equal %w[bob@example.com cy@example.com], event.guests.order(:email).pluck(:email)
+    assert event.guests.all? { |guest| guest.token_digest.nil? }
+    assert_equal 0, MailDelivery.invitation.count
     assert_equal @slots.map(&:utc), event.time_slots.where(participant_id: organizer.id).order(:start_time).pluck(:start_time)
-    assert_equal 30, event.slot_minutes
+
+    follow_redirect!
+    assert_match "ann@example.com", response.body
+    assert_match "Nothing has gone to your guests yet", response.body
+  end
+
+  test "a signed-in organizer is claimed and cannot override the email" do
+    sign_in @owner
+
+    post events_path, params: valid_params(organizer: { email: "other@example.com", name: "Other" })
+
+    organizer = Event.order(:id).last.organizer
+    assert_equal "owner@example.com", organizer.email
+    assert_equal "Olivia Owner", organizer.name
+    assert_equal @owner, organizer.user
+    assert_nil organizer.link_opened_at
+    assert_redirected_to pending_events_path
   end
 
   test "invalid availability rolls back the complete plan and echoes the form" do
-    sign_in @owner
-
-    assert_no_difference [ "Event.count", "Participant.count", "TimeSlot.count" ] do
+    assert_no_difference [ "Event.count", "Participant.count", "TimeSlot.count", "MailDelivery.count" ] do
       post events_path, params: valid_params(time_slots: { time_slot_array: "not-an-iso8601-time" })
     end
 
     assert_response :unprocessable_entity
     assert_select "textarea[name='invitations[emails]']", text: /cy@example.com/
+    assert_select "input[name='organizer[email]'][value='ann@example.com']"
     assert_select "select#timezone-picker-new[data-selected='Europe/Berlin']"
     assert_select "#time_slot_array[value='not-an-iso8601-time']"
     assert_match "Time slots must use ISO 8601 timestamps", response.body
   end
 
-  test "empty availability, unknown zones and bad addresses are validation errors" do
-    sign_in @owner
-
+  test "empty availability, unknown zones, bad addresses and a missing organizer are validation errors" do
     post events_path, params: valid_params(time_slots: { time_slot_array: "" })
     assert_response :unprocessable_entity
     assert_match "Select at least one time slot", response.body
@@ -74,12 +96,42 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     post events_path, params: valid_params(invitations: { emails: "nope" })
     assert_response :unprocessable_entity
     assert_match "nope is not a valid email address", response.body
+
+    post events_path, params: valid_params(organizer: { name: "", email: "not-an-address" })
+    assert_response :unprocessable_entity
+    assert_no_difference("Event.count") { }
   end
 
-  test "planning requires a session in this phase" do
-    get new_event_path
+  test "creation caps refuse with one generic message for known and unknown addresses" do
+    responses = [ "owner@example.com", "nobody@example.com" ].map do |email|
+      3.times do
+        post events_path, params: valid_params(organizer: { email: email, name: "Repeat" }), headers: { "REMOTE_ADDR" => "203.0.113.10" }
+        assert_response :redirect
+      end
+      post events_path, params: valid_params(organizer: { email: email, name: "Repeat" }), headers: { "REMOTE_ADDR" => "203.0.113.10" }
+      [ response.status, response.location, flash[:alert] ]
+    end
 
-    assert_redirected_to new_user_session_path
+    assert_equal 1, responses.uniq.size
+    assert_equal [ 303, new_event_url, MailDelivery::Caps::CREATION_MESSAGE ], responses.first
+  end
+
+  test "a third party cannot exhaust a victim's allowance from another network" do
+    3.times do
+      post events_path, params: valid_params(organizer: { email: "victim@example.com", name: "Attacker" }), headers: { "REMOTE_ADDR" => "203.0.113.11" }
+    end
+
+    post events_path, params: valid_params(organizer: { email: "victim@example.com", name: "Victim" }), headers: { "REMOTE_ADDR" => "198.51.100.44" }
+
+    assert_redirected_to pending_events_path
+  end
+
+  test "creation is rate limited per IP as a courtesy" do
+    with_rate_limit_count(6) do
+      post events_path, params: valid_params
+    end
+
+    assert_response :too_many_requests
   end
 
   test "legacy event routes no longer exist" do

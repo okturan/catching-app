@@ -95,10 +95,14 @@ class MailDeliveryTest < ActiveSupport::TestCase
 
     3.times do |i|
       event = Event.create!(name: "U#{i}", description: "d", slot_minutes: 60, time_zone: "UTC")
-      event.participants.create!(role: :organizer, email: "victim@example.com", name: "V", responded_at: Time.current)
+      organizer = event.participants.create!(role: :organizer, email: "victim@example.com", name: "V", responded_at: Time.current)
+      MailDelivery.create!(event: event, participant: organizer, kind: :organizer_link, recipient_email: organizer.email, request_ip: "198.51.100.2")
     end
     assert_raises(MailDelivery::CapExceeded) do
       MailDelivery::Caps.check_event_creation!(organizer_email: "victim@example.com", request_ip: "198.51.100.2")
+    end
+    assert_nothing_raised do
+      MailDelivery::Caps.check_event_creation!(organizer_email: "victim@example.com", request_ip: "198.51.100.77")
     end
     assert_nothing_raised do
       MailDelivery::Caps.check_event_creation!(organizer_email: "someone-else@example.com", request_ip: "198.51.100.2")

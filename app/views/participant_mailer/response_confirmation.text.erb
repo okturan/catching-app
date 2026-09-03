@@ -1,0 +1,18 @@
+Your reply to <%= mail_safe(@event.name) %> is saved.
+<% if @declined %>
+You said none of the offered times work for you.
+<% else %>
+Your available times (<%= @recipient_ranges[:zone] %>):
+<% @recipient_ranges[:days].each do |day, ranges| %>
+- <%= day %>: <%= ranges.join(", ") %>
+<% end %>
+<% if @recipient_ranges[:more].positive? %>and <%= @recipient_ranges[:more] %> more days.
+<% end %>
+<% if @event_ranges[:zone] != @recipient_ranges[:zone] %>
+In the event's zone (<%= @event_ranges[:zone] %>):
+<% @event_ranges[:days].each do |day, ranges| %>
+- <%= day %>: <%= ranges.join(", ") %>
+<% end %>
+<% end %>
+<% end %>
+To change your reply, use the link from your invitation. You will hear from us once more, when the time is set.

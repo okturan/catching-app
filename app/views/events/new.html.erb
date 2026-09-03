@@ -14,6 +14,17 @@
         <%= f.input :name, placeholder: "A Fabulous Meeting!" %>
         <%= f.input :description, as: :text, placeholder: "Do whatever!" %>
 
+        <% unless user_signed_in? %>
+          <div class="mb-3">
+            <label class="form-label" for="organizer_name">Your name</label>
+            <input class="form-control" type="text" id="organizer_name" name="organizer[name]" maxlength="100" required value="<%= @organizer[:name] %>">
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="organizer_email">Your email (we send your organizer link there)</label>
+            <input class="form-control" type="email" id="organizer_email" name="organizer[email]" autocomplete="email" required value="<%= @organizer[:email] %>">
+          </div>
+        <% end %>
+
         <div class="mb-3">
           <label class="form-label" for="invitations_emails">Invite people (one address per line or comma-separated)</label>
           <textarea class="form-control" id="invitations_emails" name="invitations[emails]" rows="3"><%= params.dig(:invitations, :emails) %></textarea>

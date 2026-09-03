@@ -10,6 +10,7 @@ class ParticipationsController < ParticipationScopedController
   def update
     require_guest!
     starts_at = parsed_time_slots(slot_minutes: @event.slot_minutes)
+    first_reply = @participant.responded_at.nil?
 
     @event.transaction do
       @event.replace_time_slots!(participant: @participant, starts_at: starts_at)
@@ -20,6 +21,7 @@ class ParticipationsController < ParticipationScopedController
         time_zone: params.dig(:participant, :time_zone).presence || @participant.time_zone
       )
     end
+    Deliveries.response_confirmation!(event: @event, guest: @participant) if first_reply
 
     redirect_to scoped_path, notice: "Availability saved."
   rescue ActiveRecord::RecordInvalid, ArgumentError, Event::ClosedError => error

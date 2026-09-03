@@ -229,6 +229,21 @@ class ParticipationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[type=submit][value=?]", "Send 1 invitation"
   end
 
+  test "raw tokens never reach the request log" do
+    io = StringIO.new
+    capture = ActiveSupport::Logger.new(io)
+    Rails.logger.broadcast_to(capture)
+    begin
+      get participation_path(@guest_token)
+      patch participation_path(@guest_token), params: { time_slots: { time_slot_array: "invalid" } }
+    ensure
+      Rails.logger.stop_broadcasting_to(capture)
+    end
+
+    assert_match "/p/[FILTERED]", io.string
+    assert_no_match @guest_token, io.string
+  end
+
   test "writes through one token are rate limited as a courtesy" do
     with_rate_limit_count(31) do
       patch participation_path(@guest_token), params: { time_slots: { time_slot_array: "2030-01-15T10:00:00Z" } }

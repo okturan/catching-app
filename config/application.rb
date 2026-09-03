@@ -20,6 +20,9 @@ module CatchingApp
     # Capability tokens travel in paths; keep them out of redirect log lines.
     config.filter_redirect += [ %r{/p/[A-Za-z0-9]{32}} ]
 
+    # Transactional mail goes through a job that records delivery state.
+    config.action_mailer.delivery_job = "MailDeliveryJob"
+
     config.generators do |generate|
       generate.assets false
       generate.helper false
