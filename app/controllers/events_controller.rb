@@ -5,7 +5,8 @@ class EventsController < ApplicationController
   def show
     @host = @event.user
     @host_time_slots = @event.time_slots.where(user: @host).order(:start_time)
-    @guest_time_slots = @event.time_slots.where.not(user: @host).order(:start_time)
+    @my_time_slots = @event.time_slots.where(user: current_user).order(:start_time)
+    @availability_counts = @event.time_slots.where.not(user: current_user).group(:start_time).count.transform_keys(&:iso8601)
     @guests = @event.invited_users.order(:first_name, :last_name)
   end
 

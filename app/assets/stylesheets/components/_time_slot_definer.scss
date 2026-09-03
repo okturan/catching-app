@@ -1,113 +1,225 @@
+:root {
+  --navbar-h: 96px;
+  --action-bar-h: 96px;
+  --slot-row-height: 34px;
+}
 
-#time-grid-define,
-#time-grid-show {
-  p,
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    margin: 0;
-  }
-  max-width: 80vw;
-  display: grid;
-  justify-content: center;
-  column-gap: 4px;
-  grid-auto-flow: column;
-  grid-template-columns: repeat(
-    var(--grid-cols),
-    minmax(120px, calc(30% / var(--grid-cols)))
-  );
-  grid-template-rows: repeat(var(--grid-rows), auto);
-  -moz-user-select: -moz-none;
-  -khtml-user-select: none;
+.time-grid-panel {
+  max-width: 100%;
+  border-radius: 15px;
+  padding: 12px;
+  margin-top: 16px;
+  background-size: cover;
+  background-image: url(https://res.cloudinary.com/dvpavvw1u/image/upload/v1633009159/timeslots1_mf8mpx.png);
+}
+
+.time-grid-scroll {
+  max-height: calc(100dvh - var(--navbar-h) - var(--action-bar-h));
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.time-grid {
+  border-collapse: separate;
+  border-spacing: 4px;
+  min-width: max-content;
+  touch-action: pan-x pan-y pinch-zoom;
+  -webkit-touch-callout: none;
   -webkit-user-select: none;
-  -ms-user-select: none;
   user-select: none;
 
-  .grid-item {
-    &.hour {
-      font-size: 16px;
-      line-height: 1.7em;
-      margin-top: 3px;
-      border: 1px solid #ddd;
-      text-align: center;
-      border-radius: 20px;
-      background: rgba( 255, 255, 255, 0.25 );
-      box-shadow: 0 8px 32px 0 rgba( 31, 38, 135, 0.37 );
-      -webkit-backdrop-filter: blur( 4px );
-      border-radius: 10px;
-      border: 1px solid rgba( 255, 255, 255, 0.18 );
-    }
+  // Chrome decides the allowed touch gesture before pointerdown handlers run,
+  // so paint mode disables panning on the grid body ahead of the stroke.
+  &.mode-paint,
+  &.painting {
+    touch-action: none;
+  }
 
-    &.header {
-      grid-row: 1;
-      padding: 1em;
-      text-align: center;
-      border-radius: 15px;
-      margin-bottom: 20px;
-           /*  background: rgb(185,139,255) !important; */
+  thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: 0.6em 1em;
+    text-align: center;
+    white-space: nowrap;
+    border-radius: 15px;
+    touch-action: pan-x pan-y pinch-zoom;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.8) 100%);
+    box-shadow: rgba(0, 0, 0, 0.1) 0 4px 6px -1px, rgba(0, 0, 0, 0.06) 0 2px 4px -1px;
 
-      box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 6px -1px,
-        rgba(0, 0, 0, 0.06) 0px 2px 4px -1px;
-      background: linear-gradient(
-        135deg,
-        rgba(255, 255, 255, 0.4) 0%,
-        rgba(255, 255, 255, 0.1) 100%
-      );
+    small {
+      display: block;
+      font-weight: 400;
+      font-size: 11px;
     }
   }
 
-  .active {
-    background: rgb(0, 250, 154) !important;
-    background: radial-gradient(
-      circle,
-      rgba(0, 250, 154, 1) 0%,
-      rgb(0, 235, 156) 100%
-    ) !important;
-    animation: pulse 0.3s;
-    animation-timing-function: ease-in;
+  thead th.row-label-head {
+    left: 0;
+    z-index: 3;
+    background: transparent;
+    box-shadow: none;
   }
 
-  .inactive {
-    filter: grayscale(100%);
-    opacity: 0.2;
-    border: none;
+  tbody th {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    padding: 0 0.6em;
+    font-size: 13px;
+    font-weight: 500;
+    text-align: right;
+    white-space: nowrap;
+    border-radius: 8px;
+    touch-action: pan-x pan-y pinch-zoom;
+    background: rgba(255, 255, 255, 0.85);
   }
 
-  .disabled {
-    display: none;
+  tr.day-boundary th,
+  tr.day-boundary td {
+    border-top: 2px dashed rgba(0, 0, 0, 0.35);
   }
 
-  .received {
-    background: #68bef9;
-    background: radial-gradient(
-      circle,
-      #4ca1da(0, 250, 154, 1) 0%,
-      #529cce(0, 235, 156) 100%
-    );
+  .slot {
+    min-width: 120px;
+    height: var(--slot-row-height);
+    font-size: 15px;
+    line-height: 1.3;
+    text-align: center;
+    vertical-align: middle;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.25);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+
+    &.placeholder {
+      visibility: hidden;
+      border: none;
+      box-shadow: none;
+      cursor: default;
+    }
+
+    &.inactive {
+      filter: grayscale(100%);
+      opacity: 0.2;
+      border: none;
+      cursor: default;
+    }
+
+    &.offered {
+      background: #68bef9;
+    }
+
+    &.consensus {
+      background: #4ca1da;
+      color: white;
+    }
+
+    &.past {
+      opacity: 0.35;
+      cursor: not-allowed;
+      text-decoration: line-through;
+    }
+
+    &.active {
+      background: rgb(0, 250, 154) !important;
+      background: radial-gradient(circle, rgba(0, 250, 154, 1) 0%, rgb(0, 235, 156) 100%) !important;
+      color: #061219;
+      animation: pulse 0.3s ease-in;
+    }
+
+    &:focus-visible {
+      outline: 3px solid #ffc65a;
+      outline-offset: 2px;
+    }
+
+    .others {
+      display: block;
+      font-size: 11px;
+      line-height: 1;
+      opacity: 0.8;
+    }
   }
 
+  &.hide-unoffered .slot.inactive {
+    visibility: hidden;
+  }
 }
 
-.time-grid-show-wrapper {
-  background-size: cover;
-  margin-top: 20px;
-  border-radius: 20px;
-  margin-right: 1vw;
-  padding: 20px;
-  background-image:url(https://res.cloudinary.com/dvpavvw1u/image/upload/v1633009159/timeslots1_mf8mpx.png);
+.grid-action-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 4px 4px;
+  min-height: 48px;
+
+  .alert {
+    position: static;
+    margin: 0;
+    width: 100%;
+  }
 }
 
-.time-grid-define-wrapper {
-  background-size: cover;
-  border-radius: 15px;
-  padding-top: 25px;
-  padding-bottom: 25px;
-  background-image:url(https://res.cloudinary.com/dvpavvw1u/image/upload/v1633009159/timeslots1_mf8mpx.png);
+#selection-summary {
+  font-weight: 600;
 }
-#time-grid-define {
-  margin-top: 20px;
-  margin-bottom: 20px;
+
+.paint-mode {
+  display: none;
+  gap: 4px;
+  margin: 0;
+  padding: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.9);
+
+  label {
+    margin: 0;
+    padding: 6px 14px;
+    border-radius: 99px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  input:checked + span,
+  label:has(input:checked) {
+    background: #167ffb;
+    color: white;
+  }
+}
+
+@media (any-pointer: coarse) {
+  .paint-mode {
+    display: inline-flex;
+  }
+
+  .grid-action-bar {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    background: rgba(244, 244, 244, 0.96);
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.15);
+    border-radius: 12px 12px 0 0;
+  }
+
+  .time-grid[data-slot-minutes="60"] { --slot-row-height: 44px; }
+  .time-grid[data-slot-minutes="30"] { --slot-row-height: 36px; }
+  .time-grid[data-slot-minutes="15"] { --slot-row-height: 28px; }
+
+  .time-grid .slot {
+    min-width: 88px;
+    font-size: 14px;
+  }
 }

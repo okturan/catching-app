@@ -1,151 +1,183 @@
 import { DateTime } from "luxon";
 
 import {
-  browserTimeZone,
+  parseSerializedDateTimes,
   populateTimeZoneSelect,
   slotISO,
 } from "./time_zones";
+import { localDateRangeIsAllowed, localDayColumns } from "../lib/time_grid";
+import { renderDefinerTable } from "../lib/grid_table";
 import {
-  localDateRangeIsAllowed,
-  localDayColumns,
-  localHourLabels,
-  timeGridDimensions,
-} from "../lib/time_grid";
+  attachPainting,
+  paintModeControl,
+  remapZone,
+  rescale,
+  seedTabindex,
+  summary,
+} from "../lib/paint";
+
+const SELECTABLE = ".slot.selectable[data-date]";
 
 const initTimeSlotDefiner = () => {
-  const timeGrid = document.querySelector("#time-grid-define");
-  if (!timeGrid) return;
+  const grid = document.querySelector("#time-grid-define");
+  if (!grid) return;
+
+  if (grid.__definerAbort) grid.__definerAbort.abort();
+  const controller = new AbortController();
+  grid.__definerAbort = controller;
+  const { signal } = controller;
 
   const rangeTooltip = document.querySelector("#range-tooltip");
   const timeZonePicker = document.querySelector("#timezone-picker-new");
   const beginDateInput = document.querySelector("#event-begin");
   const endDateInput = document.querySelector("#event-end");
   const timeSlotInput = document.querySelector("#time_slot_array");
+  const stepSelect = document.querySelector("#event_slot_minutes");
+  const summaryElement = document.querySelector("#selection-summary");
+  const scrollContainer = grid.closest(".time-grid-scroll");
+  const modeControl = paintModeControl(document.querySelector("#paint-mode"), {
+    onChange: (mode) => grid.classList.toggle("mode-paint", mode === "paint"),
+  });
 
-  let selectedTimeZone = browserTimeZone;
+  let slotMinutes = Number(
+    (stepSelect && stepSelect.value) || grid.dataset.slotMinutes || 60,
+  );
+  let selectedTimeZone = populateTimeZoneSelect(
+    timeZonePicker,
+    timeZonePicker.dataset.selected || grid.dataset.timeZone,
+  );
+  const selection = new Set(
+    parseSerializedDateTimes(timeSlotInput.value).map(slotISO),
+  );
   let rangeStart;
   let rangeEnd;
+  let note = "";
+
+  const setSummary = () => {
+    if (!summaryElement) return;
+    const text = summary(selection, { role: "guest", zone: selectedTimeZone });
+    summaryElement.textContent = note ? `${text}. ${note}` : text;
+  };
+
+  const serialize = () => {
+    timeSlotInput.value = [...selection].sort().join(",");
+    setSummary();
+  };
 
   const updateDateRange = () => {
-    rangeStart = DateTime.fromISO(beginDateInput.value, {
-      zone: selectedTimeZone,
-    }).startOf("day");
-    rangeEnd = DateTime.fromISO(endDateInput.value, {
-      zone: selectedTimeZone,
-    }).startOf("day");
-
-    const validRange = localDateRangeIsAllowed(rangeStart, rangeEnd);
-
-    rangeTooltip.textContent = validRange
-      ? ""
-      : "Choose a range from 1 to 31 days.";
-
-    return validRange;
+    rangeStart = DateTime.fromISO(beginDateInput.value, { zone: selectedTimeZone }).startOf("day");
+    rangeEnd = DateTime.fromISO(endDateInput.value, { zone: selectedTimeZone }).startOf("day");
+    const valid = localDateRangeIsAllowed(rangeStart, rangeEnd);
+    rangeTooltip.textContent = valid ? "" : "Choose a range from 1 to 31 days.";
+    return valid;
   };
 
-  const makeRows = (rows, columns) => {
-    timeGrid.style.setProperty("--grid-rows", rows);
-    timeGrid.style.setProperty("--grid-cols", columns);
-  };
-
-  const fillHours = (column, columnIndex) => {
-    const labels = localHourLabels(column.hours);
-
-    column.hours.forEach((hour, hourIndex) => {
-      const cell = document.createElement("div");
-      cell.textContent = labels[hourIndex];
-      cell.style.gridColumn = columnIndex + 1;
-      cell.style.gridRow = hourIndex + 2;
-      cell.className = "grid-item hour";
-      cell.dataset.date = slotISO(hour);
-      timeGrid.appendChild(cell);
+  const dropOutsideRange = () => {
+    const startMillis = rangeStart.toMillis();
+    const endMillis = rangeEnd.plus({ days: 1 }).startOf("day").toMillis();
+    let dropped = 0;
+    [...selection].forEach((iso) => {
+      const millis = DateTime.fromISO(iso).toMillis();
+      if (millis < startMillis || millis >= endMillis) {
+        selection.delete(iso);
+        dropped += 1;
+      }
     });
+    return dropped;
   };
 
-  const fillDays = (columns) => {
-    columns.forEach((column, columnIndex) => {
-      const header = document.createElement("div");
-      header.textContent = column.day.toFormat("MMM d ccc ZZZZ");
-      header.style.gridColumn = columnIndex + 1;
-      header.className = "grid-item header";
-      timeGrid.appendChild(header);
-      fillHours(column, columnIndex);
+  const draw = () => {
+    grid.replaceChildren();
+    if (!updateDateRange()) {
+      serialize();
+      return;
+    }
+    const dropped = dropOutsideRange();
+    if (dropped > 0) note = `${dropped} outside the dates dropped`;
+    renderDefinerTable(grid, localDayColumns(rangeStart, rangeEnd, slotMinutes), {
+      selection,
+      slotMinutes,
+      toISO: slotISO,
     });
+    seedTabindex(grid, SELECTABLE);
+    serialize();
   };
 
-  const drawTimeGrid = () => {
-    timeGrid.replaceChildren();
-    timeSlotInput.value = "";
-
-    if (!updateDateRange()) return;
-
-    const columns = localDayColumns(rangeStart, rangeEnd);
-    const dimensions = timeGridDimensions(columns);
-    fillDays(columns);
-    makeRows(dimensions.rows, dimensions.columns);
-  };
-
-  const addSlots = (event) => {
-    if (event.target.classList.contains("hour")) {
-      event.target.classList.add("active");
+  const seedDateRange = () => {
+    if (selection.size > 0 && !(beginDateInput.value && endDateInput.value)) {
+      const instants = [...selection]
+        .map((iso) => DateTime.fromISO(iso).setZone(selectedTimeZone))
+        .sort((a, b) => a.toMillis() - b.toMillis());
+      beginDateInput.value = instants[0].toISODate();
+      endDateInput.value = instants[instants.length - 1].toISODate();
+      return;
+    }
+    if (!beginDateInput.value || !endDateInput.value) {
+      const today = DateTime.now().setZone(selectedTimeZone).startOf("day");
+      beginDateInput.value = today.toISODate();
+      endDateInput.value = today.plus({ days: 2 }).toISODate();
     }
   };
 
-  const removeSlots = (event) => {
-    if (event.target.classList.contains("hour")) {
-      event.target.classList.remove("active");
-    }
-  };
+  timeZonePicker.addEventListener(
+    "change",
+    () => {
+      const previous = selectedTimeZone;
+      selectedTimeZone = timeZonePicker.value;
+      const remapped = remapZone(selection, previous, selectedTimeZone);
+      selection.clear();
+      remapped.forEach((iso) => selection.add(iso));
+      note = selection.size > 0 ? `Moved to ${selectedTimeZone} wall clock` : "";
+      draw();
+    },
+    { signal },
+  );
 
-  const highlightCell = (event) => {
-    if (!event.target.classList.contains("hour")) return;
-
-    const handler = event.target.classList.contains("active")
-      ? removeSlots
-      : addSlots;
-
-    timeGrid.querySelectorAll(".hour").forEach((cell) => {
-      cell.addEventListener("mouseover", handler);
-    });
-  };
-
-  const toggleActive = (event) => {
-    if (event.target.classList.contains("hour")) {
-      event.target.classList.toggle("active");
-    }
-  };
-
-  const storeActiveCells = () => {
-    const slots = [...timeGrid.querySelectorAll(".hour.active")].map(
-      (cell) => cell.dataset.date,
+  if (stepSelect) {
+    stepSelect.addEventListener(
+      "change",
+      () => {
+        const next = Number(stepSelect.value);
+        const rescaled = rescale(selection, slotMinutes, next, selectedTimeZone);
+        slotMinutes = next;
+        grid.dataset.slotMinutes = String(next);
+        selection.clear();
+        rescaled.forEach((iso) => selection.add(iso));
+        note = "";
+        draw();
+      },
+      { signal },
     );
-    timeSlotInput.value = slots.join(",");
-  };
+  }
 
-  const resetListeners = () => {
-    timeGrid.querySelectorAll(".hour").forEach((cell) => {
-      cell.removeEventListener("mouseover", addSlots);
-      cell.removeEventListener("mouseover", removeSlots);
-    });
-    storeActiveCells();
-  };
-
-  timeZonePicker.addEventListener("change", () => {
-    selectedTimeZone = timeZonePicker.value;
-    drawTimeGrid();
+  [beginDateInput, endDateInput].forEach((input) => {
+    input.addEventListener(
+      "change",
+      () => {
+        note = "";
+        draw();
+      },
+      { signal },
+    );
   });
-  beginDateInput.addEventListener("change", drawTimeGrid);
-  endDateInput.addEventListener("change", drawTimeGrid);
-  timeGrid.addEventListener("mousedown", highlightCell);
-  timeGrid.addEventListener("mousedown", toggleActive);
-  timeGrid.addEventListener("mouseup", resetListeners);
 
-  selectedTimeZone = populateTimeZoneSelect(timeZonePicker);
-  rangeStart = DateTime.now().setZone(selectedTimeZone).startOf("day");
-  rangeEnd = rangeStart.plus({ days: 2 });
-  beginDateInput.value = rangeStart.toISODate();
-  endDateInput.value = rangeEnd.toISODate();
-  drawTimeGrid();
+  if (timeSlotInput.form) {
+    timeSlotInput.form.addEventListener("submit", serialize, { signal });
+  }
+
+  attachPainting(grid, {
+    selectable: SELECTABLE,
+    selection,
+    getMode: () => modeControl.get(),
+    onStroke: () => {
+      note = "";
+      serialize();
+    },
+    scrollContainer,
+  });
+
+  seedDateRange();
+  draw();
 };
 
 export { initTimeSlotDefiner };

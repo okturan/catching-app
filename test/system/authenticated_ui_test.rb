@@ -23,7 +23,7 @@ class AuthenticatedUiTest < ApplicationSystemTestCase
     assert_field "Description"
     assert_selector "#event_invited_user_ids option", text: users(:invitee).full_name
     assert_selector "#timezone-picker-new option", minimum: 1
-    assert_selector "#time-grid-define .hour", minimum: 1
+    assert_selector "#time-grid-define .slot", minimum: 1
     assert_button "Catch.App with your Friends!"
   end
 end

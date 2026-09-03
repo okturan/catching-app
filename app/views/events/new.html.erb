@@ -3,10 +3,10 @@
 </div>
 
 <div class="event-new-grid">
-<div>
+  <div>
     <%= simple_form_for(@event) do |f| %>
       <%= f.error_notification %>
-      <input name="time_slots[time_slot_array]" id="time_slot_array" type="hidden">
+      <input name="time_slots[time_slot_array]" id="time_slot_array" type="hidden" value="<%= params.dig(:time_slots, :time_slot_array) %>">
       <div class="form-events" style="background-image:url(https://res.cloudinary.com/dvpavvw1u/image/upload/v1633004095/meetingform2_puuthd.png);">
         <%= f.input :name, placeholder: "A Fabulous Meeting!" %>
         <%= f.input :description, as: :text, placeholder: "Do whatever!" %>
@@ -20,16 +20,16 @@
 
         <div class="mb-3">
           <label class="form-label" for="timezone-picker-new">I am in:</label>
-          <select class="form-select" id="timezone-picker-new"></select>
+          <select class="form-select" id="timezone-picker-new" data-selected="<%= params.dig(:event, :time_zone) %>"></select>
         </div>
 
         <div class="mb-3">
           <label class="form-label" for="event-begin">Start date:</label>
-          <input class="form-control" type="date" name="start" id="event-begin" value="" />
+          <input class="form-control" type="date" id="event-begin" value="<%= params[:start] %>" />
         </div>
         <div class="mb-4">
           <label class="form-label" for="event-end">End date:</label>
-          <input class="form-control" type="date" name="end" id="event-end" value="" />
+          <input class="form-control" type="date" id="event-end" value="<%= params[:end] %>" />
         </div>
         <div class="text-danger" id="range-tooltip" role="status">
         </div>
@@ -39,7 +39,16 @@
     <% end %>
   </div>
 
-  <div class="time-grid-define-wrapper">
-    <div id="time-grid-define"></div>
+  <div class="time-grid-panel time-grid-define-wrapper">
+    <div class="time-grid-scroll">
+      <table id="time-grid-define" class="time-grid" role="grid" aria-label="Offered times" data-slot-minutes="60" data-time-zone=""></table>
+    </div>
+    <div class="grid-action-bar">
+      <span id="selection-summary" aria-live="polite">No times selected</span>
+      <fieldset id="paint-mode" class="paint-mode" role="radiogroup" aria-label="Touch mode">
+        <label><input type="radio" name="paint-mode" value="scroll" checked><span>Scroll</span></label>
+        <label><input type="radio" name="paint-mode" value="paint"><span>Paint</span></label>
+      </fieldset>
+    </div>
   </div>
 </div>
