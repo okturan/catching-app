@@ -4,6 +4,8 @@ require "test_helper"
 # gives it its own browser session next to ApplicationSystemTestCase.
 class MobileSystemTestCase < ActionDispatch::SystemTestCase
   include Warden::Test::Helpers
+  include ActiveJob::TestHelper
+  include ActionMailer::TestCase::ClearTestDeliveries
 
   ANDROID_USER_AGENT = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 " \
     "(KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36".freeze

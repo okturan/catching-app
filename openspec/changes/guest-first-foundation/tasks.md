@@ -57,12 +57,12 @@
 
 ## 6. Accounts and claim
 
-- [ ] 6.1 `ClaimsController#show/#create` with the guarded compare-and-set including `left_at`, all four outcomes and messages, Devise stored location round trip
-- [ ] 6.2 Dashboard cards with role and status, claimed organizer flow (organizer_link mail, invitations gated), account-deletion nullify test, forgery-protection-on integration test
-- [ ] 6.3 System tests: `organizer_plans_event_test.rb` (signed out, pending page, organizer link, send), `organizer_finalizes_test.rb`, `claim_round_trip_test.rb`, old-Safari 406 controller test
+- [x] 6.1 `ClaimsController#show/#create` with the guarded compare-and-set including `left_at`, all four outcomes and messages, Devise stored location round trip
+- [x] 6.2 Dashboard cards with role and status, claimed organizer flow (organizer_link mail, invitations gated), account-deletion nullify test, forgery-protection-on integration test
+- [x] 6.3 System tests: `organizer_plans_event_test.rb` (signed out, pending page, organizer link, send), `organizer_finalizes_test.rb`, `claim_round_trip_test.rb`, old-Safari 406 controller test
 
 ## 7. Close out
 
-- [ ] 7.1 Run `bin/ci` in the build-stage image and confirm all five GitHub jobs green, including Brakeman with `--exit-on-warn`
-- [ ] 7.2 Update README.md: security model (participants, capability links, no directory, caps), verification section, environment variables (`INVITATION_DAILY_BUDGET`), and the local-Ruby note; update SECURITY.md wording about the member directory
-- [ ] 7.3 Register the follow-up changes named in design.md Non-Goals as OpenSpec changes (`friends-graph`, `thorough-planning`, `visual-redesign`, `dead-file-removal`, `ci-regime`)
+- [ ] 7.1 Run `bin/ci` in the build-stage image and confirm all five GitHub jobs green, including Brakeman with `--exit-on-warn` (local `bin/ci` passes end to end on 2026-09-03; the GitHub run waits for the push in 1.5)
+- [x] 7.2 Update README.md: security model (participants, capability links, no directory, caps), verification section, environment variables (`INVITATION_DAILY_BUDGET`), and the local-Ruby note; update SECURITY.md wording about the member directory
+- [x] 7.3 Register the follow-up changes named in design.md Non-Goals as OpenSpec changes (`friends-graph`, `thorough-planning`, `visual-redesign`, `dead-file-removal`, `ci-regime`)
