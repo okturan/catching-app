@@ -10,8 +10,39 @@ Rails.application.routes.draw do
   root "pages#home"
   resource :dashboard, only: :show
 
-  resources :events, only: %i[show new create update] do
+  get "events/pending", to: "events#pending", as: :pending_events
+  resources :events, only: %i[new create] do
     resources :activities, only: %i[index show new create]
-    resources :time_slots, only: :create
+  end
+  resources :organizer_links, only: %i[new create]
+
+  # Actions shared by the token family (/p/:token) and the session family
+  # (/participations/:participation_id). The viewer is always the scope
+  # parameter; nested ids name a target guest.
+  concern :participation_actions do
+    scope module: :participations do
+      resource :decline, only: :create
+      resource :finalization, only: :create
+      resources :invitations, only: :create
+      resources :participants, only: :destroy do
+        resource :resend, only: :create
+        resource :link_reveal, only: :create
+      end
+    end
+  end
+
+  scope "p/:token", constraints: { token: %r{[^/]+} }, format: false do
+    resource :participation, path: "", only: %i[show update destroy] do
+      concerns :participation_actions
+      scope module: :participations do
+        resource :claim, only: %i[show create]
+      end
+    end
+  end
+
+  scope "participations/:participation_id", as: :my do
+    resource :participation, path: "", only: %i[show update destroy] do
+      concerns :participation_actions
+    end
   end
 end

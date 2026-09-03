@@ -1,0 +1,189 @@
+<% content_for :head do %>
+  <meta name="robots" content="noindex">
+  <meta name="turbo-cache-control" content="no-cache">
+<% end %>
+<% content_for :canonical_url, root_url %>
+<% content_for :meta_title, "#{@event.name} · Catching App" %>
+
+<input id="received-time-slots" type="hidden" value="<%= @offered_slots.to_json %>">
+<input id="my-time-slots" type="hidden" value="<%= @my_slots.to_json %>">
+<input id="availability-counts" type="hidden" value="<%= @availability_counts.to_json %>">
+<input id="consensus-time-slots" type="hidden" value="<%= @consensus_slots.to_json %>">
+<% if @event.status? %>
+  <input id="final-window" type="hidden" value="<%= [@event.start_time.iso8601, @event.end_time.iso8601].to_json %>">
+<% end %>
+
+<div class="banner-events mb-2" style="height: 285px; background-image:url(https://res.cloudinary.com/dvpavvw1u/image/upload/v1633029501/blob-scene-haikei_2_fkcf9o.png);">
+  <h1>WE HAVE SO MUCH CATCHING.APP TO DO!</h1>
+</div>
+
+<div class="event-show-grid">
+  <div class="event-show-card">
+    <div class="event-show-card-top">
+      <div class="mb-3 rounded" id="event-show-select">
+        <label class="visually-hidden" for="timezone-picker-show">Display time zone</label>
+        <select class="form-select" id="timezone-picker-show" data-selected="<%= @participant.time_zone %>"></select>
+        <small class="text-muted">planned in <%= @event.time_zone %></small>
+      </div>
+      <label class="switch">
+        <span class="visually-hidden">Hide times not offered</span>
+        <input type="checkbox" id="hide-disabled-cells">
+        <span class="slider round"></span>
+      </label>
+    </div>
+
+    <div class="card text-white card-has-bg click-col" style="background-image:url('<%= asset_path("cover.jpg") %>');">
+      <%= image_tag "cover.jpg", class: "card-img d-none", alt: "" %>
+      <div class="card-img-overlay d-flex flex-column">
+        <div class="card-body">
+          <small class="card-meta"><%= @event.name %></small>
+          <h4 class="card-title mt-2 text-white"><%= simple_format(@event.description, {}, wrapper_tag: "div") %></h4>
+          <% if @event.status? %>
+            <small><span aria-hidden="true">🕒</span> <%= event_window(@event) %></small><br>
+            <small id="final-window-local"></small>
+          <% else %>
+            <small><span aria-hidden="true">🕒</span> pending</small>
+          <% end %>
+          <div class="dropdown-divider w-50 mb-2"></div>
+          <% if @participant.organizer? %>
+            <small>
+              <%= @counts[:invited] %> invited,
+              <%= @counts[:replied] %> replied,
+              <%= @counts[:declined] %> cannot make it,
+              <%= @counts[:unsent] %> not yet invited
+            </small>
+          <% else %>
+            <small>Who's invited?</small>
+            <div>
+              <% @guests.active.each do |guest| %>
+                <small class="card-meta my-3"><%= guest.display_name(viewer_role: :guest) %></small><br>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+        <div class="card-footer">
+          <div class="d-flex align-items-center">
+            <%= image_tag "Useravatar.png", class: "me-3 rounded-circle", alt: "", style: "max-width:50px" %>
+            <div class="flex-grow-1">
+              <small>an event by</small>
+              <h5 class="my-1 text-white d-block"><%= @organizer&.display_name(viewer_role: :guest) %></h5>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <% if @revealed_url %>
+      <div class="alert alert-warning position-static mt-3" role="status">
+        Link for <%= @revealed_guest.email %> (shown once): <code><%= @revealed_url %></code>
+      </div>
+    <% end %>
+
+    <% if @participant.guest? && !@event.status? %>
+      <%= form_with url: scoped_path, method: :patch, id: "availability-form", class: "mt-3" do |form| %>
+        <input name="time_slots[time_slot_array]" id="new-time-slot-array" type="hidden">
+        <input name="participant[time_zone]" type="hidden">
+        <div class="mb-2">
+          <%= form.label :name, "Your name", for: "participant_name", class: "form-label" %>
+          <%= form.text_field :name, value: @participant.name, id: "participant_name", name: "participant[name]", class: "form-control", maxlength: 100 %>
+        </div>
+      <% end %>
+      <div class="d-flex gap-2 mt-2 flex-wrap">
+        <%= button_to "None of these times work", scoped_path(:decline), method: :post, class: "btn btn-outline-secondary",
+          params: { "participant[time_zone]" => "" }, form: { data: { turbo_confirm: "Tell the organizer none of these times work for you?" } } %>
+        <%= button_to "Leave this event", scoped_path, method: :delete, class: "btn btn-outline-danger",
+          params: { "participant[time_zone]" => "" }, form: { data: { turbo_confirm: "Leave this event for good? Your link will stop working." } } %>
+      </div>
+    <% elsif @participant.organizer? && !@event.status? %>
+      <%= form_with url: scoped_path(:finalization), method: :post, id: "finalize-form" do |form| %>
+        <input id="final-time-slot-array" name="time_slots[time_slot_array]" type="hidden" value="">
+      <% end %>
+    <% end %>
+
+    <% if token_request? && !@participant.claimed? && !@participant.left? %>
+      <p class="mt-3"><%= link_to "Keep this event in your account", scoped_path(:claim), class: "btn btn-link" %></p>
+    <% end %>
+
+    <% unless token_request? %>
+      <div class="mt-3 d-flex gap-2">
+        <%= link_to "View activities", event_activities_path(@event), class: "btn btn-outline-primary" %>
+        <% if @participant.organizer? %>
+          <%= link_to "Add an activity", new_event_activity_path(@event), class: "btn btn-primary" %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <% if @participant.organizer? %>
+      <section class="mt-4 organizer-panel" aria-labelledby="participants-heading">
+        <h5 id="participants-heading">Guests</h5>
+        <% if @participant.link_opened_at.nil? %>
+          <p class="text-warning">
+            Open the organizer link we emailed to <%= @participant.email %> to send invitations.
+          </p>
+          <%= button_to "Send the link again", organizer_links_path, method: :post, class: "btn btn-outline-secondary btn-sm",
+            params: { "organizer_link[email]" => @participant.email } %>
+        <% elsif !@event.status? %>
+          <%= form_with url: scoped_path(:invitations), method: :post, class: "mb-3" do |form| %>
+            <%= form.label :emails, "Invite more people (one address per line or comma-separated)", for: "invitations_emails", class: "form-label" %>
+            <%= form.text_area :emails, id: "invitations_emails", name: "invitations[emails]", class: "form-control", rows: 3 %>
+            <% pending_count = @counts[:unsent] %>
+            <%= form.submit(pending_count.positive? ? "Send #{pluralize(pending_count, 'invitation')}" : "Send invitations", class: "btn btn-primary mt-2") %>
+          <% end %>
+        <% end %>
+
+        <table class="table table-sm align-middle" id="participant-table">
+          <thead>
+            <tr><th scope="col">Guest</th><th scope="col">State</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr>
+          </thead>
+          <tbody>
+            <% @guests.each do |guest| %>
+              <tr>
+                <td>
+                  <%= guest.email %>
+                  <% if guest.name.present? %><br><small><%= guest.name %></small><% end %>
+                </td>
+                <td><%= guest_state_label(guest, @deliveries, slot_count: guest.time_slots.size) %></td>
+                <td class="text-nowrap">
+                  <% if guest.left_at.nil? && !@event.status? && @participant.link_opened_at.present? %>
+                    <%= button_to "Resend", scoped_path(:participant_resend, guest), method: :post, class: "btn btn-link btn-sm p-0 me-2" %>
+                    <%= button_to "Show link to copy", scoped_path(:participant_link_reveal, guest), method: :post, class: "btn btn-link btn-sm p-0 me-2",
+                      form: { data: { turbo_confirm: "Anyone with this link can answer as this guest. Show it?" } } %>
+                  <% end %>
+                  <% if guest.left_at.nil? && !@event.status? %>
+                    <%= button_to "Remove", scoped_path(:participant, guest), method: :delete, class: "btn btn-link btn-sm p-0 text-danger",
+                      form: { data: { turbo_confirm: "Remove #{guest.email} from this event?" } } %>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </section>
+    <% end %>
+  </div>
+
+  <div class="time-grid-panel time-grid-show-wrapper">
+    <div class="time-grid-scroll">
+      <table id="time-grid-show" class="time-grid" role="grid" aria-label="Availability"
+        data-role="<%= @role %>"
+        data-slot-minutes="<%= @event.slot_minutes %>"
+        data-event-time-zone="<%= @event.time_zone %>"
+        data-not-before="<%= TimeSlotParser::PAST_GRACE.ago.utc.iso8601 %>"
+        <%= "data-finalized" if @event.status? %>></table>
+    </div>
+    <div class="grid-action-bar">
+      <span id="selection-summary" aria-live="polite">No times selected</span>
+      <fieldset id="paint-mode" class="paint-mode" role="radiogroup" aria-label="Touch mode">
+        <label><input type="radio" name="paint-mode" value="scroll" checked><span>Scroll</span></label>
+        <label><input type="radio" name="paint-mode" value="paint"><span>Paint</span></label>
+      </fieldset>
+      <% if @participant.guest? && !@event.status? %>
+        <button type="submit" form="availability-form" class="btn-meeting px-5">Save</button>
+      <% elsif @participant.organizer? && !@event.status? && @counts[:replied].positive? %>
+        <button type="submit" form="finalize-form" class="btn-meeting px-5">Set in stone</button>
+      <% elsif @participant.organizer? && !@event.status? %>
+        <span class="text-muted">No replies yet. Invitations sent to <%= @counts[:invited] %>.</span>
+      <% end %>
+    </div>
+  </div>
+</div>

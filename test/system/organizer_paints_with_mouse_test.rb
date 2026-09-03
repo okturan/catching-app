@@ -18,7 +18,7 @@ class OrganizerPaintsWithMouseTest < ApplicationSystemTestCase
 
     times = hidden_value("#time_slot_array").split(",").map { |value| Time.iso8601(value) }.sort
     assert_equal 2, times.size
-    assert_equal 3600, times.last - times.first
+    assert_equal 1800, times.last - times.first, "the form defaults to 30-minute slots"
 
     previous_zone = find("#timezone-picker-new").value
     select "Asia/Tokyo", from: "timezone-picker-new"

@@ -4,7 +4,7 @@
       <p class="text-uppercase text-muted mb-1"><%= @event.name %></p>
       <h1>Activities</h1>
     </div>
-    <% if @event.user == current_user %>
+    <% if @participation.organizer? %>
       <%= link_to "Add activity", new_event_activity_path(@event), class: "btn btn-primary" %>
     <% end %>
   </div>
@@ -23,5 +23,5 @@
     <% end %>
   </div>
 
-  <%= link_to "Back to event", event_path(@event), class: "btn btn-link mt-4" %>
+  <%= link_to "Back to event", my_participation_path(@participation), class: "btn btn-link mt-4" %>
 </div>

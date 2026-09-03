@@ -1,6 +1,7 @@
 class ActivitiesController < ApplicationController
   before_action :set_accessible_event, only: %i[index show]
   before_action :set_owned_event, only: %i[new create]
+  before_action :set_participation
   before_action :set_activity, only: :show
 
   def index
@@ -26,11 +27,15 @@ class ActivitiesController < ApplicationController
   private
 
   def set_accessible_event
-    @event = Event.accessible_to(current_user).find(params[:event_id])
+    @event = Event.for_user(current_user).find(params[:event_id])
   end
 
   def set_owned_event
-    @event = current_user.events.find(params[:event_id])
+    @event = Event.organized_by(current_user).find(params[:event_id])
+  end
+
+  def set_participation
+    @participation = current_user.participants.active.find_by!(event_id: @event.id)
   end
 
   def set_activity

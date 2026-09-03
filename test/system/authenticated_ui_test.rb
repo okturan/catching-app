@@ -12,16 +12,16 @@ class AuthenticatedUiTest < ApplicationSystemTestCase
     click_button "Log in"
 
     assert_text "SIGN OUT"
-    click_link "SEE MY EVENTS"
-
     assert_current_path dashboard_path
     assert_text "Planning session"
+    assert_text "Organizing"
     click_link "PLAN YOUR MEETING NOW"
 
     assert_current_path new_event_path
     assert_field "Name"
     assert_field "Description"
-    assert_selector "#event_invited_user_ids option", text: users(:invitee).full_name
+    assert_field "Invite people (one address per line or comma-separated)"
+    assert_select "Slot length", selected: "30 minutes"
     assert_selector "#timezone-picker-new option", minimum: 1
     assert_selector "#time-grid-define .slot", minimum: 1
     assert_button "Catch.App with your Friends!"

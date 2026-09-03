@@ -1,12 +1,8 @@
 require "mobile_system_test_case"
 
 class GuestPaintsOnTouchTest < MobileSystemTestCase
-  setup do
-    login_as users(:invitee), scope: :user
-  end
-
   test "guest scrolls by default and paints in paint mode" do
-    visit event_path(events(:planning))
+    visit participation_path(raw_token(:planning_guest))
     assert page.evaluate_script("matchMedia('(any-pointer: coarse)').matches"), "touch emulation is not active"
     assert_selector "#time-grid-show .slot.selectable", count: 2
     assert page.evaluate_script("document.documentElement.scrollWidth <= window.innerWidth"), "body scrolls horizontally"
@@ -23,7 +19,7 @@ class GuestPaintsOnTouchTest < MobileSystemTestCase
     assert_selector "#time-grid-show .slot.active", count: 2
     assert_selector "button[form='availability-form']", visible: true
 
-    click_button "Confirm"
+    click_button "Save"
     assert_text "Availability saved."
     assert_selector "#time-grid-show .slot.active", count: 2
   end

@@ -2,47 +2,48 @@
   <h1>WE HAVE SO MUCH CATCHING.APP TO DO!</h1>
 </div>
 
-<div class="header-activity">
+<% [ [ "Organizing", @organizing ], [ "Invited", @invited ] ].each do |heading, participations| %>
+  <div class="header-activity">
+    <h2><%= heading %></h2>
+  </div>
 
-</div>
-
-<div class="container-activities">
-  <% @events.each do |event| %>
-  
-    <%= link_to event_path(event), class: "card text-white text-decoration-none card-has-bg click-col", style: "background-image:url('https://res.cloudinary.com/dvpavvw1u/image/upload/v1633026904/gabriel-benois-qnWPjzewewA-unsplash_1_ccwnb8-c_scale_h_900_w_600_kbdkhq.jpg');" do %>
-      <img class="card-img d-none" src="https://res.cloudinary.com/dvpavvw1u/image/upload/v1633026904/gabriel-benois-qnWPjzewewA-unsplash_1_ccwnb8-c_scale_h_900_w_600_kbdkhq.jpg" alt="">
-      <div class="card-img-overlay d-flex flex-column">
-        <div class="card-body"> <small class="card-meta mb-2"><%= event.name %></small>
-          <% if event.status? %>
-            <div class="event-finalized-emoji">
-              👍
-            </div>
-          <% end %>
-        
-          <h4 class="card-title mt-0 text-white"><%= event.description %></h4>
-          <small><span aria-hidden="true">🕒</span><%= event.status? ? event.start_time.strftime("  %b %e, %l:%M %p") : " pending" %></small>
-          <div class="dropdown-divider w-50 mb-2"></div>
-          <div>
-          <% unless event.invited_users.empty? %>
-          <small>Who's invited?</small><br>
-            <% event.invited_users.each do |guest| %>
-              <small class="card-meta my-3"><%= guest.full_name %></small><br>
+  <div class="container-activities">
+    <% participations.each do |participation| %>
+      <% event = participation.event %>
+      <%= link_to my_participation_path(participation), class: "card text-white text-decoration-none card-has-bg click-col", style: "background-image:url('https://res.cloudinary.com/dvpavvw1u/image/upload/v1633026904/gabriel-benois-qnWPjzewewA-unsplash_1_ccwnb8-c_scale_h_900_w_600_kbdkhq.jpg');" do %>
+        <img class="card-img d-none" src="https://res.cloudinary.com/dvpavvw1u/image/upload/v1633026904/gabriel-benois-qnWPjzewewA-unsplash_1_ccwnb8-c_scale_h_900_w_600_kbdkhq.jpg" alt="">
+        <div class="card-img-overlay d-flex flex-column">
+          <div class="card-body"> <small class="card-meta mb-2"><%= event.name %></small>
+            <% if event.status? %>
+              <div class="event-finalized-emoji">👍</div>
             <% end %>
-          <% end %>
+            <h4 class="card-title mt-0 text-white"><%= event.description %></h4>
+            <small><span aria-hidden="true">🕒</span><%= event.status? ? event.start_time.strftime("  %b %e, %l:%M %p UTC") : " pending" %></small>
+            <div class="dropdown-divider w-50 mb-2"></div>
+            <small>
+              <% if participation.organizer? %>
+                <%= pluralize(event.guests.active.count, "guest") %>
+              <% elsif participation.declined_at.present? %>
+                You said none of these times work
+              <% elsif participation.responded_at.present? %>
+                You replied
+              <% else %>
+                Waiting for your reply
+              <% end %>
+            </small>
           </div>
-        </div>
-        <div class="card-footer">
-          <div class="d-flex align-items-center">
-            <%= image_tag "Useravatar.png", class: "me-3 rounded-circle", alt: "", style: "max-width:50px" %>
-            <div class="flex-grow-1">
-              <small>an event by</small>
-              <h5 class="my-1 text-white d-block"><%= event.user.full_name %></h5>
-              <small>jolly good lad</small>
+          <div class="card-footer">
+            <div class="d-flex align-items-center">
+              <%= image_tag "Useravatar.png", class: "me-3 rounded-circle", alt: "", style: "max-width:50px" %>
+              <div class="flex-grow-1">
+                <small>an event by</small>
+                <h5 class="my-1 text-white d-block"><%= event.organizer&.display_name(viewer_role: :guest) %></h5>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      <% end %>
     <% end %>
-  <% end %>
-</div>
+  </div>
+<% end %>
 <div class="push"></div>

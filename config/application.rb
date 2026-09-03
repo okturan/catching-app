@@ -17,6 +17,9 @@ module CatchingApp
 
     config.autoload_lib(ignore: %w[assets tasks templates])
 
+    # Capability tokens travel in paths; keep them out of redirect log lines.
+    config.filter_redirect += [ %r{/p/[A-Za-z0-9]{32}} ]
+
     config.generators do |generate|
       generate.assets false
       generate.helper false
