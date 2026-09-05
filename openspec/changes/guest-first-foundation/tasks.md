@@ -2,7 +2,7 @@
 
 - [x] 1.1 Delete the `ARGV.unshift("--ensure-latest")` line from `bin/brakeman`; keep `--exit-on-warn --exit-on-error` in CI and `config/ci.rb` unchanged
 - [x] 1.2 Change `Gemfile` to `ruby "~> 4.0.5"` so a patch-level Homebrew Ruby boots the app; keep `.ruby-version` at `4.0.5` so CI and the Dockerfile stay exact and `Gemfile.lock` keeps `RUBY VERSION ruby 4.0.5` (frozen installs tolerate the patch difference; verified locally on 4.0.6); leave `.node-version` exact (CI asserts it)
-- [x] 1.3 Change `package.json` `test` to `node --test test/javascript/`
+- [x] 1.3 Change `package.json` `test` to `node --test "test/javascript/**/*.test.js"` (a bare directory is rejected by Node 24, which CI pins)
 - [x] 1.4 Give `ApplicationMailer` the sender fallback `ENV.fetch("MAILER_FROM", "no-reply@catching.app")` and set Devise `config.parent_mailer = "ApplicationMailer"`
 - [ ] 1.5 Open a PR with only the above, confirm all five CI jobs pass including the container smoke test, and note whether bundler-audit surfaces anything now that it runs again
 

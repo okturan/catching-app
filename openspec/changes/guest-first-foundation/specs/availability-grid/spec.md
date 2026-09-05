@@ -89,7 +89,7 @@ On coarse pointers the default mode SHALL be scroll, paint SHALL be opt-in throu
 - **THEN** `document.documentElement.scrollWidth` is at most `window.innerWidth`
 
 ### Requirement: JavaScript tests run as a directory
-`package.json` `test` SHALL be `node --test test/javascript/` so every test file runs in `npm run check`; no new npm dependency SHALL be added.
+`package.json` `test` SHALL be `node --test "test/javascript/**/*.test.js"` so every test file runs in `npm run check` on the pinned Node 24; no new npm dependency SHALL be added.
 
 #### Scenario: New test file is picked up
 - **WHEN** `test/javascript/paint.test.js` exists
