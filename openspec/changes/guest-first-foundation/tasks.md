@@ -4,7 +4,7 @@
 - [x] 1.2 Change `Gemfile` to `ruby "~> 4.0.5"` so a patch-level Homebrew Ruby boots the app; keep `.ruby-version` at `4.0.5` so CI and the Dockerfile stay exact and `Gemfile.lock` keeps `RUBY VERSION ruby 4.0.5` (frozen installs tolerate the patch difference; verified locally on 4.0.6); leave `.node-version` exact (CI asserts it)
 - [x] 1.3 Change `package.json` `test` to `node --test "test/javascript/**/*.test.js"` (a bare directory is rejected by Node 24, which CI pins)
 - [x] 1.4 Give `ApplicationMailer` the sender fallback `ENV.fetch("MAILER_FROM", "no-reply@catching.app")` and set Devise `config.parent_mailer = "ApplicationMailer"`
-- [ ] 1.5 Open a PR with only the above, confirm all five CI jobs pass including the container smoke test, and note whether bundler-audit surfaces anything now that it runs again
+- [x] 1.5 Open a PR with only the above, confirm all five CI jobs pass including the container smoke test, and note whether bundler-audit surfaces anything now that it runs again (done as one draft PR #53 for the whole branch; run 33953906015 green on all five jobs; bundler-audit found nothing)
 
 ## 2. Grid library and painting (front end only, Ruby suite untouched)
 
@@ -17,7 +17,7 @@
 - [x] 2.7 SCSS: table styling, `touch-action` rules with `pinch-zoom`, `.painting` state, bounded-height `.time-grid-scroll` with sticky headers and row-label column, coarse-pointer row heights and sticky action bar, `.slot.past`, valid `.received` colors, `.card { width: min(400px, 100%) }`
 - [x] 2.8 Render `value` on the hidden `#time_slot_array` in `events/new.html.erb` and add `data-slot-minutes`/`data-time-zone` to both grid roots (defaults 60 and browser zone in this phase); `events/show.html.erb` moved to the show contract (`data-role`, `#my-time-slots`, `#availability-counts`, action bar, `#is-host` removed) with two extra instance variables in `EventsController#show`
 - [x] 2.9 System tests: update `authenticated_ui_test.rb` selector to `.slot`; add `organizer_paints_with_mouse_test.rb` (pointer actions paint two adjacent cells, zone change moves them); add `MobileSystemTestCase` (412x915, touch emulation, distinct driver name) and `guest_paints_on_touch_test.rb` asserting scroll-mode scroll, tap toggle, paint-mode four cells, edge auto-scroll, no horizontal body scroll, skipping with a message when the driver lacks touch `PointerInput`; keyboard test with one Tab stop
-- [ ] 2.10 Run `npm run check` and the system tests in CI; PR with the Ruby suite unchanged
+- [x] 2.10 Run `npm run check` and the system tests in CI; PR with the Ruby suite unchanged (green in PR #53 after switching the JS test script to a quoted glob)
 
 ## 3. Data model: participants, ledger, granularity, re-parented slots
 
@@ -63,6 +63,6 @@
 
 ## 7. Close out
 
-- [ ] 7.1 Run `bin/ci` in the build-stage image and confirm all five GitHub jobs green, including Brakeman with `--exit-on-warn` (local `bin/ci` passes end to end on 2026-09-03; the GitHub run waits for the push in 1.5)
+- [x] 7.1 Run `bin/ci` in the build-stage image and confirm all five GitHub jobs green, including Brakeman with `--exit-on-warn` (local `bin/ci` green 2026-09-03; GitHub run 33953906015 green 2026-09-05 including the container smoke test)
 - [x] 7.2 Update README.md: security model (participants, capability links, no directory, caps), verification section, environment variables (`INVITATION_DAILY_BUDGET`), and the local-Ruby note; update SECURITY.md wording about the member directory
 - [x] 7.3 Register the follow-up changes named in design.md Non-Goals as OpenSpec changes (`friends-graph`, `thorough-planning`, `visual-redesign`, `dead-file-removal`, `ci-regime`)
