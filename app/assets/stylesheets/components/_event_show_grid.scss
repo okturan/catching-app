@@ -1,36 +1,101 @@
 .event-show-grid {
-  display: flex;
-  justify-content: center;
-  flex-direction: row;
-  flex-flow: wrap;
-  padding: 1% 5%;
-}
+  display: grid;
+  grid-template-columns: minmax(300px, 400px) minmax(0, 1fr);
+  gap: clamp(1rem, 3vw, 2.5rem);
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: clamp(1rem, 3vw, 2rem) clamp(1rem, 4vw, 2.5rem) 3rem;
+  align-items: start;
 
-.event-new-grid {
-  display: flex;
-  justify-content: center;
-  flex-direction: row;
-  flex-flow: wrap;
-  padding: 5%;
-}
-
-#event-show-select {
-  width: 65%;
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
 }
 
 .event-show-card {
-  align-self: flex-start;
-  justify-content: space-evenly;
-  align-items: center;
-  display: flex;
-  flex-direction: column;
-  margin-right: 3vw;
-  margin-top: 16px;
+  display: grid;
+  gap: 1rem;
+  align-content: start;
 }
 
 .event-show-card-top {
   display: flex;
-  justify-content: space-evenly;
+  justify-content: space-between;
   align-items: center;
-  margin-top: 6px;
+  gap: 1rem;
+}
+
+#event-show-select {
+  flex: 1 1 auto;
+  small { display: block; margin-top: 0.25rem; }
+}
+
+.event-panel {
+  @extend .face;
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  display: grid;
+  gap: 0.75rem;
+
+  .plate { justify-self: start; }
+  h1 {
+    font-size: clamp(1.5rem, 2.6vw, 2rem);
+    font-weight: 800;
+    margin: 0;
+    .plate { font-size: 0.65rem; vertical-align: middle; margin-left: 0.4rem; }
+  }
+  .event-description { color: $ink-soft; margin: 0; }
+  .event-when {
+    font-family: $time-font;
+    font-size: 0.95rem;
+    display: grid;
+    gap: 0.15rem;
+  }
+  .event-when.is-pending { color: $ink-soft; font-family: $body-font; font-weight: 600; }
+  .event-people {
+    border-top: 1px solid $hairline;
+    padding-top: 0.75rem;
+    font-size: 0.9rem;
+    color: $ink-soft;
+    ul { list-style: none; padding: 0; margin: 0.25rem 0 0; display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; }
+    strong { color: $ink; }
+  }
+}
+
+.organizer-panel {
+  @extend .face;
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  display: grid;
+  gap: 1rem;
+
+  h5 {
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin: 0;
+  }
+  .table { margin: 0; font-size: 0.9rem; }
+  .table td, .table th { border-color: $hairline; }
+}
+
+.switch-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  .switch-label { font-size: 0.85rem; font-weight: 600; color: $ink-soft; white-space: nowrap; }
+}
+
+.guest-panel .guest-hint {
+  margin: 0;
+  color: $ink-soft;
+  font-size: 0.9rem;
+}
+
+.organizer-panel .text-warning {
+  color: $ink !important;
+  background: $awake-wash;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  margin: 0;
 }

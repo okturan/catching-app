@@ -40,3 +40,7 @@
 # Ignore Mac and Linux file system files
 *.swp
 .DS_Store
+
+# Impeccable local state and review captures
+.impeccable/review/
+.impeccable/config.local.json

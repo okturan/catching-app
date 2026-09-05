@@ -3,7 +3,7 @@ require "application_system_test_case"
 class OrganizerPlansEventTest < ApplicationSystemTestCase
   test "a visitor without an account plans an event and opens the organizer link" do
     visit root_path
-    click_link "PLAN YOUR MEETING NOW"
+    click_link "Plan a meeting", match: :first
     assert_current_path new_event_path
 
     fill_in "Name", with: "Board games night"
@@ -19,7 +19,7 @@ class OrganizerPlansEventTest < ApplicationSystemTestCase
     page.driver.browser.action.move_to(first_cell.native).pointer_down.move_to(second_cell.native).pointer_up.perform
     assert_text "2 slots on 1 day"
 
-    click_button "Catch.App with your Friends!"
+    click_button "Send me my organizer link"
     assert_text "Check your inbox"
     assert_text "ann@example.com"
     assert_text "Nothing has gone to your guests yet"

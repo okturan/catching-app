@@ -1,6 +1,24 @@
+// Flashes read like a notice pinned to the wall, not a floating toast.
 .alert {
-  position: fixed;
-  bottom: 16px;
-  right: 16px;
-  z-index: 1000;
+  max-width: 1280px;
+  margin: 1rem auto 0;
+  border: 1px solid rgba(20, 20, 20, 0.2);
+  border-radius: 4px;
+  font-weight: 600;
+  padding-right: 3rem;
+
+  &.alert-info {
+    background: $face;
+    color: $ink;
+    border-left: 1px solid rgba(20, 20, 20, 0.2);
+  }
+  &.alert-warning {
+    background: $awake-wash;
+    color: $ink;
+  }
+}
+
+body > .alert {
+  margin-left: clamp(1rem, 4vw, 2.5rem);
+  margin-right: clamp(1rem, 4vw, 2.5rem);
 }

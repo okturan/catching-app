@@ -1,49 +1,47 @@
-<div class="banner-events" style="background-image:url(https://res.cloudinary.com/dvpavvw1u/image/upload/v1633029501/blob-scene-haikei_2_fkcf9o.png);">
-  <h1>WE HAVE SO MUCH CATCHING.APP TO DO!</h1>
-</div>
-
 <% [ [ "Organizing", @organizing ], [ "Invited", @invited ] ].each do |heading, participations| %>
-  <div class="header-activity">
-    <h2><%= heading %></h2>
-  </div>
+  <section aria-labelledby="<%= heading.parameterize %>-heading">
+    <h2 class="section-title" id="<%= heading.parameterize %>-heading"><%= heading %> <span class="plate"><%= participations.size %></span></h2>
 
-  <div class="container-activities">
-    <% participations.each do |participation| %>
-      <% event = participation.event %>
-      <%= link_to my_participation_path(participation), class: "card text-white text-decoration-none card-has-bg click-col", style: "background-image:url('https://res.cloudinary.com/dvpavvw1u/image/upload/v1633026904/gabriel-benois-qnWPjzewewA-unsplash_1_ccwnb8-c_scale_h_900_w_600_kbdkhq.jpg');" do %>
-        <img class="card-img d-none" src="https://res.cloudinary.com/dvpavvw1u/image/upload/v1633026904/gabriel-benois-qnWPjzewewA-unsplash_1_ccwnb8-c_scale_h_900_w_600_kbdkhq.jpg" alt="">
-        <div class="card-img-overlay d-flex flex-column">
-          <div class="card-body"> <small class="card-meta mb-2"><%= event.name %></small>
-            <% if event.status? %>
-              <div class="event-finalized-emoji">👍</div>
-            <% end %>
-            <h4 class="card-title mt-0 text-white"><%= event.description %></h4>
-            <small><span aria-hidden="true">🕒</span><%= event.status? ? event.start_time.strftime("  %b %e, %l:%M %p UTC") : " pending" %></small>
-            <div class="dropdown-divider w-50 mb-2"></div>
-            <small>
+    <% if participations.empty? %>
+      <div class="empty">
+        <% if heading == "Organizing" %>
+          <span>Nothing planned yet.</span>
+          <%= link_to "Plan a meeting", new_event_path, class: "plate plate-button-sm" %>
+        <% else %>
+          <span>No invitations yet. Guest links you open while signed in show up here.</span>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="event-list">
+        <% participations.each do |participation| %>
+          <% event = participation.event %>
+          <%= link_to my_participation_path(participation), class: "event-face" do %>
+            <h3><%= event.name %></h3>
+            <span class="event-face-time">
+              <% if event.status? %>
+                <%= event.start_time.utc.strftime("%a %-d %b, %H:%M") %> UTC
+              <% else %>
+                <span class="body-font">pending</span>
+              <% end %>
+            </span>
+            <p><%= event.description %></p>
+            <span class="event-face-state">
               <% if participation.organizer? %>
                 <%= pluralize(event.guests.active.count, "guest") %>
-              <% elsif participation.declined_at.present? %>
-                You said none of these times work
-              <% elsif participation.responded_at.present? %>
-                You replied
               <% else %>
-                Waiting for your reply
+                by <%= event.organizer&.display_name(viewer_role: :guest) %> ·
+                <% if participation.declined_at.present? %>
+                  you said none of these times work
+                <% elsif participation.responded_at.present? %>
+                  you replied
+                <% else %>
+                  waiting for your reply
+                <% end %>
               <% end %>
-            </small>
-          </div>
-          <div class="card-footer">
-            <div class="d-flex align-items-center">
-              <%= image_tag "Useravatar.png", class: "me-3 rounded-circle", alt: "", style: "max-width:50px" %>
-              <div class="flex-grow-1">
-                <small>an event by</small>
-                <h5 class="my-1 text-white d-block"><%= event.organizer&.display_name(viewer_role: :guest) %></h5>
-              </div>
-            </div>
-          </div>
-        </div>
-      <% end %>
+            </span>
+          <% end %>
+        <% end %>
+      </div>
     <% end %>
-  </div>
+  </section>
 <% end %>
-<div class="push"></div>

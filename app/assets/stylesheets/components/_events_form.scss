@@ -1,24 +1,52 @@
-.form-events {
-  /* background: yellow; */
-  background-size: cover;
-  padding: 40px 20px;
-  /* border-radius: 3px; */
-  border-radius: 15px;
-  box-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-  h2 {
-    font-size: 25px;
-    font-weight: bold;
-    margin-bottom: 30px;
-    text-align: center;
+.event-new-grid {
+  display: grid;
+  grid-template-columns: minmax(300px, 420px) minmax(0, 1fr);
+  gap: clamp(1rem, 3vw, 2.5rem);
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: clamp(1rem, 3vw, 2rem) clamp(1rem, 4vw, 2.5rem) 3rem;
+  align-items: start;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
   }
-/*   .btn {
-    width: 100%;
-    margin-bottom: 20px;
-  } */
-  margin-bottom: 3vw;
-  margin-right: 3vw;
-  margin-left: 1vw;
 }
-.form-control {
-  border-radius: 15px;
+
+.form-events {
+  @extend .face;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  display: grid;
+  gap: 0.25rem;
+
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+  }
+}
+
+.form-control,
+.form-select {
+  border-radius: 4px;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: $enamel;
+}
+
+.page-head {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: clamp(1.5rem, 4vw, 2.5rem) clamp(1rem, 4vw, 2.5rem) 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.75rem 1.5rem;
+
+  h1 {
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    font-weight: 800;
+    margin: 0;
+  }
 }

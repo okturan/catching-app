@@ -1,16 +1,15 @@
-// Import your components CSS files here.
+// Component partials, one per material or surface.
+@import "wall";
+@import "clock";
 @import "alert";
 @import "navbar";
-@import "activity_list";
+@import "footer";
 @import "dashboard";
 @import "time_slot_definer";
-@import "banner";
 @import "buttons";
 @import "events_form";
 @import "forms";
 @import "event_show_grid";
 @import "toggle";
-@import "footer";
 @import "animations";
-@import "friends";
 @import "cards";

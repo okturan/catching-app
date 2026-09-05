@@ -1,5 +1,6 @@
-<div class="banner-events mb-1" style="height: 285px; background-image:url(https://res.cloudinary.com/dvpavvw1u/image/upload/v1633029501/blob-scene-haikei_2_fkcf9o.png);">
-  <h1>WE HAVE SO MUCH CATCHING.APP TO DO!</h1>
+<div class="page-head">
+  <h1>Offer the times you can do.</h1>
+  <p class="lede mb-0">Paint your free hours on the grid, in your own zone. Your friends see them in theirs.</p>
 </div>
 
 <div class="event-new-grid">
@@ -10,8 +11,8 @@
         <div class="alert alert-danger position-static" role="alert"><%= @event.errors[:base].to_sentence %></div>
       <% end %>
       <input name="time_slots[time_slot_array]" id="time_slot_array" type="hidden" value="<%= params.dig(:time_slots, :time_slot_array) %>">
-      <div class="form-events" style="background-image:url(https://res.cloudinary.com/dvpavvw1u/image/upload/v1633004095/meetingform2_puuthd.png);">
-        <%= f.input :name, placeholder: "A Fabulous Meeting!" %>
+      <div class="form-events">
+        <%= f.input :name, placeholder: "A fabulous meeting!" %>
         <%= f.input :description, as: :text, placeholder: "Do whatever!" %>
 
         <% unless user_signed_in? %>
@@ -49,7 +50,8 @@
         <div class="text-danger" id="range-tooltip" role="status">
         </div>
 
-        <%= f.submit "Catch.App with your Friends!", class: "btn-meeting mb-0" %>
+        <% submit_label = user_signed_in? ? "Plan it" : "Send me my organizer link" %>
+        <%= f.submit submit_label, class: "btn-meeting mb-0" %>
       </div>
     <% end %>
   </div>

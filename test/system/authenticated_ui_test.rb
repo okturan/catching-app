@@ -11,11 +11,11 @@ class AuthenticatedUiTest < ApplicationSystemTestCase
     fill_in "Password", with: "correct horse battery staple"
     click_button "Log in"
 
-    assert_text "SIGN OUT"
+    assert_text "Sign out"
     assert_current_path dashboard_path
     assert_text "Planning session"
     assert_text "Organizing"
-    click_link "PLAN YOUR MEETING NOW"
+    click_link "Plan a meeting", match: :first
 
     assert_current_path new_event_path
     assert_field "Name"
@@ -24,6 +24,6 @@ class AuthenticatedUiTest < ApplicationSystemTestCase
     assert_select "Slot length", selected: "30 minutes"
     assert_selector "#timezone-picker-new option", minimum: 1
     assert_selector "#time-grid-define .slot", minimum: 1
-    assert_button "Catch.App with your Friends!"
+    assert_button "Plan it"
   end
 end

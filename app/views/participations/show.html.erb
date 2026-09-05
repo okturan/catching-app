@@ -13,63 +13,50 @@
   <input id="final-window" type="hidden" value="<%= [@event.start_time.iso8601, @event.end_time.iso8601].to_json %>">
 <% end %>
 
-<div class="banner-events mb-2" style="height: 285px; background-image:url(https://res.cloudinary.com/dvpavvw1u/image/upload/v1633029501/blob-scene-haikei_2_fkcf9o.png);">
-  <h1>WE HAVE SO MUCH CATCHING.APP TO DO!</h1>
-</div>
-
 <div class="event-show-grid">
   <div class="event-show-card">
     <div class="event-show-card-top">
       <div class="mb-3 rounded" id="event-show-select">
         <label class="visually-hidden" for="timezone-picker-show">Display time zone</label>
         <select class="form-select" id="timezone-picker-show" data-selected="<%= @participant.time_zone %>"></select>
-        <small class="text-muted">planned in <%= @event.time_zone %></small>
+        <small class="text-muted">Shown in your zone · planned in <%= @event.time_zone %></small>
       </div>
-      <label class="switch">
-        <span class="visually-hidden">Hide times not offered</span>
-        <input type="checkbox" id="hide-disabled-cells">
-        <span class="slider round"></span>
+      <label class="switch-row">
+        <span class="switch">
+          <input type="checkbox" id="hide-disabled-cells">
+          <span class="slider round"></span>
+        </span>
+        <span class="switch-label">Hide times not offered</span>
       </label>
     </div>
 
-    <div class="card text-white card-has-bg click-col" style="background-image:url('<%= asset_path("cover.jpg") %>');">
-      <%= image_tag "cover.jpg", class: "card-img d-none", alt: "" %>
-      <div class="card-img-overlay d-flex flex-column">
-        <div class="card-body">
-          <small class="card-meta"><%= @event.name %></small>
-          <h4 class="card-title mt-2 text-white"><%= simple_format(@event.description, {}, wrapper_tag: "div") %></h4>
-          <% if @event.status? %>
-            <small><span aria-hidden="true">🕒</span> <%= event_window(@event) %></small><br>
-            <small id="final-window-local"></small>
-          <% else %>
-            <small><span aria-hidden="true">🕒</span> pending</small>
-          <% end %>
-          <div class="dropdown-divider w-50 mb-2"></div>
-          <% if @participant.organizer? %>
-            <small>
-              <%= @counts[:invited] %> invited,
-              <%= @counts[:replied] %> replied,
-              <%= @counts[:declined] %> cannot make it,
-              <%= @counts[:unsent] %> not yet invited
-            </small>
-          <% else %>
-            <small>Who's invited?</small>
-            <div>
-              <% @guests.active.each do |guest| %>
-                <small class="card-meta my-3"><%= guest.display_name(viewer_role: :guest) %></small><br>
-              <% end %>
-            </div>
-          <% end %>
+    <div class="event-panel">
+      <h1><%= @event.name %><% if @event.status? %> <span class="plate">Set in stone</span><% end %></h1>
+      <% if @event.description.present? %>
+        <%= simple_format(@event.description, { class: "event-description" }) %>
+      <% end %>
+      <% if @event.status? %>
+        <div class="event-when">
+          <span><%= event_window(@event) %></span>
+          <span id="final-window-local"></span>
         </div>
-        <div class="card-footer">
-          <div class="d-flex align-items-center">
-            <%= image_tag "Useravatar.png", class: "me-3 rounded-circle", alt: "", style: "max-width:50px" %>
-            <div class="flex-grow-1">
-              <small>an event by</small>
-              <h5 class="my-1 text-white d-block"><%= @organizer&.display_name(viewer_role: :guest) %></h5>
-            </div>
-          </div>
-        </div>
+      <% else %>
+        <div class="event-when is-pending">Time to be confirmed by <%= @organizer&.display_name(viewer_role: :guest) %></div>
+      <% end %>
+      <div class="event-people">
+        <% if @participant.organizer? %>
+          <strong><%= @counts[:invited] %></strong> invited,
+          <strong><%= @counts[:replied] %></strong> replied,
+          <strong><%= @counts[:declined] %></strong> cannot make it,
+          <strong><%= @counts[:unsent] %></strong> not yet invited
+        <% else %>
+          Organized by <strong><%= @organizer&.display_name(viewer_role: :guest) %></strong>. Also invited:
+          <ul>
+            <% @guests.active.each do |guest| %>
+              <li><%= guest.display_name(viewer_role: :guest) %></li>
+            <% end %>
+          </ul>
+        <% end %>
       </div>
     </div>
 
@@ -80,7 +67,8 @@
     <% end %>
 
     <% if @participant.guest? && !@event.status? %>
-      <%= form_with url: scoped_path, method: :patch, id: "availability-form", class: "mt-3" do |form| %>
+      <div class="organizer-panel guest-panel">
+      <%= form_with url: scoped_path, method: :patch, id: "availability-form" do |form| %>
         <input name="time_slots[time_slot_array]" id="new-time-slot-array" type="hidden">
         <input name="participant[time_zone]" type="hidden">
         <div class="mb-2">
@@ -88,11 +76,13 @@
           <%= form.text_field :name, value: @participant.name, id: "participant_name", name: "participant[name]", class: "form-control", maxlength: 100 %>
         </div>
       <% end %>
-      <div class="d-flex gap-2 mt-2 flex-wrap">
+      <p class="guest-hint">Paint the times that work for you on the grid, then press Save. Your reply goes to the organizer.</p>
+      <div class="d-flex gap-2 flex-wrap">
         <%= button_to "None of these times work", scoped_path(:decline), method: :post, class: "btn btn-outline-secondary",
           params: { "participant[time_zone]" => "" }, form: { data: { turbo_confirm: "Tell the organizer none of these times work for you?" } } %>
         <%= button_to "Leave this event", scoped_path, method: :delete, class: "btn btn-outline-danger",
           params: { "participant[time_zone]" => "" }, form: { data: { turbo_confirm: "Leave this event for good? Your link will stop working." } } %>
+      </div>
       </div>
     <% elsif @participant.organizer? && !@event.status? %>
       <%= form_with url: scoped_path(:finalization), method: :post, id: "finalize-form" do |form| %>

@@ -7,7 +7,7 @@ class DashboardsControllerTest < ActionDispatch::IntegrationTest
     get dashboard_path
 
     assert_response :success
-    assert_select "h2", "Organizing"
+    assert_select "h2", /\AOrganizing/
     assert_select "a[href=?]", my_participation_path(participants(:planning_organizer))
     assert_select "a[href=?]", my_participation_path(participants(:finalized_organizer))
     assert_no_match "Uma Organizer", response.body

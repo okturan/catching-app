@@ -8,7 +8,7 @@ class ClaimRoundTripTest < ApplicationSystemTestCase
     click_link "Keep this event in your account"
     assert_text "Log in"
 
-    click_link "Sign up"
+    within("main") { click_link "Sign up" }
     fill_in "First name", with: "Pat"
     fill_in "Last name", with: "Pending"
     fill_in "Email", with: "pat@example.com"

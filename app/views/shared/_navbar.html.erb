@@ -1,51 +1,25 @@
-  <% if current_page?(root_path) %>
-      <div id='navbar-home' class="navbar navbar-expand-sm navbar-light navbar-lewagon">
-  <% elsif current_page?(new_event_path) %>
-      <div id='navbar-event' class="navbar navbar-expand-sm navbar-light navbar-lewagon">
-  <% elsif current_page?(dashboard_path) %>
-      <div id='navbar-dashboard' class="navbar navbar-expand-sm navbar-light navbar-lewagon">
-  <% else %>
-      <div class="navbar navbar-expand-sm navbar-light navbar-lewagon">
-  <% end %>
+<header class="wall-nav">
+  <nav class="wall-nav-inner navbar navbar-expand-md" aria-label="Primary">
+    <%= link_to "Catching.app", root_path, class: "brand", "aria-label": "Catching App home" %>
 
+    <div class="wall-nav-right">
+      <%= link_to "Plan a meeting", new_event_path, class: "plate plate-button-sm nav-cta" %>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <svg width="22" height="14" viewBox="0 0 22 14" aria-hidden="true" focusable="false"><path d="M1 2h20M1 12h20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
 
-  <%= link_to root_path, class: "navbar-brand" do %>
-    <%= image_tag "Sadelogo.png" %>
-    <% end %>
-
-  <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-    <span class="navbar-toggler-icon"></span>
-  </button>
-
-
-  <div class="collapse navbar-collapse" id="navbarSupportedContent">
-    <ul class="navbar-nav me-auto">
-      <% if user_signed_in? %>
-
-        <li class="nav-item active">
-          <%= link_to "SEE MY EVENTS", dashboard_path, class: "nav-link", id: "event-link" %>
-        </li>
-        <li class="nav-item active">
-          <%= link_to "EDIT PROFILE", edit_user_registration_path, class: "nav-link" %>
-        </li>
-        <li class="nav-item active">
-          <%= link_to "SIGN OUT", destroy_user_session_path, data: { turbo_method: :delete }, class: "nav-link" %>
-        </li>
-        <li class="nav-item active">
-          <%= link_to 'PLAN YOUR MEETING NOW', new_event_path, class: "btn-event" %>
-        </li>
-
-      <% else %>
-        <li class="nav-item">
-       <%= link_to "Login", new_user_session_path, class: "btn btn-outline-primary me-3" %>
-        </li>
-        <li class="nav-item">
-          <%= link_to "Sign up for free", new_user_registration_path, class: 'btn btn-md btn-primary' %>
-        </li>
-        <li class="nav-item">
-          <%= link_to 'PLAN YOUR MEETING NOW', new_event_path, class: "btn-event" %>
-        </li>
-      <% end %>
-    </ul>
-  </div>
-</div>
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="wall-nav-links navbar-nav">
+        <% if user_signed_in? %>
+          <li class="nav-item"><%= link_to "My events", dashboard_path, class: "nav-link" %></li>
+          <li class="nav-item"><%= link_to "Profile", edit_user_registration_path, class: "nav-link" %></li>
+          <li class="nav-item"><%= link_to "Sign out", destroy_user_session_path, data: { turbo_method: :delete }, class: "nav-link" %></li>
+        <% else %>
+          <li class="nav-item"><%= link_to "Log in", new_user_session_path, class: "nav-link" %></li>
+          <li class="nav-item"><%= link_to "Sign up", new_user_registration_path, class: "nav-link" %></li>
+        <% end %>
+      </ul>
+    </div>
+  </nav>
+</header>
