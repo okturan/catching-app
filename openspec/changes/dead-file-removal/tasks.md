@@ -16,4 +16,4 @@
 
 ## 4. Verify
 
-- [ ] 4.1 `bin/ci` green locally; push; CI green on the PR
+- [x] 4.1 `bin/ci` green locally; push; CI green on the PR (run 33954666370)
