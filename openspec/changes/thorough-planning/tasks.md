@@ -57,6 +57,6 @@
 
 ## 9. Derived times, previews and close-out
 
-- [ ] 9.1 `[data-zoned-instant]` rewrite in `time_slot_show.js` with a `zonedLabel` node test; `finalized` mail plan lines with derived starts; `ParticipantMailerPreview` samples for every kind and the preview-rendering test
-- [ ] 9.2 PRODUCT.md capabilities and undecided lines rewritten; change README rewritten without polls; register `guest-polls`, `reminders`, `organizer-digest`, `data-retention` READMEs
-- [ ] 9.3 Full check green: `npm test`, `bin/rails test`, `bin/rails test:system`, `bin/rubocop`, `bin/brakeman`; `openspec validate thorough-planning`
+- [x] 9.1 `[data-zoned-instant]` rewrite in `time_slot_show.js` with a `zonedLabel` node test; `finalized` mail plan lines with derived starts; `ParticipantMailerPreview` samples for every kind and the preview-rendering test
+- [x] 9.2 PRODUCT.md capabilities and undecided lines rewritten; change README rewritten without polls; register `guest-polls`, `reminders`, `organizer-digest`, `data-retention` READMEs
+- [x] 9.3 Full check green: `npm test`, `bin/rails test`, `bin/rails test:system`, `bin/rubocop`, `bin/brakeman`; `openspec validate thorough-planning`

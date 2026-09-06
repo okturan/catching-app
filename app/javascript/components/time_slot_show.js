@@ -9,6 +9,7 @@ import {
 import { offeredGrid } from "../lib/time_grid";
 import { renderOfferedTable } from "../lib/grid_table";
 import { filterStash } from "../lib/stash";
+import { zonedLabel } from "../lib/zoned_label";
 import {
   attachPainting,
   paintModeControl,
@@ -127,6 +128,19 @@ const initTimeSlotShow = () => {
     )} (${selectedTimeZone})`;
   };
 
+  // Every server-rendered instant on the page (derived plan starts, the
+  // offer-change and reopen notes, the cancelled stamps) arrives in the
+  // event zone; the picker zone replaces it, and a dated label stays dated.
+  // An instant the formatter cannot read keeps the server's words.
+  const rewriteZonedInstants = () => {
+    document.querySelectorAll("time[data-zoned-instant]").forEach((element) => {
+      const label = zonedLabel(element.getAttribute("datetime"), selectedTimeZone, {
+        format: element.dataset.zonedFormat || "time",
+      });
+      if (label) element.textContent = label;
+    });
+  };
+
   const draw = () => {
     const result = offeredGrid(offered, {
       eventZone,
@@ -144,6 +158,7 @@ const initTimeSlotShow = () => {
     seedTabindex(grid, SELECTABLE);
     grid.classList.toggle("hide-unoffered", Boolean(hideSwitch && hideSwitch.checked));
     renderFinalWindow();
+    rewriteZonedInstants();
 
     // Every offered instant is behind the cut-off: a guest reads why Save is
     // gone; the organizer's action bar already says so server-side, with

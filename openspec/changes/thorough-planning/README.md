@@ -1,3 +1,3 @@
 # thorough-planning
 
-Activity revamp and planning fields (place, duration, polls, agenda) plus organizer offer revision after creation
+Event facts (place, link, planned length) and the plan, a calendar file with a fuller finalized mail, change notices, offer revision after creation, cancellation and reopening; polls are deferred to `guest-polls`
