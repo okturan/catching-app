@@ -59,6 +59,12 @@ module Participations
       assert finalized.status?
       assert_equal Time.utc(2030, 1, 15, 10), finalized.start_time
       assert_equal Time.utc(2030, 1, 15, 11), finalized.end_time
+
+      post my_participation_reopening_path(participants(:finalized_organizer))
+      assert_response :see_other
+      assert_equal "This event was cancelled", flash[:alert], "cancelled wins over reopen"
+      assert finalized.reload.status?
+      assert_equal 0, MailDelivery.reopened.count
     end
 
     test "an organizer who never opened the link can cancel and is the one person told" do
@@ -110,6 +116,7 @@ module Participations
         "activity update" => -> { patch participation_activity_path(@organizer_token, item), params: { activity: { name: "Late" } } },
         "activity destroy" => -> { delete participation_activity_path(@organizer_token, item) },
         "activity move" => -> { post participation_activity_move_path(@organizer_token, item), params: { move: { position: 0 } } },
+        "reopen" => -> { post participation_reopening_path(@organizer_token) },
         "cancel" => -> { post participation_cancellation_path(@organizer_token) }
       }
       writes.each do |name, write|

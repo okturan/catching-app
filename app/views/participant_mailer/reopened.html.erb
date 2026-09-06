@@ -1,0 +1,12 @@
+<p><strong><%= mail_safe(@event.name) %></strong> is no longer set for <%= @recipient_window %>.</p>
+<% if @recipient_window != @event_window %><p>In the event's zone: <%= @event_window %></p><% end %>
+<p><%= mail_safe(@organizer&.name) %> withdrew this time and is planning again.</p>
+<% if @link %>
+<p>Your link:</p>
+<p><%= link_to @link, @link %></p>
+<% else %>
+<p>Use the link from your invitation.</p>
+<% end %>
+<p>If you added it to your calendar, the attached file removes it.</p>
+<p>Your painted times still count. Open your link to change them. You will get one message when a new time is set.</p>
+<p>To stop hearing about this event, open your link and choose Leave this event.</p>

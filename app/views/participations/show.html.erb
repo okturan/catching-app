@@ -50,6 +50,12 @@
       <% else %>
         <div class="event-when is-pending">Time to be confirmed by <%= @organizer&.display_name(viewer_role: :guest) %></div>
       <% end %>
+      <% if @participant.organizer? && !@event.cancelled? && @event.reopen_count.positive? %>
+        <p class="event-reopened">
+          <span><%= @event.reopen_count == 1 ? "Reopened once" : "Reopened twice — the last time" %></span>
+          <span>The set time was withdrawn on <%= zoned_time(@event.reopened_at, @event.time_zone, format: :date_time) %></span>
+        </p>
+      <% end %>
       <% if @event.place.present? || @event.place_url.present? || @event.duration_minutes.present? || @plan.any? %>
         <dl class="event-facts">
           <% if @event.place.present? || @event.place_url.present? %>
@@ -202,8 +208,14 @@
         </table>
       </section>
       <% unless @event.cancelled? %>
-        <%= button_to "Cancel this event", scoped_path(:cancellation), method: :post, class: "btn btn-outline-danger",
-          form: { class: "mt-3", data: { turbo_confirm: "Cancel #{@event.name} for everyone? Everyone with a link gets one last email. This cannot be undone." } } %>
+        <div class="event-organizer-ends">
+          <% if @event.status? %>
+            <%= button_to "Reopen the time", scoped_path(:reopening), method: :post, class: "btn btn-outline-secondary",
+              form: { data: { turbo_confirm: "Withdraw #{event_window(@event)}? Everyone with a link is told once and can paint again." } } %>
+          <% end %>
+          <%= button_to "Cancel this event", scoped_path(:cancellation), method: :post, class: "btn btn-outline-danger",
+            form: { data: { turbo_confirm: "Cancel #{@event.name} for everyone? Everyone with a link gets one last email. This cannot be undone." } } %>
+        </div>
       <% end %>
     <% end %>
   </div>
@@ -229,18 +241,22 @@
         <p class="grid-notice" role="status">None of the times you picked are offered any more. Pick again.</p>
       <% when :declined_added %>
         <p class="grid-notice" role="status">You said none of these worked. New times were added.</p>
+      <% when :reopened %>
+        <p class="grid-notice" role="status">The set time was withdrawn on
+          <%= zoned_time(@event.reopened_at, @event.time_zone, format: :date_time) %>. Check your picks and save.</p>
       <% end %>
       <% if @participant.organizer? && @event.open? && !@every_offer_past && (@counts[:stale] + @counts[:voided]).positive? %>
         <% unanswered = @counts[:stale] + @counts[:voided] %>
         <p class="grid-notice" role="status"><%= pluralize(unanswered, "guest has", plural: "guests have") %> not answered the current times</p>
       <% end %>
-      <span id="selection-summary" aria-live="polite">No times selected</span>
+      <% guest_dead_end = @participant.guest? && @event.open? && @every_offer_past %>
+      <span id="selection-summary" aria-live="polite"><%= guest_dead_end ? "All the offered times have passed." : "No times selected" %></span>
       <fieldset id="paint-mode" class="paint-mode" role="radiogroup" aria-label="Touch mode">
         <label><input type="radio" name="paint-mode" value="scroll" checked><span>Scroll</span></label>
         <label><input type="radio" name="paint-mode" value="paint"><span>Paint</span></label>
       </fieldset>
       <% if @participant.guest? && @event.open? %>
-        <button type="submit" form="availability-form" class="btn-meeting px-5">Save</button>
+        <button type="submit" form="availability-form" class="btn-meeting px-5"<%= " hidden" if guest_dead_end %>>Save</button>
       <% elsif @participant.organizer? && @event.open? && @every_offer_past %>
         <span class="grid-every-past">
           <span>Every offered time has passed.</span>

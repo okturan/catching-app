@@ -211,6 +211,85 @@ class ParticipationsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 1, @event.reload.notified_revision
   end
 
+  test "a resend to one guest does not hide a change the other linked guests were never told about" do
+    @event.update_details!(place: "Zoom")
+    assert_equal [ 1, 0 ], [ @event.reload.revision, @event.notified_revision ]
+    assert_equal 2, @event.guests.active.linked.count
+
+    post participation_participant_resend_path(@organizer_token, @guest)
+    assert_redirected_to participation_path(@organizer_token)
+    assert_equal "Invitation sent again to invitee@example.com.", flash[:notice]
+
+    get participation_path(@organizer_token)
+    assert_response :success
+    assert_select ".event-untold", count: 1
+    assert_equal 0, @event.reload.notified_revision
+  end
+
+  test "a guest who replied before the reopen reads that the set time was withdrawn, zoned and named, until they save" do
+    @event.update_columns(time_zone: "Europe/Berlin", reopened_at: Time.utc(2025, 1, 10, 19), reopen_count: 1)
+    @guest.update_columns(responded_at: Time.utc(2025, 1, 2, 9))
+
+    get participation_path(@guest_token)
+
+    assert_response :success
+    assert_select "table#time-grid-show[data-role=guest]:not([data-finalized])"
+    assert_select "#availability-form"
+    assert_select "#my-time-slots[value=?]", [ "2030-01-15T10:00:00Z" ].to_json
+    assert_select "button[form=availability-form]", "Save"
+    assert_select ".grid-action-bar .grid-notice[role=status]", count: 1 do
+      assert_select "time.time[data-zoned-instant][data-zoned-format='date-time'][datetime=?]", "2025-01-10T19:00:00Z", text: "Fri 10 Jan 2025 20:00 (Europe/Berlin)"
+    end
+    assert_equal "The set time was withdrawn on Fri 10 Jan 2025 20:00 (Europe/Berlin). Check your picks and save.", css_select(".grid-notice").first.text.squish
+    assert_select ".event-reopened", { count: 0 }, "the count note is the organizer's"
+
+    patch participation_path(@guest_token), params: { time_slots: { time_slot_array: "2030-01-15T11:00:00Z" } }
+    assert_redirected_to participation_path(@guest_token)
+    assert_operator @guest.reload.responded_at, :>, @event.reopened_at
+    get participation_path(@guest_token)
+    assert_select ".grid-notice", count: 0
+
+    get participation_path(raw_token(:planning_pending))
+    assert_select ".grid-notice", { count: 0 }, "a guest who never replied sees no note"
+
+    get participation_path(@organizer_token)
+    assert_select ".grid-notice", text: /withdrawn/, count: 0
+    assert_select ".event-reopened" do
+      assert_select "span", text: "Reopened once"
+      assert_select "time.time[data-zoned-instant][datetime=?]", "2025-01-10T19:00:00Z", text: "Fri 10 Jan 2025 20:00 (Europe/Berlin)"
+    end
+
+    @guest.update_columns(responded_at: Time.utc(2025, 1, 2, 9))
+    @event.update_columns(offer_revised_at: Time.utc(2025, 1, 11, 9), offer_revision_added: 1, offer_revision_removed: 0)
+    get participation_path(@guest_token)
+    assert_select ".grid-notice", count: 1, text: /changed the offered times/
+    assert_no_match "withdrawn", css_select(".grid-action-bar").first.text
+
+    @event.update_columns(reopened_at: Time.utc(2025, 1, 12, 9))
+    get participation_path(@guest_token)
+    assert_select ".grid-notice", count: 1, text: /The set time was withdrawn/
+  end
+
+  test "a guest whose every offered time has passed reads so with no Save control, before any script runs" do
+    past = 3.days.ago.beginning_of_hour
+    @event.time_slots.where(start_time: Time.utc(2030, 1, 15, 10)).update_all(start_time: past)
+    @event.time_slots.where(start_time: Time.utc(2030, 1, 15, 11)).update_all(start_time: past - 1.hour)
+
+    get participation_path(@guest_token)
+
+    assert_response :success
+    assert_select "#selection-summary", text: "All the offered times have passed."
+    assert_select "button[form=availability-form][hidden]", text: "Save"
+    assert_select "#availability-form"
+
+    get participation_path(@organizer_token)
+    assert_select ".grid-every-past" do
+      assert_select "span", text: "Every offered time has passed."
+      assert_select "a.plate-button-sm[href=?]", edit_participation_offer_path(@organizer_token), text: "Change the times"
+    end
+    assert_select "#selection-summary", text: "No times selected"
+  end
+
   test "a guest who replied before a revision reads what changed, in the event zone and named" do
     @event.update_columns(time_zone: "Europe/Berlin", offer_revised_at: Time.utc(2030, 1, 10, 19), offer_revision_added: 4, offer_revision_removed: 1)
     @guest.update_columns(responded_at: Time.utc(2030, 1, 2, 9))

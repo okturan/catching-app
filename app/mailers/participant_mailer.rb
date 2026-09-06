@@ -1,7 +1,8 @@
 # Every transactional mail. Parameters: delivery (the MailDelivery ledger
 # row, which carries event, participant and recipient), token (the raw
-# capability token for the templates that carry a link) and, for finalized
-# and cancelled, window (the set start and end, or nil for a pending cancel).
+# capability token for the templates that carry a link), for finalized and
+# cancelled, window (the set start and end, or nil for a pending cancel),
+# and for reopened, previous_window (the withdrawn start and end).
 class ParticipantMailer < ApplicationMailer
   helper MailTextHelper
   include MailTextHelper
@@ -101,6 +102,26 @@ class ParticipantMailer < ApplicationMailer
       to: @delivery.recipient_email,
       reply_to: @organizer&.email,
       subject: subject_for("#{mail_safe(@event.name)} is cancelled")
+    )
+  end
+
+  # The set time is withdrawn: the window in both zones, the promise that
+  # the guest's paint still counts, the link by the claim rule and a file
+  # that clears the calendar entry. Guests only. The window comes from the
+  # params, never from the row, which is already pending again.
+  def reopened
+    @organizer = @event.organizer
+    start_time, end_time = params.fetch(:previous_window)
+    zone = @participant&.time_zone.presence || @event.time_zone
+    @recipient_window = window_in(zone, start_time, end_time)
+    @event_window = window_in(@event.time_zone, start_time, end_time)
+    @link = guest_link
+    attach_calendar(window: [ start_time, end_time ], status: :cancelled)
+    date = start_time.in_time_zone(zone_named(zone)).strftime("%a %-d %b")
+    mail(
+      to: @delivery.recipient_email,
+      reply_to: @organizer&.email,
+      subject: subject_for("#{mail_safe(@event.name)} is no longer set for #{date}")
     )
   end
 

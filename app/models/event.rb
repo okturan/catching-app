@@ -17,6 +17,8 @@ class Event < ApplicationRecord
 
   SLOT_MINUTES = [ 15, 30, 60 ].freeze
   MAX_DURATION_MINUTES = 1440
+  REOPEN_LIMIT = 2
+  REOPEN_LIMIT_MESSAGE = "This event was reopened twice already. Cancel it and plan a new one.".freeze
   WEB_ADDRESS_MESSAGE = "must be a web address starting with http:// or https://".freeze
   # The fields an organizer edits on the details page; changing any of them
   # is a new revision of what guests see.
@@ -277,6 +279,34 @@ class Event < ApplicationRecord
       restore_attributes
       raise
     end
+  end
+
+  # The organizer withdraws the set time. The event is an ordinary pending
+  # event again: every pick, reply, voiding, token and claim stays, and
+  # consensus recomputes from the same rows. At most twice per event (the
+  # database check is the floor). Returns the withdrawn window so the
+  # reopened mail can print it and clear the calendar entry.
+  def reopen!
+    with_lock do
+      ensure_not_cancelled!
+      raise ArgumentError, "Only a set time can be reopened" unless status?
+      raise ArgumentError, REOPEN_LIMIT_MESSAGE if reopen_count >= REOPEN_LIMIT
+
+      window = [ start_time, end_time ]
+      update!(status: false, start_time: nil, end_time: nil, reopened_at: Time.current,
+        reopen_count: reopen_count + 1, revision: revision + 1)
+      window
+    end
+  end
+
+  # True when the organizer offered times and every one of them is behind
+  # the parser's cut-off: nothing can be painted or set until the offer
+  # changes.
+  def every_offer_past?
+    return false unless organizer
+
+    offer = time_slots.where(participant_id: organizer.id)
+    offer.exists? && offer.where(start_time: TimeSlotParser::PAST_GRACE.ago..).none?
   end
 
   # Sets the time. The revision bump makes the calendar file published by

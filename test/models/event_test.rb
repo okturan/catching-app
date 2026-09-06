@@ -361,7 +361,8 @@ class EventTest < ActiveSupport::TestCase
       "finalize!" => -> { @event.finalize!(starts_at: [ Time.utc(2030, 1, 15, 10) ]) },
       "update_details!" => -> { @event.update_details!(name: "Renamed") },
       "add_plan_item!" => -> { @event.add_plan_item!(name: "Late") },
-      "revise_offer!" => -> { @event.revise_offer!(starts_at: [ Time.utc(2030, 1, 15, 12) ]) }
+      "revise_offer!" => -> { @event.revise_offer!(starts_at: [ Time.utc(2030, 1, 15, 12) ]) },
+      "reopen!" => -> { @event.reopen! }
     }
     writers.each do |name, writer|
       error = assert_raises(Event::ClosedError, name) { writer.call }
@@ -373,6 +374,101 @@ class EventTest < ActiveSupport::TestCase
     assert_equal "Planning session", @event.name
     assert_equal 1, @event.revision
     assert_equal [ "Board games" ], @event.activities.pluck(:name)
+  end
+
+  test "reopen! withdraws the window, keeps every row and returns what was set" do
+    finalized = events(:finalized)
+    finalized.update_columns(revision: 5, notified_revision: 5)
+    guest = participants(:finalized_guest)
+    rows = -> { [ finalized.time_slots.order(:id).pluck(:participant_id, :start_time), finalized.participants.order(:id).pluck(:responded_at, :declined_at, :reply_voided_at, :token_digest, :pending_token_digest, :user_id) ] }
+    before = rows.call
+
+    window = finalized.reopen!
+
+    assert_equal [ Time.utc(2030, 1, 15, 10), Time.utc(2030, 1, 15, 11) ], window
+    finalized.reload
+    assert_not finalized.status?
+    assert finalized.open?
+    assert_nil finalized.start_time
+    assert_nil finalized.end_time
+    assert_in_delta Time.current, finalized.reopened_at, 5.seconds
+    assert_equal 1, finalized.reopen_count
+    assert_equal 6, finalized.revision
+    assert_equal 5, finalized.notified_revision, "the batch, not the model, marks guests told"
+    assert_equal before, rows.call
+    assert guest.reload.counting?
+    assert_equal [ Time.utc(2030, 1, 15, 10) ], finalized.mutually_available_start_times
+    assert_nil finalized.window_minutes
+    assert finalized.plan_timeline.all? { |_activity, start| start.nil? }, "derived starts need a set time"
+  end
+
+  test "reopen! refuses a pending event, a cancelled one and a third time with the exact messages" do
+    error = assert_raises(ArgumentError) { @event.reopen! }
+    assert_equal "Only a set time can be reopened", error.message
+    assert_equal 0, @event.reload.reopen_count
+    assert_equal 0, @event.revision
+
+    finalized = events(:finalized)
+    finalized.update_columns(reopen_count: 2, revision: 9)
+    error = assert_raises(ArgumentError) { finalized.reopen! }
+    assert_equal "This event was reopened twice already. Cancel it and plan a new one.", error.message
+    finalized.reload
+    assert finalized.status?
+    assert_equal Time.utc(2030, 1, 15, 10), finalized.start_time
+    assert_equal 2, finalized.reopen_count
+    assert_equal 9, finalized.revision
+
+    finalized.update_columns(reopen_count: 1)
+    finalized.cancel!
+    error = assert_raises(Event::ClosedError) { finalized.reopen! }
+    assert_equal "This event was cancelled", error.message, "cancelled wins over every other check"
+    assert finalized.reload.status?
+    assert_equal 1, finalized.reopen_count
+  end
+
+  test "the reopen count is a real check" do
+    assert_raises(ActiveRecord::StatementInvalid) do
+      Event.transaction(requires_new: true) { @event.update_columns(reopen_count: 3) }
+    end
+  end
+
+  test "finalize! after reopen! sets a new window, bumps the revision again and the second reopen is the last" do
+    finalized = events(:finalized)
+    finalized.update_columns(revision: 6)
+
+    finalized.reopen!
+    finalized.reload.finalize!(starts_at: [ Time.utc(2030, 1, 15, 10) ])
+
+    finalized.reload
+    assert finalized.status?
+    assert_equal Time.utc(2030, 1, 15, 10), finalized.start_time
+    assert_equal Time.utc(2030, 1, 15, 11), finalized.end_time
+    assert_equal 8, finalized.revision
+    assert_equal 1, finalized.reopen_count
+
+    finalized.reopen!
+    assert_equal 2, finalized.reload.reopen_count
+    assert_equal 9, finalized.revision
+    finalized.finalize!(starts_at: [ Time.utc(2030, 1, 15, 10) ])
+    assert_equal 10, finalized.reload.revision
+    error = assert_raises(ArgumentError) { finalized.reopen! }
+    assert_equal Event::REOPEN_LIMIT_MESSAGE, error.message
+    assert finalized.reload.status?
+  end
+
+  test "every_offer_past? reads the organizer's offer against the parser cut-off" do
+    assert_not @event.every_offer_past?
+
+    past = 3.days.ago.beginning_of_hour
+    @event.time_slots.where(start_time: Time.utc(2030, 1, 15, 10)).update_all(start_time: past)
+    @event.time_slots.where(start_time: Time.utc(2030, 1, 15, 11)).update_all(start_time: past - 1.hour)
+    assert @event.every_offer_past?
+
+    @event.time_slots.create!(participant: @organizer, start_time: 2.days.from_now.beginning_of_hour)
+    assert_not @event.every_offer_past?
+
+    @event.time_slots.delete_all
+    assert_not @event.every_offer_past?, "no offer at all is not a past offer"
   end
 
   test "database rejects a finalized event without a whole number of slots" do

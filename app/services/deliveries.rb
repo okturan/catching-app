@@ -14,9 +14,11 @@ module Deliveries
     delivery = record!(event: event, participant: guest, kind: :invitation, recipient_email: guest.email,
       sender_email: MailDelivery.canonical(organizer.email), request_ip: request_ip)
     enqueue(delivery, raw_token)
-    # The invitation describes the event as it stands, so the guests it
-    # reaches know about every revision so far.
-    event.update_columns(notified_revision: event.revision)
+    # The first invitation of an event describes it as it stands, so the
+    # guests it reaches know about every revision so far. A later invitee or
+    # a Resend to one guest tells nobody else, so it must not hide a change
+    # the guests already linked were never told about.
+    event.update_columns(notified_revision: event.revision) if event.guests.active.linked.where.not(id: guest.id).none?
     raw_token
   end
 
@@ -117,6 +119,28 @@ module Deliveries
       delivery = record!(event: event, participant: participant, kind: :cancelled, recipient_email: participant.email,
         sender_email: organizer && MailDelivery.canonical(organizer.email))
       enqueue(delivery, nil, window: window)
+      told += 1
+    end
+    event.update_columns(notified_revision: event.revision)
+    told
+  end
+
+  # After reopen!: every active linked guest hears once that the set time is
+  # withdrawn, the organizer (who pressed the button) not at all. Never
+  # capped: reopen! itself allows at most two per event. The link follows the
+  # claim rule (a fresh pending token for an unclaimed guest, none for a
+  # claimed one), the withdrawn window travels in the params so the job
+  # prints it and builds the cancelled calendar file without reading the
+  # row, and the batch marks the guests as told. Returns the number told.
+  def reopened!(event:, previous_window:)
+    ensure_not_cancelled!(event)
+    organizer = event.organizer
+    told = 0
+    event.guests.active.linked.find_each do |guest|
+      raw_token = guest.claimed? ? nil : guest.issue_pending_token!
+      delivery = record!(event: event, participant: guest, kind: :reopened, recipient_email: guest.email,
+        sender_email: organizer && MailDelivery.canonical(organizer.email))
+      enqueue(delivery, raw_token, previous_window: previous_window)
       told += 1
     end
     event.update_columns(notified_revision: event.revision)

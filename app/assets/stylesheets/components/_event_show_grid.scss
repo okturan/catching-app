@@ -53,6 +53,20 @@
   .event-when.is-pending { color: $ink-soft; font-family: $body-font; font-weight: 600; }
   // The cancelled line: words in the body face, the instants in the mono face.
   .event-when.is-cancelled { font-family: $body-font; font-weight: 600; }
+  // The organizer's hairline note after a reopen: how many are left and
+  // when the set time was withdrawn, the instant in the mono face.
+  .event-reopened {
+    display: grid;
+    gap: 0.15rem;
+    margin: 0;
+    padding-top: 0.6rem;
+    border-top: 1px solid $hairline;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: $ink-soft;
+    span:first-child { color: $ink; }
+    time { font-size: 0.85rem; color: $ink; }
+  }
   // Where and how long: labels in the form-label style, values in body type.
   .event-facts {
     display: grid;
@@ -100,6 +114,17 @@
     ul { list-style: none; padding: 0; margin: 0.25rem 0 0; display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; }
     strong { color: $ink; }
   }
+}
+
+// Reopen the time (while set) and Cancel this event, side by side under the
+// guests: the two writes that change what the event is, kept apart from
+// the everyday controls.
+.event-organizer-ends {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin-top: 1rem;
+  form { margin: 0; }
 }
 
 .organizer-panel {

@@ -47,6 +47,12 @@ class ParticipantMailerPreview < ActionMailer::Preview
     ParticipantMailer.with(delivery: sample(:cancelled), token: nil, window: nil).cancelled
   end
 
+  # The set time withdrawn: the window it was, the link and the file that
+  # clears the calendar entry.
+  def reopened
+    ParticipantMailer.with(delivery: sample(:reopened), token: sample_token, previous_window: sample_window).reopened
+  end
+
   private
 
   def sample_event

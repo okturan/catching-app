@@ -14,7 +14,7 @@ module ParticipationPage
     @offered_slots = offered.map(&:iso8601)
     # Every offered instant is behind the parser's cut-off: nothing can be
     # painted or set until the organizer changes the times.
-    @every_offer_past = offered.any? && offered.all? { |start_time| start_time < TimeSlotParser::PAST_GRACE.ago }
+    @every_offer_past = @event.every_offer_past?
     @my_slots = slot_instants(@participant).map(&:iso8601)
     @revision_notice = revision_notice
     @consensus_slots = @event.mutually_available_start_times.map(&:iso8601)
@@ -45,14 +45,20 @@ module ParticipationPage
     @event.time_slots.where(participant_id: participant.id).order(:start_time).pluck(:start_time)
   end
 
-  # What a guest who already replied must hear about the offer, while the
-  # event is open: their reply was voided, or it predates the last revision
-  # (a declined guest only when times were added). Nil for the organizer,
-  # for a guest who never replied, and once the guest has saved again.
+  # What a guest who already replied must hear, while the event is open:
+  # their reply was voided; the set time was withdrawn since they replied;
+  # or the offer changed since they replied (a declined guest only when
+  # times were added). When both a reopen and a revision postdate the reply
+  # the later one speaks. Nil for the organizer, for a guest who never
+  # replied, and once the guest has saved again.
   def revision_notice
     return nil unless @event.open? && @participant.guest? && @participant.responded_at.present?
     return :voided if @participant.reply_voided_at.present?
-    return nil unless @event.offer_revised_at.present? && @participant.responded_at < @event.offer_revised_at
+
+    reopened = @event.reopened_at.present? && @participant.responded_at < @event.reopened_at
+    revised = @event.offer_revised_at.present? && @participant.responded_at < @event.offer_revised_at
+    return :reopened if reopened && (!revised || @event.reopened_at > @event.offer_revised_at)
+    return nil unless revised
     return :stale if @participant.declined_at.nil?
 
     @event.offer_revision_added.positive? ? :declined_added : nil

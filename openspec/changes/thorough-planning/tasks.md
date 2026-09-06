@@ -51,9 +51,9 @@
 
 ## 8. Reopen
 
-- [ ] 8.1 `Event#reopen!` (status true only, not cancelled, at most twice, window captured, revision bump), `resource :reopening`, `Participations::ReopeningsController`
-- [ ] 8.2 `reopened` mail with `previous_window:` params and `STATUS:CANCELLED` attachment; `Deliveries.reopened!`; page controls ("Reopened once/twice"), guest note while `responded_at < reopened_at`, every-offer-past sentence
-- [ ] 8.3 Tests: model transitions and refusals, controller both families, mailer, round trip finalize → reopen → revise → finalize
+- [x] 8.1 `Event#reopen!` (status true only, not cancelled, at most twice, window captured, revision bump), `resource :reopening`, `Participations::ReopeningsController`
+- [x] 8.2 `reopened` mail with `previous_window:` params and `STATUS:CANCELLED` attachment; `Deliveries.reopened!`; page controls ("Reopened once/twice"), guest note while `responded_at < reopened_at`, every-offer-past sentence
+- [x] 8.3 Tests: model transitions and refusals, controller both families, mailer, round trip finalize → reopen → revise → finalize
 
 ## 9. Derived times, previews and close-out
 

@@ -19,7 +19,8 @@ class DeliveriesTest < ActiveSupport::TestCase
       "response_confirmation!" => -> { Deliveries.response_confirmation!(event: @event, guest: @guest) },
       "finalized!" => -> { Deliveries.finalized!(event: @event) },
       "event_updated!" => -> { Deliveries.event_updated!(event: @event, organizer: @organizer, request_ip: nil, reason: :all) },
-      "reveal_link!" => -> { Deliveries.reveal_link!(event: @event, guest: @guest, organizer: @organizer, request_ip: nil) }
+      "reveal_link!" => -> { Deliveries.reveal_link!(event: @event, guest: @guest, organizer: @organizer, request_ip: nil) },
+      "reopened!" => -> { Deliveries.reopened!(event: @event, previous_window: [ Time.utc(2030, 1, 15, 10), Time.utc(2030, 1, 15, 11) ]) }
     }
 
     assert_no_difference "MailDelivery.count" do
@@ -35,13 +36,88 @@ class DeliveriesTest < ActiveSupport::TestCase
     assert_nil @guest.reload.pending_token_digest
   end
 
-  test "invitation! marks the guests told about every revision so far" do
+  test "the first invitation marks the guests told about every revision so far; later invitees and resends tell nobody else" do
     @event.update_columns(revision: 3, notified_revision: 1)
+    unsent = participants(:planning_unsent)
 
-    Deliveries.invitation!(event: @event, guest: participants(:planning_unsent), organizer: @organizer, request_ip: "203.0.113.1")
+    Deliveries.invitation!(event: @event, guest: unsent, organizer: @organizer, request_ip: "203.0.113.1")
+    assert_equal 1, @event.reload.notified_revision, "two guests already linked were never told about revisions 2 and 3"
+    assert unsent.reload.token_digest.present?
 
-    assert_equal 3, @event.reload.notified_revision
-    assert participants(:planning_unsent).reload.token_digest.present?
+    @event.guests.where.not(id: unsent.id).update_all(token_digest: nil)
+    MailDelivery.invitation.delete_all
+    Deliveries.invitation!(event: @event, guest: unsent, organizer: @organizer, request_ip: "203.0.113.1")
+    assert_equal 3, @event.reload.notified_revision, "the only linked guest now knows the current state"
+
+    @event.update_columns(revision: 4)
+    MailDelivery.invitation.delete_all
+    Deliveries.invitation!(event: @event, guest: @guest, organizer: @organizer, request_ip: "203.0.113.1")
+    assert_equal 3, @event.reload.notified_revision, "a late invitee does not hide what the first guest was never told"
+  end
+
+  test "reopened! tells every active linked guest once by the claim rule, the organizer not at all, and marks the revision told" do
+    @event.update_columns(revision: 5, notified_revision: 2)
+    pending = participants(:planning_pending)
+    stale = pending.issue_pending_token!
+    window = [ Time.utc(2030, 1, 15, 10), Time.utc(2030, 1, 15, 11) ]
+
+    told = nil
+    assert_difference "MailDelivery.reopened.count", 2 do
+      assert_enqueued_jobs 2, only: MailDeliveryJob do
+        told = Deliveries.reopened!(event: @event, previous_window: window)
+      end
+    end
+
+    assert_equal 2, told
+    rows = MailDelivery.reopened.order(:id)
+    assert_equal %w[invitee@example.com pending@example.com], rows.map(&:recipient_email).sort
+    assert rows.all? { |row| row.sender_email == "owner@example.com" && row.participant_id.present? && row.request_ip.nil? }
+    assert_equal 5, @event.reload.notified_revision
+    pending.reload
+    assert pending.pending_token_digest.present?
+    assert_not_equal Participant.digest(stale), pending.pending_token_digest, "the previous pending token retires"
+    assert_nil pending.pending_token_expires_at
+    assert_equal Participant.digest(raw_token(:planning_pending)), pending.token_digest, "the live token keeps working"
+    assert_nil @guest.reload.pending_token_digest, "a claimed guest gets no token"
+    assert_nil @organizer.reload.pending_token_digest
+
+    perform_enqueued_jobs
+    mails = ActionMailer::Base.deliveries.last(2).index_by { |mail| mail.to.first }
+    assert_equal [ "Catching App: Planning session is no longer set for Tue 15 Jan" ], mails.values.map(&:subject).uniq
+    pending_body = mails["pending@example.com"].text_part.body.to_s
+    assert_match %r{http://example.com/p/[A-Za-z0-9]{32}}, pending_body
+    assert_not_includes pending_body, raw_token(:planning_pending), "never the live token"
+    assert_not_includes pending_body, stale
+    claimed_body = mails["invitee@example.com"].text_part.body.to_s
+    assert_includes claimed_body, "http://example.com/participations/#{@guest.id}"
+    assert_not_includes claimed_body, "/p/"
+    mails.each_value do |mail|
+      assert_includes mail.text_part.body.to_s, "Tue 15 Jan 2030 10:00–11:00 (UTC)"
+      assert_includes mail.attachments.first.body.decoded, "STATUS:CANCELLED"
+      assert_includes mail.attachments.first.body.decoded, "SEQUENCE:5"
+    end
+    assert MailDelivery.reopened.all? { |row| row.reload.delivered_at.present? }
+  end
+
+  test "reopened! is never capped and prints the window from the job's own params" do
+    10.times do |i|
+      MailDelivery.create!(event: events(:other_event), kind: :invitation, recipient_email: @guest.email,
+        sender_email: "o#{i}@example.com")
+    end
+    finalized = events(:finalized)
+    window = finalized.reopen!
+
+    perform_enqueued_jobs do
+      assert_difference "MailDelivery.reopened.where(recipient_email: 'invitee@example.com').count", 1 do
+        assert_equal 1, Deliveries.reopened!(event: finalized, previous_window: window)
+      end
+    end
+
+    mail = ActionMailer::Base.deliveries.last
+    assert_equal [ "invitee@example.com" ], mail.to
+    assert_includes mail.text_part.body.to_s, "Finalized event is no longer set for Tue 15 Jan 2030 10:00–11:00 (UTC)."
+    assert_includes mail.attachments.first.body.decoded, "DTSTART:20300115T100000Z"
+    assert_equal 0, MailDelivery.reopened.where(recipient_email: "owner@example.com").count, "no organizer copy"
   end
 
   test "finalized! links unclaimed guests through a fresh pending token, claimed ones by account, the organizer not at all" do

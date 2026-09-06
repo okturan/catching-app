@@ -30,6 +30,7 @@ Rails.application.routes.draw do
       resource :offer, only: %i[edit update] # organizer, while open: Change the times
       resource :notice, only: :create # organizer: Tell the guests
       resource :cancellation, only: :create # organizer: terminal, read-only afterwards
+      resource :reopening, only: :create # organizer, finalized: Reopen the time
       resource :calendar, only: :show, path: "calendar.ics", format: false # any participant, finalized
       resources :activities, only: %i[create update destroy] do # organizer: the plan
         resource :move, only: :create, controller: :activity_moves # organizer: move[position]

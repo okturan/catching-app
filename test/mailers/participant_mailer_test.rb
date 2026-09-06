@@ -319,6 +319,75 @@ class ParticipantMailerTest < ActionMailer::TestCase
     assert_empty mail.attachments
   end
 
+  def reopened_mail(participant, token: nil, event: events(:finalized), window: nil)
+    row = MailDelivery.create!(event: event, participant: participant, kind: :reopened, recipient_email: participant.email,
+      sender_email: "owner@example.com")
+    window ||= [ Time.utc(2030, 1, 15, 10), Time.utc(2030, 1, 15, 11) ]
+    ParticipantMailer.with(delivery: row, token: token, previous_window: window).reopened
+  end
+
+  test "reopened names the withdrawn window in both zones, dates the subject in the recipient zone and attaches the cancelled file" do
+    berlin = events(:finalized)
+    berlin.update_columns(time_zone: "Europe/Berlin", status: false, start_time: nil, end_time: nil, reopened_at: Time.current,
+      reopen_count: 1, revision: 7, place: "Ege's place https://maps.example/x", place_url: "https://zoom.us/j/1")
+    participants(:finalized_organizer).update!(name: "Olivia https://evil.example Owner")
+    guest = participants(:finalized_guest)
+    guest.update!(time_zone: "Asia/Kolkata")
+    withdrawn = [ Time.utc(2030, 1, 15, 9), Time.utc(2030, 1, 15, 10) ]
+
+    mail = reopened_mail(guest, window: withdrawn)
+
+    assert_equal "Catching App: Finalized event is no longer set for Tue 15 Jan", mail.subject
+    assert_equal [ "invitee@example.com" ], mail.to
+    assert_equal [ "owner@example.com" ], mail.reply_to
+    [ CGI.unescapeHTML(mail.html_part.body.to_s), mail.text_part.body.to_s ].each do |body|
+      assert_includes body, "Finalized event"
+      assert_includes body, " is no longer set for Tue 15 Jan 2030 14:30–15:30 (Asia/Kolkata)."
+      assert_includes body, "In the event's zone: Tue 15 Jan 2030 10:00–11:00 (Europe/Berlin)"
+      assert_includes body, "Olivia evil.example Owner withdrew this time and is planning again."
+      assert_includes body, "Your painted times still count. Open your link to change them. You will get one message when a new time is set."
+      assert_includes body, "If you added it to your calendar, the attached file removes it."
+      assert_includes body, "http://example.com/participations/#{guest.id}"
+      assert_not_includes body, "maps.example"
+      assert_not_includes body, "zoom.us"
+      assert_equal body.scan("://").size, body.scan("http://example.com/participations/#{guest.id}").size, "only the participation link carries a scheme"
+    end
+    text = mail.text_part.body.to_s.strip
+    assert text.end_with?("You will get one message when a new time is set.\n\nTo stop hearing about this event, open your link and choose Leave this event."), text
+    leave = "To stop hearing about this event, open your link and choose Leave this event."
+    assert_match(/<p>#{Regexp.escape(leave)}<\/p>\s*<\/body>/, mail.html_part.body.to_s)
+
+    assert_equal [ "catching-app.ics" ], mail.attachments.map(&:filename)
+    attachment = mail.attachments.first
+    assert_equal "text/calendar", attachment.mime_type
+    assert_equal "PUBLISH", attachment.content_type_parameters["method"]
+    file = attachment.body.decoded
+    assert_includes file, "STATUS:CANCELLED"
+    assert_includes file, "DTSTART:20300115T090000Z"
+    assert_includes file, "DTEND:20300115T100000Z"
+    assert_includes file, "SEQUENCE:7"
+    assert_includes file, "LOCATION:Ege's place maps.example/x"
+    assert_not_includes file, "://"
+    assert_not_includes file, "URL:"
+  end
+
+  test "reopened links an unclaimed guest through the pending token it was handed and says so once when the zones agree" do
+    guest = participants(:finalized_guest)
+    guest.update!(user: nil)
+    pending = guest.issue_pending_token!
+
+    mail = reopened_mail(guest, token: pending)
+
+    [ mail.html_part.body.to_s, mail.text_part.body.to_s ].each do |body|
+      assert_includes body, "http://example.com/p/#{pending}"
+      assert_not_includes body, "/participations/"
+      assert_equal body.scan("http://example.com/p/#{pending}").size, body.scan("://").size, "only the participation link carries a scheme"
+      assert_includes body, " is no longer set for Tue 15 Jan 2030 10:00–11:00 (UTC)."
+      assert_not_includes body, "In the event's zone"
+      assert_includes body, "To stop hearing about this event, open your link and choose Leave this event."
+    end
+  end
+
   test "header injection through the event name is neutralized" do
     @event.update!(name: "Dinner\r\nBcc: victim@example.com")
     row = delivery(:invitation, @guest)
