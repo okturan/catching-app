@@ -5,14 +5,14 @@
 
 #### Scenario: Signed-out visitor reaches the form
 - **WHEN** a signed-out visitor requests `GET /events/new`
-- **THEN** the response is 200 and contains fields `event[name]`, `event[description]`, `event[slot_minutes]`, `event[time_zone]`, `organizer[name]`, `organizer[email]`, `invitations[emails]` and the hidden `time_slots[time_slot_array]`
+- **THEN** the response is 200 and contains fields `event[name]`, `event[description]`, `event[slot_minutes]`, `event[time_zone]`, `organizer[name]`, `organizer[email]` and the hidden `time_slots[time_slot_array]`
 
 #### Scenario: Signed-in organizer email cannot be overridden
 - **WHEN** a signed-in user posts `organizer[email]=other@example.com`
 - **THEN** the organizer participant's email is the signed-in user's email and the row is claimed by that user
 
 ### Requirement: Event fields are validated and bounded
-The system SHALL require `event[name]` (squished, at most 120 characters) and `event[description]` (stripped, paragraphs kept, at most 2000 characters), `event[slot_minutes]` in {15, 30, 60} (default 30), `event[time_zone]` accepted by `ActiveSupport::TimeZone[]`, `organizer[name]` (at most 100 characters), and a valid organizer email. `invitations[emails]` SHALL be rejected before parsing when longer than 4096 bytes.
+The system SHALL require `event[name]` (squished, at most 120 characters), bound `event[description]` (stripped, paragraphs kept, at most 2000 characters), `event[slot_minutes]` in {15, 30, 60} (default 30), `event[time_zone]` accepted by `ActiveSupport::TimeZone[]`, `organizer[name]` (at most 100 characters), and a valid organizer email. `invitations[emails]` SHALL be rejected before parsing when longer than 4096 bytes.
 
 #### Scenario: Unknown time zone is refused
 - **WHEN** an event is posted with `event[time_zone]=Mars/Olympus`
@@ -38,7 +38,7 @@ The system SHALL require `event[name]` (squished, at most 120 characters) and `e
 - **THEN** the response is 422 with a message stating the limit of 50
 
 ### Requirement: Event creation is one atomic operation
-`Event.plan!` SHALL create, in one transaction: the event; the organizer participant (`responded_at` now, `link_opened_at` NULL, `user_id` when signed in); the organizer's offered slots through `replace_time_slots!` (validated as aligned, inside 31 days, not before the past cut-off, at least one); one guest participant per invitee with no token; and the `organizer_link` ledger row. Any failure SHALL roll back everything and re-render the form with status 422, echoing the hidden slot value, the selected zone and step via `data-selected`, the organizer fields, the invitee list, and base errors rendered explicitly.
+`Event.plan!` SHALL create, in one transaction: the event; the organizer participant (`responded_at` now, `link_opened_at` NULL, `user_id` when signed in); the organizer's offered slots through `replace_time_slots!` (validated as aligned, inside 31 days, not before the past cut-off, at least one); one guest participant per invitee with no token; and the `organizer_link` ledger row. Any failure SHALL roll back everything and re-render the form with status 422, echoing the hidden slot value, the selected zone and step via `data-selected`, the organizer fields, and base errors rendered explicitly.
 
 #### Scenario: Successful plan writes everything
 - **WHEN** a valid form with two aligned slots and two invitees is posted
@@ -46,7 +46,7 @@ The system SHALL require `event[name]` (squished, at most 120 characters) and `e
 
 #### Scenario: Invalid slots roll back the whole plan
 - **WHEN** a form is posted with `time_slots[time_slot_array]=not-a-time`
-- **THEN** no event, participant, time slot or mail delivery is created, the response is 422, and the rendered form contains the posted organizer name, invitee list and `data-selected` zone
+- **THEN** no event, participant, time slot or mail delivery is created, the response is 422, and the rendered form contains the posted organizer name and `data-selected` zone
 
 #### Scenario: Missing slots is a validation error, not a 400
 - **WHEN** a form is posted with an empty `time_slots[time_slot_array]`

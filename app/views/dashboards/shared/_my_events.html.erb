@@ -26,7 +26,7 @@
                 <span class="body-font">pending</span>
               <% end %>
             </span>
-            <p><%= event.description %></p>
+            <% if event.description.present? %><p><%= event.description %></p><% end %>
             <span class="event-face-state">
               <% if event.cancelled? %>cancelled ·<% end %>
               <% if participation.organizer? %>

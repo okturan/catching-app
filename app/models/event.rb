@@ -32,7 +32,9 @@ class Event < ApplicationRecord
   has_many :mail_deliveries, dependent: :delete_all, inverse_of: :event
 
   normalizes :name, with: ->(name) { name.squish }
-  normalizes :description, with: ->(description) { description.strip }
+  # apply_to_nil, so an omitted description still reaches the NOT NULL column
+  # as "" rather than nil.
+  normalizes :description, with: ->(description) { description.to_s.strip }, apply_to_nil: true
   normalizes :place, with: ->(place) { place.squish.presence }
   # Strip, then downcase the scheme only: "HTTPS://Zoom.us/J/1" keeps its path.
   normalizes :place_url, with: ->(url) {
@@ -41,7 +43,7 @@ class Event < ApplicationRecord
   }
 
   validates :name, presence: true, length: { maximum: 120 }
-  validates :description, presence: true, length: { maximum: 2000 }
+  validates :description, length: { maximum: 2000 }
   validates :place, length: { maximum: 200 }
   validates :slot_minutes, inclusion: { in: SLOT_MINUTES }
   validates :duration_minutes, numericality: { only_integer: true }, allow_nil: true

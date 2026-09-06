@@ -18,11 +18,12 @@
 }
 
 // The definer panel: heading, the painting instruction, the controls strip,
-// then the scroll box. The toolbar is inside the panel, so where the sticky
-// action bar lives the scroll box gives back an approximation of its height,
-// the way --action-bar-h does.
+// then the scroll box. The toolbar is inside the panel, so the scroll box gives
+// back an approximation of its height, the way --action-bar-h does. Measured
+// from panel top to scroll-box top on the built page; being off by a few pixels
+// only makes the box slightly short or tall, never broken.
 .time-grid-define-wrapper {
-  --grid-controls-h: 240px;
+  --grid-controls-h: 420px;
 
   > h2 {
     font-size: 1.2rem;
@@ -33,7 +34,13 @@
 }
 
 @media (max-width: 600px) {
-  .time-grid-define-wrapper { --grid-controls-h: 340px; }
+  .time-grid-define-wrapper { --grid-controls-h: 590px; }
+}
+
+// Unconditional: without it the panel is taller than the viewport at every
+// width and the action bar with its live selection count falls below the fold.
+.time-grid-define-wrapper .time-grid-scroll {
+  max-height: calc(100dvh - var(--navbar-h) - var(--action-bar-h) - var(--grid-controls-h));
 }
 
 #grid-paint-hint {
@@ -302,12 +309,6 @@
 
 @media (any-pointer: coarse) {
   .touch-only { display: inline; }
-
-  // The action bar sticks to the bottom of the viewport only here, so only
-  // here does the toolbar above the grid have to come out of the scroll box.
-  .time-grid-define-wrapper .time-grid-scroll {
-    max-height: calc(100dvh - var(--navbar-h) - var(--action-bar-h) - var(--grid-controls-h));
-  }
 
   .paint-mode {
     display: inline-flex;

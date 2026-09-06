@@ -23,7 +23,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[name='organizer[name]']"
     assert_select "input[name='organizer[email]']"
     assert_select "select#event_slot_minutes option[selected][value='30']"
-    assert_select "textarea[name='invitations[emails]']"
+    assert_select "textarea[name='invitations[emails]']", count: 0
     assert_select "select#timezone-picker-new[name='event[time_zone]']"
     assert_select "select[name='event[invited_user_ids][]']", count: 0
     assert_select "table#time-grid-define[data-slot-minutes='30']"
@@ -117,7 +117,6 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_response :unprocessable_entity
-    assert_select "textarea[name='invitations[emails]']", text: /cy@example.com/
     assert_select "input[name='organizer[email]'][value='ann@example.com']"
     assert_select "select#timezone-picker-new[data-selected='Europe/Berlin']"
     assert_select "#time_slot_array[value='not-an-iso8601-time']"

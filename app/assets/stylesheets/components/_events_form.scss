@@ -11,9 +11,10 @@
   padding: clamp(1rem, 3vw, 2rem) clamp(1rem, 4vw, 2.5rem) 3rem;
   align-items: start;
 
+  // Exactly two grid children in every state, error renders included: a third
+  // child would take a row and drop the form face below the whole panel.
   > .form-events { grid-column: 1; }
   > .time-grid-panel { grid-column: 2; grid-row: 1 / -1; }
-  > .alert { grid-column: 1; }
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
@@ -31,10 +32,21 @@
   gap: 0.25rem;
 
   h2 {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     font-weight: 800;
-    margin-bottom: 0.5rem;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.75rem;
   }
+}
+
+// The sentence that says what the button does, and the signed-in stand-in for
+// the two organizer fields. Quiet, but body-sized: it is not fine print.
+.form-note {
+  color: $ink-soft;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  max-width: 62ch;
+  margin: 0.5rem 0 1rem;
 }
 
 .form-control,

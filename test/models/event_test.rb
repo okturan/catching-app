@@ -16,12 +16,11 @@ class EventTest < ActiveSupport::TestCase
     )
   end
 
-  test "requires a name, a description, a known zone and an allowed slot length" do
+  test "requires a name, a known zone and an allowed slot length" do
     event = Event.new
 
     assert_not event.valid?
     assert_includes event.errors[:name], "can't be blank"
-    assert_includes event.errors[:description], "can't be blank"
 
     event.assign_attributes(name: "x", description: "y", slot_minutes: 45, time_zone: "Mars/Olympus")
     assert_not event.valid?
@@ -31,6 +30,13 @@ class EventTest < ActiveSupport::TestCase
     event.assign_attributes(slot_minutes: 30, time_zone: "Europe/Berlin", description: "x" * 2001)
     assert_not event.valid?
     assert_includes event.errors[:description], "is too long (maximum is 2000 characters)"
+  end
+
+  test "saves without a description, which the organizer can add later" do
+    event = plan(description: nil)
+
+    assert_equal "", event.reload.description
+    assert_predicate event, :valid?
   end
 
   test "requires end time to follow start time and a complete range when finalized" do

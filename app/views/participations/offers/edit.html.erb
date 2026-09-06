@@ -13,14 +13,16 @@
 <%# The form element is the two-column grid, so the grid panel and its controls
     sit inside the form and can be ordered against the submit. %>
 <%= form_with model: @event, url: scoped_path(:offer), method: :patch, id: "offer-form", class: "event-new-grid" do |form| %>
-  <% messages = @event.errors.full_messages %>
-  <% if messages.any? %>
-    <div class="alert alert-danger position-static" role="alert"><%= messages.to_sentence %></div>
-  <% end %>
   <input name="time_slots[time_slot_array]" id="time_slot_array" type="hidden" value="<%= @hydrated %>">
   <input id="current-offer" type="hidden" value="<%= @current_offer.to_json %>">
   <input id="guest-picked-counts" type="hidden" value="<%= @guest_picked_counts.to_json %>">
+  <%# The alert lives inside the face, not beside it: a direct child of the grid
+      would take a row of its own and push the face below the whole panel. %>
   <div class="form-events">
+    <% messages = @event.errors.full_messages %>
+    <% if messages.any? %>
+      <div class="alert alert-danger position-static" role="alert"><%= messages.to_sentence %></div>
+    <% end %>
     <p class="offer-event-name"><%= @event.name %></p>
     <% if @past_count.positive? %>
       <p class="offer-note"><%= @past_count == 1 ? "1 past time stays as it is" : "#{@past_count} past times stay as they are" %></p>

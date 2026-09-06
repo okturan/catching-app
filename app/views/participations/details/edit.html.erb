@@ -26,8 +26,8 @@
         <% if @event.errors[:name].any? %><div class="invalid-feedback d-block"><%= @event.errors[:name].to_sentence %></div><% end %>
       </div>
       <div class="mb-3">
-        <%= form.label :description, "Description", class: "form-label" %>
-        <%= form.text_area :description, class: class_names("form-control", "is-invalid" => @event.errors[:description].any?), rows: 4, maxlength: 2000, required: true %>
+        <%= form.label :description, "Description (optional)", class: "form-label" %>
+        <%= form.text_area :description, class: class_names("form-control", "is-invalid" => @event.errors[:description].any?), rows: 4, maxlength: 2000 %>
         <% if @event.errors[:description].any? %><div class="invalid-feedback d-block"><%= @event.errors[:description].to_sentence %></div><% end %>
       </div>
       <div class="mb-3">

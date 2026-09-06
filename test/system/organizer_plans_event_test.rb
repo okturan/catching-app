@@ -9,8 +9,7 @@ class OrganizerPlansEventTest < ApplicationSystemTestCase
     fill_in "Name", with: "Board games night"
     fill_in "Description", with: "Bring snacks"
     fill_in "Your name", with: "Ann Organizer"
-    fill_in "Your email (we send your organizer link there)", with: "ann@example.com"
-    fill_in "Invite people (one address per line or comma-separated)", with: "bob@example.com"
+    fill_in "Your email", with: "ann@example.com"
     fill_in "Place", with: "Ege's place, Kadıköy"
     fill_in "Link", with: "https://zoom.us/j/1"
     assert_select "Slot length", selected: "30 minutes"
@@ -42,10 +41,14 @@ class OrganizerPlansEventTest < ApplicationSystemTestCase
     visit URI.parse(link).request_uri
 
     assert_text "No replies yet"
-    assert_selector "input[type=submit][value='Send 1 invitation']"
+    assert_selector "input[type=submit][value='Send invitations']"
     assert_selector "dl.event-facts dd", text: "1 h 30 min"
     assert_selector "dl.event-facts a.quiet-link[href='https://zoom.us/j/1']", text: "zoom.us"
     event = Event.find_by(name: "Board games night")
+
+    fill_in "Invite more people (one address per line or comma-separated)", with: "bob@example.com"
+    click_button "Send invitations"
+    assert_text "1 added. 1 invitation sent."
     assert_equal 1, event.guests.count
     assert_equal [ "Ege's place, Kadıköy", "https://zoom.us/j/1", 90 ], [ event.place, event.place_url, event.duration_minutes ]
 

@@ -154,8 +154,15 @@ const attachPainting = (
     if (active && active.frame) cancelAnimationFrame(active.frame);
   };
 
+  // Only a stroke that has actually moved auto-scrolls. A pointer that goes
+  // down inside the 48 px band and never moves is resting, not dragging, and
+  // scrolling under it would paint rows the visitor never touched.
   const autoScroll = () => {
     if (!active || !scrollContainer) return;
+    if (!active.moved) {
+      active.frame = requestAnimationFrame(autoScroll);
+      return;
+    }
     const rect = scrollContainer.getBoundingClientRect();
     let dx = 0;
     let dy = 0;
@@ -198,6 +205,7 @@ const attachPainting = (
         mode: strokeMode(cell.classList.contains("active")),
         lastX: event.clientX,
         lastY: event.clientY,
+        moved: false,
         frame: null,
       };
       grid.classList.add("painting");
@@ -216,6 +224,7 @@ const attachPainting = (
     "pointermove",
     (event) => {
       if (!active || event.pointerId !== active.pointerId) return;
+      if (event.clientX !== active.lastX || event.clientY !== active.lastY) active.moved = true;
       active.lastX = event.clientX;
       active.lastY = event.clientY;
       const cell = cellAt(event.clientX, event.clientY);

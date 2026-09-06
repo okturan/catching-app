@@ -20,10 +20,9 @@ class AuthenticatedUiTest < ApplicationSystemTestCase
     assert_current_path new_event_path
     assert_field "Name"
     assert_field "Description"
-    assert_field "Invite people (one address per line or comma-separated)"
     assert_select "Slot length", selected: "30 minutes"
     assert_selector "#timezone-picker-new option", minimum: 1
     assert_selector "#time-grid-define .slot", minimum: 1
-    assert_button "Plan it"
+    assert_button "Send me my organizer link"
   end
 end
