@@ -49,7 +49,7 @@ class TimeSlotTest < ActiveSupport::TestCase
 
   test "deleting a participant deletes its slots through the database" do
     guest = participants(:planning_guest)
-    assert_equal 2, TimeSlot.where(participant_id: guest.id).count
+    assert_equal 1, TimeSlot.where(participant_id: guest.id).count
 
     Participant.where(id: guest.id).delete_all
 

@@ -5,14 +5,20 @@ require "test_helper"
   20260902000003_reparent_time_slots_to_participants
   20260902000004_drop_user_ownership
   20260905000001_drop_dead_user_columns
+  20260906000001_add_planning_state_to_events_and_participants
+  20260906000002_revamp_activities_into_plan
+  20260906000003_extend_mail_delivery_kinds
 ].each { |file| require Rails.root.join("db/migrate/#{file}") }
 
-# Runs the four migrations down and up inside the test transaction on an
-# emptied database and checks the result against the committed schema.
-# Between down and up only connection introspection is used: no model may
-# be queried while the tables have their legacy shape.
+# Runs the foundation and planning migrations down and up inside the test
+# transaction on an emptied database and checks the result against the
+# committed schema. Between down and up only connection introspection is used:
+# no model may be queried while the tables have their legacy shape.
 class GuestFirstFoundationMigrationsTest < ActiveSupport::TestCase
-  MIGRATIONS = [ CreateParticipants, AddSchedulingGridToEvents, ReparentTimeSlotsToParticipants, DropUserOwnership, DropDeadUserColumns ].freeze
+  MIGRATIONS = [
+    CreateParticipants, AddSchedulingGridToEvents, ReparentTimeSlotsToParticipants, DropUserOwnership, DropDeadUserColumns,
+    AddPlanningStateToEventsAndParticipants, RevampActivitiesIntoPlan, ExtendMailDeliveryKinds
+  ].freeze
   MODELS = [ Participant, MailDelivery, TimeSlot, Event, User, Activity ].freeze
 
   test "the migrations round-trip and reproduce db/schema.rb" do
@@ -30,6 +36,9 @@ class GuestFirstFoundationMigrationsTest < ActiveSupport::TestCase
       assert_not connection.table_exists?(:mail_deliveries)
       assert_not connection.column_exists?(:events, :slot_minutes)
       assert connection.column_exists?(:users, :phone_number)
+      assert_not connection.column_exists?(:events, :revision)
+      assert_not connection.column_exists?(:activities, :position)
+      assert connection.check_constraints(:activities).any? { |check| check.name == "activities_duration_positive" }
 
       MIGRATIONS.each { |migration| migration.new.migrate(:up) }
     end
@@ -39,6 +48,10 @@ class GuestFirstFoundationMigrationsTest < ActiveSupport::TestCase
     assert connection.indexes(:participants).any? { |index| index.name == "index_participants_one_organizer_per_event" && index.where.present? }
     assert connection.check_constraints(:time_slots).any? { |check| check.name == "time_slots_start_time_quarter_hour" }
     assert_not connection.column_exists?(:users, :phone_number)
+    assert connection.check_constraints(:events).any? { |check| check.name == "events_offer_revision_counts" }
+    assert connection.check_constraints(:participants).any? { |check| check.name == "participants_voided_is_open_reply" }
+    assert connection.check_constraints(:activities).any? { |check| check.name == "activities_duration_bounded" }
+    assert_equal :cascade, connection.foreign_keys(:activities).find { |key| key.to_table == "events" }.on_delete
 
     dump = StringIO.new
     ActiveRecord::SchemaDumper.dump(ActiveRecord::Base.connection_pool, dump)

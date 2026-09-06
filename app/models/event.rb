@@ -6,7 +6,7 @@ class Event < ApplicationRecord
   has_many :participants, dependent: :destroy, inverse_of: :event
   has_one :organizer, -> { organizer }, class_name: "Participant", inverse_of: :event
   has_many :guests, -> { guest }, class_name: "Participant", inverse_of: :event
-  has_many :activities, dependent: :destroy, inverse_of: :event
+  has_many :activities, -> { order(:position, :id) }, dependent: :destroy, inverse_of: :event
   has_many :time_slots, dependent: :delete_all, inverse_of: :event
   has_many :mail_deliveries, dependent: :delete_all, inverse_of: :event
 

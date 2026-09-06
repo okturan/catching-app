@@ -10,31 +10,49 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_05_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_06_000003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
   create_table "activities", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.text "description", null: false
-    t.integer "duration", null: false
+    t.text "description"
+    t.integer "duration"
     t.bigint "event_id", null: false
     t.string "name", null: false
+    t.integer "position", default: 0, null: false
     t.datetime "updated_at", null: false
-    t.index ["event_id"], name: "index_activities_on_event_id"
-    t.check_constraint "duration > 0", name: "activities_duration_positive"
+    t.index ["event_id", "position"], name: "index_activities_on_event_id_and_position"
+    t.check_constraint "\"position\" >= 0", name: "activities_position_non_negative"
+    t.check_constraint "duration IS NULL OR duration > 0 AND duration <= 1440", name: "activities_duration_bounded"
   end
 
   create_table "events", force: :cascade do |t|
+    t.datetime "cancelled_at"
     t.datetime "created_at", null: false
     t.text "description", null: false
+    t.integer "duration_minutes"
     t.datetime "end_time", precision: nil
     t.string "name", null: false
+    t.integer "notified_revision", default: 0, null: false
+    t.datetime "offer_revised_at"
+    t.integer "offer_revision_added", default: 0, null: false
+    t.integer "offer_revision_removed", default: 0, null: false
+    t.string "place"
+    t.string "place_url"
+    t.integer "reopen_count", default: 0, null: false
+    t.datetime "reopened_at"
+    t.integer "revision", default: 0, null: false
     t.integer "slot_minutes", default: 30, null: false
     t.datetime "start_time", precision: nil
     t.boolean "status", default: false, null: false
     t.string "time_zone", default: "UTC", null: false
     t.datetime "updated_at", null: false
+    t.check_constraint "duration_minutes IS NULL OR duration_minutes > 0 AND duration_minutes <= 1440 AND (duration_minutes % 15) = 0", name: "events_duration_minutes_quarter_hour"
+    t.check_constraint "notified_revision >= 0 AND notified_revision <= revision", name: "events_revisions_ordered"
+    t.check_constraint "offer_revised_at IS NULL AND offer_revision_added = 0 AND offer_revision_removed = 0 OR offer_revised_at IS NOT NULL AND (offer_revision_added + offer_revision_removed) > 0", name: "events_offer_revision_counts"
+    t.check_constraint "place_url IS NULL OR place_url::text ~ '^[Hh][Tt][Tt][Pp][Ss]?://'::text", name: "events_place_url_scheme"
+    t.check_constraint "reopen_count >= 0 AND reopen_count <= 2", name: "events_reopen_count_bounded"
     t.check_constraint "slot_minutes = ANY (ARRAY[15, 30, 60])", name: "events_slot_minutes_allowed"
     t.check_constraint "start_time IS NULL OR end_time IS NULL OR end_time > start_time", name: "events_end_time_after_start_time"
     t.check_constraint "status = false OR (EXTRACT(epoch FROM end_time - start_time)::bigint % (slot_minutes * 60)::bigint) = 0", name: "events_finalized_window_whole_slots"
@@ -60,7 +78,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_05_000001) do
     t.index ["participant_id"], name: "index_mail_deliveries_on_participant_id"
     t.index ["request_ip", "created_at"], name: "index_mail_deliveries_on_request_ip_and_created_at"
     t.index ["sender_email", "created_at"], name: "index_mail_deliveries_on_sender_email_and_created_at"
-    t.check_constraint "kind::text = ANY (ARRAY['organizer_link'::character varying, 'invitation'::character varying, 'response_confirmation'::character varying, 'finalized'::character varying, 'link_shown'::character varying]::text[])", name: "mail_deliveries_kind_allowed"
+    t.check_constraint "kind::text = ANY (ARRAY['organizer_link'::character varying, 'invitation'::character varying, 'response_confirmation'::character varying, 'finalized'::character varying, 'link_shown'::character varying, 'event_updated'::character varying, 'cancelled'::character varying, 'reopened'::character varying]::text[])", name: "mail_deliveries_kind_allowed"
   end
 
   create_table "participants", force: :cascade do |t|
@@ -73,6 +91,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_05_000001) do
     t.string "name"
     t.string "pending_token_digest"
     t.datetime "pending_token_expires_at"
+    t.datetime "reply_voided_at"
     t.datetime "responded_at"
     t.string "role", null: false
     t.string "time_zone"
@@ -93,6 +112,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_05_000001) do
     t.check_constraint "left_at IS NULL OR token_digest IS NULL AND pending_token_digest IS NULL AND declined_at IS NOT NULL AND user_id IS NULL AND role::text = 'guest'::text", name: "participants_left_is_revoked"
     t.check_constraint "pending_token_digest IS NULL OR char_length(pending_token_digest::text) = 64", name: "participants_pending_token_digest_length"
     t.check_constraint "pending_token_expires_at IS NULL OR pending_token_digest IS NOT NULL", name: "participants_pending_token_pair"
+    t.check_constraint "reply_voided_at IS NULL OR responded_at IS NOT NULL AND declined_at IS NULL AND left_at IS NULL AND role::text = 'guest'::text", name: "participants_voided_is_open_reply"
     t.check_constraint "role::text = ANY (ARRAY['organizer'::character varying, 'guest'::character varying]::text[])", name: "participants_role_allowed"
     t.check_constraint "token_digest IS NULL OR char_length(token_digest::text) = 64", name: "participants_token_digest_length"
   end
@@ -122,7 +142,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_05_000001) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
-  add_foreign_key "activities", "events"
+  add_foreign_key "activities", "events", on_delete: :cascade
   add_foreign_key "mail_deliveries", "events", on_delete: :cascade
   add_foreign_key "mail_deliveries", "participants", on_delete: :nullify
   add_foreign_key "participants", "events", on_delete: :cascade

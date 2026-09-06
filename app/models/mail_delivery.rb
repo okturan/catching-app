@@ -2,7 +2,7 @@
 # when it is delivered or fails. It is the source for every send cap and for
 # the organizer table's delivery state, and it survives participant removal.
 class MailDelivery < ApplicationRecord
-  KINDS = %w[organizer_link invitation response_confirmation finalized link_shown].freeze
+  KINDS = %w[organizer_link invitation response_confirmation finalized link_shown event_updated cancelled reopened].freeze
   DOT_INSENSITIVE_DOMAINS = %w[gmail.com googlemail.com].freeze
 
   class CapExceeded < StandardError; end

@@ -21,6 +21,21 @@ class MailDeliveryTest < ActiveSupport::TestCase
     assert_equal "john.doe@example.com", MailDelivery.canonical("john.doe@example.com")
   end
 
+  test "every ledger kind is accepted at both layers and nothing else is" do
+    MailDelivery::KINDS.each { |kind| assert_predicate record(kind: kind, sender: nil), :persisted?, "for #{kind}" }
+    assert_equal %w[event_updated cancelled reopened], MailDelivery::KINDS.last(3)
+
+    assert_raises(ActiveRecord::RecordInvalid) { record(kind: "newsletter", sender: nil) }
+    assert_raises(ActiveRecord::StatementInvalid) do
+      MailDelivery.transaction(requires_new: true) do
+        MailDelivery.connection.execute(<<~SQL.squish)
+          INSERT INTO mail_deliveries (event_id, kind, recipient_email, canonical_recipient_email, created_at)
+          VALUES (#{@event.id}, 'newsletter', 'a@example.com', 'a@example.com', NOW())
+        SQL
+      end
+    end
+  end
+
   test "state follows the ledger columns" do
     row = record
     assert_equal :queued, row.state

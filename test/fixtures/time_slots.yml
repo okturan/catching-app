@@ -13,11 +13,6 @@ planning_owner_only:
   event: planning
   start_time: 2030-01-15 11:00:00 UTC
 
-planning_invitee_only:
-  participant: planning_guest
-  event: planning
-  start_time: 2030-01-15 12:00:00 UTC
-
 finalized_owner:
   participant: finalized_organizer
   event: finalized

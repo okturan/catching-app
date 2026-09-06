@@ -15,7 +15,7 @@ class ParticipationsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select 'table#time-grid-show[role=grid][data-role=guest][data-slot-minutes="60"][data-event-time-zone="UTC"]'
     assert_select "#received-time-slots[value=?]", [ "2030-01-15T10:00:00Z", "2030-01-15T11:00:00Z" ].to_json
-    assert_select "#my-time-slots[value=?]", [ "2030-01-15T10:00:00Z", "2030-01-15T12:00:00Z" ].to_json
+    assert_select "#my-time-slots[value=?]", [ "2030-01-15T10:00:00Z" ].to_json
     assert_select "#availability-counts"
     assert_select "form#availability-form[action=?]", participation_path(@guest_token)
     assert_select "button[form=availability-form]", "Save"
