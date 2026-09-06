@@ -51,7 +51,7 @@ module Participations
       @event.update_columns(reopen_count: 2, reopened_at: Time.utc(2030, 1, 12, 9))
       get participation_path(@organizer_token)
       assert_select ".event-reopened span", text: "Reopened twice — the last time"
-      assert_select "form[action=?]", participation_reopening_path(@organizer_token)
+      assert_select "form[action=?]", participation_reopening_path(@organizer_token), count: 0, message: "the control is gone at the limit"
 
       get participation_path(@guest_token)
       assert_select "form[action=?]", participation_reopening_path(@guest_token), count: 0

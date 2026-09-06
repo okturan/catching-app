@@ -14,7 +14,8 @@ module ParticipationPage
     @offered_slots = offered.map(&:iso8601)
     # Every offered instant is behind the parser's cut-off: nothing can be
     # painted or set until the organizer changes the times.
-    @every_offer_past = @event.every_offer_past?
+    cutoff = TimeSlotParser::PAST_GRACE.ago
+    @every_offer_past = offered.any? && offered.all? { |instant| instant < cutoff }
     @my_slots = slot_instants(@participant).map(&:iso8601)
     @revision_notice = revision_notice
     @consensus_slots = @event.mutually_available_start_times.map(&:iso8601)

@@ -12,14 +12,17 @@ class GuestReadsZonedTimesTest < ApplicationSystemTestCase
     visit participation_path(raw_token(:finalized_guest))
 
     assert_equal "Europe/Berlin", find("#timezone-picker-show").value
+    assert_selector "dl.event-facts ol.event-plan li:nth-child(1) time[data-zoned-instant]", text: "11:00 (Europe/Berlin)"
     assert_equal [ "11:00 (Europe/Berlin)", "11:30 (Europe/Berlin)" ], plan_starts
     assert_selector "#final-window-local", text: "Tue 15 Jan 11:00–12:00 (Europe/Berlin)"
 
     select "Asia/Tokyo", from: "timezone-picker-show"
+    assert_selector "dl.event-facts ol.event-plan li:nth-child(1) time[data-zoned-instant]", text: "19:00 (Asia/Tokyo)"
     assert_equal [ "19:00 (Asia/Tokyo)", "19:30 (Asia/Tokyo)" ], plan_starts
     assert_selector "#final-window-local", text: "Tue 15 Jan 19:00–20:00 (Asia/Tokyo)"
 
     select "UTC", from: "timezone-picker-show"
+    assert_selector "dl.event-facts ol.event-plan li:nth-child(1) time[data-zoned-instant]", text: "10:00 (UTC)"
     assert_equal [ "10:00 (UTC)", "10:30 (UTC)" ], plan_starts
   end
 

@@ -398,3 +398,6 @@ Settled after the delta specs were written and validated; specs and implementati
 43. **Dashboard cancelled state.** On a cancelled event the `.event-face-time` cell shows "cancelled" in the body face instead of the window or "pending", and the state row is unchanged.
 44. **Seeds.** The seeded event keeps its current name from `db/seeds.rb`; specs do not pin it.
 45. **Redundant requirements** between deltas (recovery scope, dashboard "cancelled") are intentional; the implementation satisfies both.
+46. **The cancelled page keeps the zone picker.** Amendment 5 called the cancelled page picker-less; the built page keeps the picker like every participation page, and every dated stamp on it ("Cancelled on", "Was set for") follows the picker zone. The details edit page has no picker and stays in the event zone, named.
+47. **Reopen control visibility.** "Reopen the time" renders only while `reopen_count < Event::REOPEN_LIMIT`; the "Reopened twice — the last time" note explains its absence; the controller refusal stays as the floor for stale pages.
+48. **Flash counts follow one helper.** Cancel and reopen flashes pluralize with the existing helper ("1 person was told." / "2 guests were told."); the design's literal "N guests were told." is the plural form.

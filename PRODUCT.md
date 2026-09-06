@@ -24,7 +24,7 @@ Catching App finds a time that works for everyone. The organizer offers a range 
 ## Operating Context
 
 - Organizer plans on the web, usually desktop or laptop; guests respond from the emailed link, often on a phone.
-- Email is the delivery channel for every link (organizer link, invitations, confirmation, final time). Invitations leave only after the organizer has opened their own link.
+- Email is the delivery channel for every link (organizer link, invitations, the set time, change notices, a reopened time). Invitations leave only after the organizer has opened their own link.
 - Time zones are first-class: the organizer's zone anchors the grid; every viewer sees it in a zone of their choosing; mails print times in both.
 
 ## Capabilities and Constraints
@@ -45,7 +45,7 @@ Catching App finds a time that works for everyone. The organizer offers a range 
 
 ## Evidence on Hand
 
-- Working product on the `guest-first-foundation` branch with 152 Rails tests, 7 browser tests and 19 JavaScript tests.
+- Working product on the `guest-first-foundation` branch with 334 Rails tests, 12 browser tests and 35 JavaScript tests.
 - Historical 2021 screenshots in `docs/screenshots/legacy/`.
 - No testimonials, usage numbers, press or customer names exist; future copy must not invent them.
 - Current imagery is hosted on a third-party Cloudinary account not controlled by the project; the three landing-page videos and eight images there are not committed assets.

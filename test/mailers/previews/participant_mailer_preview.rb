@@ -81,7 +81,7 @@ class ParticipantMailerPreview < ActionMailer::Preview
   def sample_event
     @sample_event ||= begin
       event = Event.includes(:activities).order(:id).first or raise "seed an event first"
-      event.place = "Ege's place" if event.place.blank? && event.place_url.blank?
+      event.place = "Ege's place" if event.place.blank?
       event.duration_minutes ||= 150
       if event.activities.empty?
         event.activities.build(name: "Pizza first", duration: 30, position: 0)
@@ -101,7 +101,9 @@ class ParticipantMailerPreview < ActionMailer::Preview
     @sample_guest ||= begin
       guest = sample_event.guests.active.order(:id).first ||
         sample_event.participants.build(role: :guest, email: "guest@example.test", name: "Sedef")
-      guest.time_zone = "Asia/Kolkata" if guest.time_zone.blank?
+      if guest.time_zone.blank? || guest.time_zone == sample_event.time_zone
+        guest.time_zone = sample_event.time_zone == "Asia/Kolkata" ? "Europe/Berlin" : "Asia/Kolkata"
+      end
       guest
     end
   end

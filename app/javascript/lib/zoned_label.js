@@ -12,7 +12,7 @@ const FORMATS = {
 // rewrites them into the picker zone with the same helper, passing the
 // element's data-zoned-format so a dated label keeps its date.
 const zonedLabel = (iso, zone, { format = "time" } = {}) => {
-  const instant = DateTime.fromISO(String(iso || ""), { setZone: true });
+  const instant = DateTime.fromISO(String(iso || ""), { setZone: true, locale: "en" });
   if (!instant.isValid) return "";
   const local = instant.setZone(zone);
   if (!local.isValid) return "";

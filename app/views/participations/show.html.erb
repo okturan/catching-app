@@ -209,7 +209,7 @@
       </section>
       <% unless @event.cancelled? %>
         <div class="event-organizer-ends">
-          <% if @event.status? %>
+          <% if @event.status? && @event.reopen_count < Event::REOPEN_LIMIT %>
             <%= button_to "Reopen the time", scoped_path(:reopening), method: :post, class: "btn btn-outline-secondary",
               form: { data: { turbo_confirm: "Withdraw #{event_window(@event)}? Everyone with a link is told once and can paint again." } } %>
           <% end %>

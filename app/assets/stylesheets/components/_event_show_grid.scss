@@ -46,7 +46,8 @@
   .event-description { color: $ink-soft; margin: 0; }
   .event-when {
     font-family: $time-font;
-    font-size: 0.95rem;
+    font-size: 0.85rem;
+    line-height: 1.5;
     display: grid;
     gap: 0.15rem;
   }
