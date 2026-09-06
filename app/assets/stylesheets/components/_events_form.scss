@@ -4,7 +4,9 @@
 .event-new-grid {
   display: grid;
   grid-template-columns: minmax(300px, 420px) minmax(0, 1fr);
-  grid-template-rows: auto auto;
+  // Row 2 is flexible so the panel's extra height lands there and the second
+  // face sits directly under the first instead of being pushed down.
+  grid-template-rows: auto 1fr;
   gap: clamp(1rem, 3vw, 2.5rem);
   max-width: 1400px;
   margin: 0 auto;
@@ -29,7 +31,7 @@
   > .error-summary { grid-column: 1 / -1; grid-row: 1; }
 
   &:has(> .error-summary) {
-    grid-template-rows: auto auto auto;
+    grid-template-rows: auto auto 1fr;
 
     > .time-grid-panel { grid-row: 2 / -1; }
   }

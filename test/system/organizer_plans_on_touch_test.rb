@@ -17,6 +17,17 @@ class OrganizerPlansOnTouchTest < MobileSystemTestCase
     assert_operator document_top("#time-grid-define"), :<, document_top("input[type=submit]"),
       "the submit comes before the grid it posts"
 
+    # While the grid is in view the bar is stuck to the bottom of the viewport,
+    # which is the only state in which it could cover anything.
+    page.execute_script("document.querySelector('.time-grid-panel').scrollIntoView({ block: 'start', behavior: 'instant' })")
+    settle_layout
+    height = page.evaluate_script("window.innerHeight")
+    assert_operator viewport_bottom(".grid-action-bar"), :<=, height,
+      "the action bar with the live count is below the fold while the grid is in view"
+    assert_operator viewport_top(".grid-action-bar"), :>, 0,
+      "the action bar has scrolled off the top while the grid is in view"
+
+    # And it lets go before the submit, so it can never sit on the button.
     page.execute_script("document.querySelector('input[type=submit]').scrollIntoView({ block: 'end', behavior: 'instant' })")
     settle_layout
     assert_operator viewport_bottom(".grid-action-bar"), :<=, viewport_top("input[type=submit]"),

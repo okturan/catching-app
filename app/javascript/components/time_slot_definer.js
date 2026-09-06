@@ -36,6 +36,11 @@ const syncDurationOptions = (select, stepMinutes, note) => {
   const chosen = select.options[select.selectedIndex];
   if (chosen && chosen.disabled) {
     select.value = "";
+    // The server's error on this field described the length that just went;
+    // clear its marks so the page does not argue with itself.
+    select.classList.remove("is-invalid");
+    select.removeAttribute("aria-invalid");
+    document.querySelector("#event_duration_minutes_error")?.remove();
     if (note) {
       note.textContent =
         `Planned length cleared: ${chosen.textContent} is not a whole number of ${stepMinutes}-minute slots.`;
@@ -278,7 +283,7 @@ const initTimeSlotDefiner = () => {
     scrollContainer,
   });
 
-  syncDurationOptions(durationSelect, slotMinutes, durationNote);
+  syncDurationOptions(durationSelect, slotMinutes, null);
   seedDateRange();
   draw();
 };

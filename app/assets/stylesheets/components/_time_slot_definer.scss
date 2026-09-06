@@ -18,13 +18,14 @@
 }
 
 // The definer panel: heading, the painting instruction, the controls strip,
-// then the scroll box and the action bar. The panel owns the budget: it is
-// bounded to the viewport and lays out as a column, so the scroll box gets
-// whatever the strip leaves at every width and in the frozen state, and the
-// action bar with its live count stays inside the viewport. A constant for the
-// strip cannot do this — it measures 409px at 1440 and 574px at 412, and is
-// shorter again on the frozen offer page. The floor keeps the grid usable on a
-// short window; under it the panel simply scrolls with the page.
+// then the scroll box and the action bar. The panel owns the budget: it lays
+// out as a column bounded to the viewport, so the scroll box gets whatever the
+// strip leaves at every width and in the frozen state, and the action bar with
+// its live count stays in view. A constant for the strip cannot do this: it
+// measures 409px at 1440 and 574px at 412, and is shorter again on the frozen
+// offer page. Below 700px of viewport height the strip plus a usable grid no
+// longer fit, so the budget is dropped entirely and the panel scrolls with the
+// page: an action bar the page can reach beats one pinned out of sight.
 .time-grid-define-wrapper {
   display: flex;
   flex-direction: column;
@@ -39,9 +40,20 @@
 
   > .time-grid-scroll {
     flex: 1 1 auto;
-    min-height: 12rem;
+    min-height: 0;
     max-height: none;
   }
+
+  @media (min-height: 700px) {
+    > .time-grid-scroll { min-height: 12rem; }
+  }
+}
+
+// A short window (a 1366x768 laptop, a shortened browser) cannot hold the
+// strip, a usable grid and the bar at once. Give the page its scroll back.
+@media (max-height: 699px) {
+  .time-grid-define-wrapper { max-height: none; }
+  .event-new-grid > .time-grid-panel { position: static; }
 }
 
 #grid-paint-hint {
