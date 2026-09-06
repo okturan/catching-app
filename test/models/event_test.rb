@@ -36,7 +36,9 @@ class EventTest < ActiveSupport::TestCase
     event = plan(description: nil)
 
     assert_equal "", event.reload.description
-    assert_predicate event, :valid?
+    # The column default, so an attribute the form never sends still reaches
+    # the surviving NOT NULL constraint as "".
+    assert_equal "", Event.new.description
   end
 
   test "requires end time to follow start time and a complete range when finalized" do

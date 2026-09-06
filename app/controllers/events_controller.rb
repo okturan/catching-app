@@ -11,6 +11,7 @@ class EventsController < ApplicationController
     # populateTimeZoneSelect and paint every visitor the wrong hours.
     @event = Event.new(slot_minutes: 30, time_zone: nil)
     @organizer = organizer_attributes
+    @organizer_errors = {}
   end
 
   # Anyone with an email address can plan. Nothing is sent to guests until
@@ -32,11 +33,14 @@ class EventsController < ApplicationController
     redirect_to pending_events_path, notice: "Event created."
   rescue MailDelivery::CapExceeded => error
     redirect_to new_event_path, alert: error.message, status: :see_other
-  rescue ActiveRecord::RecordInvalid, ArgumentError => error
-    @event = Event.new(event_params)
-    @event.validate
-    @event.errors.add(:base, error.message)
-    render :new, status: :unprocessable_entity
+  rescue ActiveRecord::RecordInvalid => error
+    # Re-validating reproduces the record's own errors, so appending the
+    # message would print each one twice: once in the summary, once under
+    # the field. The organizer's errors have no record on this page, so they
+    # are carried across by hand.
+    render_form_again(record: error.record)
+  rescue ArgumentError => error
+    render_form_again(base: error.message)
   end
 
   def pending
@@ -44,6 +48,18 @@ class EventsController < ApplicationController
   end
 
   private
+
+  def render_form_again(record: nil, base: nil)
+    @event = Event.new(event_params)
+    @event.validate
+    @event.errors.add(:base, base) if base
+    @organizer_errors = record.is_a?(Participant) ? organizer_error_messages(record) : {}
+    render :new, status: :unprocessable_entity
+  end
+
+  def organizer_error_messages(record)
+    { name: record.errors[:name].first, email: record.errors[:email].first }.compact
+  end
 
   def event_params
     params.fetch(:event, {}).permit(:name, :description, :slot_minutes, :time_zone, :place, :place_url, :duration_minutes)

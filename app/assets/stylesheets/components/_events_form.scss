@@ -11,17 +11,44 @@
   padding: clamp(1rem, 3vw, 2rem) clamp(1rem, 4vw, 2.5rem) 3rem;
   align-items: start;
 
-  // Exactly two grid children in every state, error renders included: a third
-  // child would take a row and drop the form face below the whole panel.
+  // Two faces in column 1, the panel spanning both rows in column 2. Pinned,
+  // so the panel's viewport-relative budget is honest: without this the grid
+  // scrolls off screen while the visitor works down the left rail, and no
+  // height given to a box that is not pinned can help. The sticky containing
+  // block is the grid area, which spans every row.
   > .form-events { grid-column: 1; }
-  > .time-grid-panel { grid-column: 2; grid-row: 1 / -1; }
+  > .time-grid-panel {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    position: sticky;
+    top: 1rem;
+  }
+
+  // The 422 summary is the form's first child and runs the full width, so the
+  // panel starts a row lower and the two faces fall in behind it.
+  > .error-summary { grid-column: 1 / -1; grid-row: 1; }
+
+  &:has(> .error-summary) {
+    grid-template-rows: auto auto auto;
+
+    > .time-grid-panel { grid-row: 2 / -1; }
+  }
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
     grid-template-rows: none;
 
     > .form-events,
+    > .error-summary,
     > .time-grid-panel { grid-column: auto; grid-row: auto; }
+
+    > .time-grid-panel { position: static; }
+
+    &:has(> .error-summary) {
+      grid-template-rows: none;
+
+      > .time-grid-panel { grid-row: auto; }
+    }
   }
 }
 
@@ -36,6 +63,41 @@
     font-weight: 800;
     letter-spacing: -0.02em;
     margin: 0 0 0.75rem;
+  }
+}
+
+// The 422 summary: a white face with a signal-red edge and one link per error.
+// Red marks it, it never fills it. Focused on render by error_summary.js.
+.error-summary {
+  @extend .face;
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  border-color: $signal;
+
+  h2 {
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.5rem;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 1.25rem;
+  }
+
+  li + li {
+    margin-top: 0.25rem;
+  }
+
+  a {
+    color: $ink;
+    font-weight: 600;
+    text-decoration-color: $signal;
+    text-underline-offset: 0.2em;
+
+    &:hover {
+      color: $signal;
+    }
   }
 }
 

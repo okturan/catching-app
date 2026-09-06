@@ -141,6 +141,31 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_no_difference("Event.count") { }
   end
 
+  test "a 422 lists every error once, linked to the control that raised it" do
+    post events_path, params: valid_params(event: { time_zone: "Mars/Olympus", place_url: "javascript:alert(1)", duration_minutes: "45" })
+
+    assert_response :unprocessable_entity
+    assert_select "#error-summary[role=alert][tabindex='-1']" do
+      assert_select "li", count: 3
+      assert_select "a[href='#timezone-picker-new']", text: "Time zone is not a known time zone"
+      assert_select "a[href='#event_place_url']", text: "Link must be a web address starting with http:// or https://"
+      assert_select "a[href='#event_duration_minutes']", text: "Planned length must be a whole number of 30-minute slots"
+    end
+    # The rescue no longer appends the exception on top of the record's own
+    # errors, so the summary and the field's own message are the only copies.
+    assert_equal 2, response.body.scan("must be a web address starting with http:// or https://").size
+    assert_select "#event_place_url[aria-invalid=true][aria-describedby=?]", "event_place_url_help event_place_url_error"
+
+    post events_path, params: valid_params(time_slots: { time_slot_array: "" })
+    assert_select "#error-summary li a[href='#time-grid-define']", text: "Select at least one time slot"
+
+    post events_path, params: valid_params(organizer: { name: "", email: "not-an-address" })
+    assert_select "#error-summary li a[href='#organizer_name']", text: "Your name can't be blank"
+    assert_select "#error-summary li a[href='#organizer_email']", text: "Your email is invalid"
+    assert_select "input#organizer_email.is-invalid[aria-invalid=true][aria-describedby=?]", "organizer_email_help organizer_email_error"
+    assert_select "#organizer_email_error", text: "is invalid"
+  end
+
   test "creation caps refuse with one generic message for known and unknown addresses" do
     responses = [ "owner@example.com", "nobody@example.com" ].map do |email|
       3.times do

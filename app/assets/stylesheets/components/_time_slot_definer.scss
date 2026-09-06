@@ -18,12 +18,17 @@
 }
 
 // The definer panel: heading, the painting instruction, the controls strip,
-// then the scroll box. The toolbar is inside the panel, so the scroll box gives
-// back an approximation of its height, the way --action-bar-h does. Measured
-// from panel top to scroll-box top on the built page; being off by a few pixels
-// only makes the box slightly short or tall, never broken.
+// then the scroll box and the action bar. The panel owns the budget: it is
+// bounded to the viewport and lays out as a column, so the scroll box gets
+// whatever the strip leaves at every width and in the frozen state, and the
+// action bar with its live count stays inside the viewport. A constant for the
+// strip cannot do this — it measures 409px at 1440 and 574px at 412, and is
+// shorter again on the frozen offer page. The floor keeps the grid usable on a
+// short window; under it the panel simply scrolls with the page.
 .time-grid-define-wrapper {
-  --grid-controls-h: 420px;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 1rem);
 
   > h2 {
     font-size: 1.2rem;
@@ -31,16 +36,12 @@
     letter-spacing: -0.02em;
     margin: 0 0 0.5rem;
   }
-}
 
-@media (max-width: 600px) {
-  .time-grid-define-wrapper { --grid-controls-h: 590px; }
-}
-
-// Unconditional: without it the panel is taller than the viewport at every
-// width and the action bar with its live selection count falls below the fold.
-.time-grid-define-wrapper .time-grid-scroll {
-  max-height: calc(100dvh - var(--navbar-h) - var(--action-bar-h) - var(--grid-controls-h));
+  > .time-grid-scroll {
+    flex: 1 1 auto;
+    min-height: 12rem;
+    max-height: none;
+  }
 }
 
 #grid-paint-hint {

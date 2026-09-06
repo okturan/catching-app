@@ -3,6 +3,57 @@ module EventsHelper
   DURATION_TAIL = [ 300, 360, 480, 720, 1440 ].freeze
   PLAN_DURATIONS = [ 15, 30, 45, 60, 90, 120, 150, 180, 240 ].freeze
 
+  # Where each error on the planning form points. Base errors are the grid's:
+  # with the invitee field gone, every ArgumentError this form can raise comes
+  # from TimeSlotParser, replace_time_slots! or ensure_aligned!, so no message
+  # is matched and none needs to be.
+  ERROR_TARGETS = {
+    name: "event_name",
+    description: "event_description",
+    place: "event_place",
+    place_url: "event_place_url",
+    duration_minutes: "event_duration_minutes",
+    slot_minutes: "event_slot_minutes",
+    time_zone: "timezone-picker-new"
+  }.freeze
+
+  # The two organizer fields are hand-rolled, not a form builder's, so their
+  # messages carry the field's own label the way full_message would.
+  ORGANIZER_ERROR_TARGETS = {
+    name: [ "organizer_name", "Your name" ],
+    email: [ "organizer_email", "Your email" ]
+  }.freeze
+
+  # One [message, control id] per error for the summary, in the page's order:
+  # the grid first, then the fields, then the organizer. Attribute errors are
+  # listed too, and must stay listed: event[time_zone] is a hand-rolled
+  # select_tag with no inline error, so the summary is the only place its
+  # message is ever said.
+  def planning_error_links(event, organizer_errors)
+    links = event.errors[:base].map { |message| [ message, "time-grid-define" ] }
+    event.errors.each do |error|
+      next if error.attribute == :base
+
+      links << [ event.errors.full_message(error.attribute, error.message), ERROR_TARGETS[error.attribute] ]
+    end
+    organizer_errors.each do |attribute, message|
+      id, label = ORGANIZER_ERROR_TARGETS.fetch(attribute)
+      links << [ "#{label} #{message}", id ]
+    end
+    links
+  end
+
+  # SimpleForm 5.4.1 links neither its hint nor its error to the control, so
+  # every field on the planning form says so itself: the hint always, the
+  # error id and aria-invalid only once the server has rendered one.
+  def planning_field_aria(event, attribute, hint_id, error_id, required: false)
+    invalid = event.errors[attribute].any?
+    aria = { describedby: [ hint_id, (error_id if invalid) ].compact.join(" ") }
+    aria[:required] = true if required
+    aria[:invalid] = true if invalid
+    aria
+  end
+
   # "1 h 30 min", "2 h", "45 min": a length, never a clock reading, so no zone.
   def duration_label(minutes)
     hours, rest = minutes.to_i.divmod(60)

@@ -1,2 +1,11 @@
 # Application translations. Devise and Simple Form keep their own files here.
-en: {}
+en:
+  activerecord:
+    attributes:
+      event:
+        # Three columns whose humanized names are not what any page calls
+        # them. Naming them here is what makes a full message read as the
+        # page does: "Link must be a web address…", not "Place url must be…".
+        place_url: Link
+        duration_minutes: Planned length
+        slot_minutes: Slot length

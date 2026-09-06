@@ -4,7 +4,7 @@
 Both grids SHALL render as `<table role="grid">` with a `thead` row of `th[scope=col]` day headers and one `tr` per time row; each cell SHALL be `td.slot[data-date]` carrying an `aria-label` such as "Tue 10 Feb, 09:00–09:30" (viewer zone) followed by ", N others available" when a count exists; non-offered and past cells SHALL carry `aria-disabled="true"` and no `aria-selected`; selectable cells SHALL carry `aria-selected`. Keyboard: roving tabindex (one cell at 0), arrow keys move focus, Space toggles, so the grid is one Tab stop; `.slot:focus-visible` SHALL have a visible outline. The "Hide times not offered" switch SHALL have a visually hidden label and hide with `visibility: hidden` so table semantics survive. The paint-mode control SHALL be a `role="radiogroup"` of two radios.
 
 #### Scenario: One Tab stop
-- **WHEN** a keyboard user tabs from the zone picker
+- **WHEN** a keyboard user tabs from the last grid control
 - **THEN** focus lands on one grid cell, Space toggles it, and the next Tab leaves the grid
 
 #### Scenario: Cell labels include counts
@@ -78,15 +78,19 @@ A shared `lib/paint.js` SHALL implement `attachPainting(grid, { selectable, sele
 - **THEN** one stroke still toggles each cell exactly once
 
 ### Requirement: Touch layout keeps the page scrollable and zoomable
-On coarse pointers the default mode SHALL be scroll, paint SHALL be opt-in through `#paint-mode` and remembered in `localStorage`; `touch-action` SHALL be `pan-x pan-y pinch-zoom` in scroll mode and `none` on the grid body only while painting, with `pan-x pan-y pinch-zoom` kept on the sticky header row and the row-label column. The grid wrapper `.time-grid-scroll` SHALL have a bounded height (`max-height: calc(100dvh - <navbar> - <action bar>)`, `overflow: auto`) so sticky day headers and a sticky row-label column work and paint-mode auto-scroll has one target; while a captured pointer is within 48 px of a wrapper edge the wrapper SHALL auto-scroll until the stroke ends. The event card SHALL be `width: min(400px, 100%)` and the document MUST NOT scroll horizontally on a 412 px viewport.
+On coarse pointers the default mode SHALL be scroll, paint SHALL be opt-in through `#paint-mode` and remembered in `localStorage`; `touch-action` SHALL be `pan-x pan-y pinch-zoom` in scroll mode and `none` on the grid body only while painting, with `pan-x pan-y pinch-zoom` kept on the sticky header row and the row-label column. The grid wrapper `.time-grid-scroll` SHALL have a bounded height and `overflow: auto` so sticky day headers and a sticky row-label column work and paint-mode auto-scroll has one target: `max-height: calc(100dvh - <navbar> - <action bar>)` on the show page, and on the definer page — where the controls strip sits inside the same panel and its height varies with width and with the frozen state — the panel itself is bounded to the viewport and lays out as a column, so the wrapper takes the space the strip leaves, above a floor; while a captured pointer is within 48 px of a wrapper edge the wrapper SHALL auto-scroll until the stroke ends. The event card SHALL be `width: min(400px, 100%)` and the document MUST NOT scroll horizontally on a 412 px viewport.
 
 #### Scenario: Paint mode reaches the bottom rows
 - **WHEN** a touch stroke in paint mode drags to within 48 px of the wrapper's bottom edge on a 48-row grid
 - **THEN** the wrapper scrolls and cells below the initial viewport get painted
 
 #### Scenario: No horizontal body scroll on a phone
-- **WHEN** the guest page renders in the 412 px mobile system test
+- **WHEN** the guest page or the definer page renders in the 412 px mobile system test
 - **THEN** `document.documentElement.scrollWidth` is at most `window.innerWidth`
+
+#### Scenario: The grid comes before the button that posts it
+- **WHEN** the definer page renders in the 412 px mobile system test
+- **THEN** `#time-grid-define` starts above the submit and the sticky action bar does not overlap it
 
 ### Requirement: JavaScript tests run as a directory
 `package.json` `test` SHALL be `node --test "test/javascript/**/*.test.js"` so every test file runs in `npm run check` on the pinned Node 24; no new npm dependency SHALL be added.

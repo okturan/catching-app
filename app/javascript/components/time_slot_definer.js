@@ -23,8 +23,9 @@ const SELECTABLE = ".slot.selectable[data-date]";
 
 // The planned length must be a whole number of slots: lengths that stop
 // fitting the step are disabled, and a selection that stopped fitting falls
-// back to "Not set" (the blank option).
-const syncDurationOptions = (select, stepMinutes) => {
+// back to "Not set" (the blank option). The reset used to be silent; the
+// status line says which length went and why.
+const syncDurationOptions = (select, stepMinutes, note) => {
   if (!select) return;
   const options = [...select.options].filter((option) => option.value !== "");
   const { allowed } = allowedDurations(stepMinutes, options.map((option) => option.value));
@@ -33,7 +34,15 @@ const syncDurationOptions = (select, stepMinutes) => {
     option.disabled = !fits.has(option.value);
   });
   const chosen = select.options[select.selectedIndex];
-  if (chosen && chosen.disabled) select.value = "";
+  if (chosen && chosen.disabled) {
+    select.value = "";
+    if (note) {
+      note.textContent =
+        `Planned length cleared: ${chosen.textContent} is not a whole number of ${stepMinutes}-minute slots.`;
+    }
+  } else if (note) {
+    note.textContent = "";
+  }
 };
 
 const hiddenValue = (selector) => {
@@ -66,6 +75,7 @@ const initTimeSlotDefiner = () => {
   const timeSlotInput = document.querySelector("#time_slot_array");
   const stepSelect = document.querySelector("#event_slot_minutes");
   const durationSelect = document.querySelector("#event_duration_minutes");
+  const durationNote = document.querySelector("#duration-note");
   const summaryElement = document.querySelector("#selection-summary");
   const scrollContainer = grid.closest(".time-grid-scroll");
   const modeControl = paintModeControl(document.querySelector("#paint-mode"), {
@@ -219,7 +229,7 @@ const initTimeSlotDefiner = () => {
         grid.dataset.slotMinutes = String(next);
         selection.clear();
         rescaled.forEach((iso) => selection.add(iso));
-        syncDurationOptions(durationSelect, next);
+        syncDurationOptions(durationSelect, next, durationNote);
         note = "";
         draw();
       },
@@ -238,8 +248,23 @@ const initTimeSlotDefiner = () => {
     );
   });
 
+  // The one error native validation cannot raise. The button is never
+  // disabled: a dead primary action with no explanation is worse than a
+  // blocked one that says why and puts the visitor on the grid.
   if (timeSlotInput.form) {
-    timeSlotInput.form.addEventListener("submit", serialize, { signal });
+    timeSlotInput.form.addEventListener(
+      "submit",
+      (event) => {
+        serialize();
+        if (selection.size > 0) return;
+
+        event.preventDefault();
+        if (summaryElement) summaryElement.textContent = "Paint at least one time before sending";
+        grid.scrollIntoView({ block: "center", behavior: "instant" });
+        grid.querySelector('.slot[tabindex="0"]')?.focus();
+      },
+      { signal },
+    );
   }
 
   attachPainting(grid, {
@@ -253,7 +278,7 @@ const initTimeSlotDefiner = () => {
     scrollContainer,
   });
 
-  syncDurationOptions(durationSelect, slotMinutes);
+  syncDurationOptions(durationSelect, slotMinutes, durationNote);
   seedDateRange();
   draw();
 };

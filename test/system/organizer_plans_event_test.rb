@@ -18,12 +18,19 @@ class OrganizerPlansEventTest < ApplicationSystemTestCase
     select "1 h 30 min", from: "Planned length"
     select "60 minutes", from: "Slot length"
     assert_selector "#event_duration_minutes option[value='90']:disabled", visible: :all
+    assert_text "Planned length cleared: 1 h 30 min is not a whole number of 60-minute slots."
     assert_select "Planned length", selected: "Not set"
     select "30 minutes", from: "Slot length"
     assert_selector "#event_duration_minutes option[value='90']:enabled", visible: :all
     select "1 h 30 min", from: "Planned length"
 
     assert_selector "#time-grid-define .slot[data-date]", minimum: 24
+    # Nothing painted: the guard blocks the post the server would refuse
+    # anyway, and says so where the live count already is.
+    click_button "Send me my organizer link"
+    assert_text "Paint at least one time before sending"
+    assert_current_path new_event_path
+
     first_cell = find('#time-grid-define .slot[data-row="20"][data-col="1"]')
     second_cell = find('#time-grid-define .slot[data-row="21"][data-col="1"]')
     page.driver.browser.action.move_to(first_cell.native).pointer_down.move_to(second_cell.native).pointer_up.perform

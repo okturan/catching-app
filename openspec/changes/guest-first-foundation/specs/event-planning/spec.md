@@ -38,7 +38,7 @@ The system SHALL require `event[name]` (squished, at most 120 characters), bound
 - **THEN** the response is 422 with a message stating the limit of 50
 
 ### Requirement: Event creation is one atomic operation
-`Event.plan!` SHALL create, in one transaction: the event; the organizer participant (`responded_at` now, `link_opened_at` NULL, `user_id` when signed in); the organizer's offered slots through `replace_time_slots!` (validated as aligned, inside 31 days, not before the past cut-off, at least one); one guest participant per invitee with no token; and the `organizer_link` ledger row. Any failure SHALL roll back everything and re-render the form with status 422, echoing the hidden slot value, the selected zone and step via `data-selected`, the organizer fields, and base errors rendered explicitly.
+`Event.plan!` SHALL create, in one transaction: the event; the organizer participant (`responded_at` now, `link_opened_at` NULL, `user_id` when signed in); the organizer's offered slots through `replace_time_slots!` (validated as aligned, inside 31 days, not before the past cut-off, at least one); one guest participant per invitee with no token; and the `organizer_link` ledger row. Any failure SHALL roll back everything and re-render the form with status 422, echoing the hidden slot value, the selected zone and step via `data-selected`, and the organizer fields. Every error — base, attribute, and the organizer participant's own — SHALL be listed exactly once in a `role="alert"` summary at the top of the form, each item a link to the control that raised it.
 
 #### Scenario: Successful plan writes everything
 - **WHEN** a valid form with two aligned slots and two invitees is posted
