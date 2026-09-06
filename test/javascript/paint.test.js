@@ -77,3 +77,34 @@ test("summary reports the window or a broken run for organizers", () => {
     "Not one continuous window",
   );
 });
+
+test("summary compares the organizer's window with the planned length", () => {
+  const zone = "Europe/Berlin";
+  const oneHour = new Set([iso("2026-02-10T20:00", zone), iso("2026-02-10T20:30", zone)]);
+  const ninety = new Set([
+    iso("2026-02-10T20:00", zone),
+    iso("2026-02-10T20:30", zone),
+    iso("2026-02-10T21:00", zone),
+  ]);
+
+  assert.equal(
+    summary(oneHour, { role: "organizer", zone, slotMinutes: 30, durationMinutes: 90 }),
+    "Tue 10 Feb 20:00–21:00 (1 h) · planned 1 h 30 min, shorter than planned",
+  );
+  assert.equal(
+    summary(ninety, { role: "organizer", zone, slotMinutes: 30, durationMinutes: 90 }),
+    "Tue 10 Feb 20:00–21:30 (1 h 30 min) · planned 1 h 30 min",
+  );
+  assert.equal(
+    summary(ninety, { role: "organizer", zone, slotMinutes: 30, durationMinutes: "60" }),
+    "Tue 10 Feb 20:00–21:30 (1 h 30 min) · planned 1 h",
+  );
+  assert.equal(
+    summary(oneHour, { role: "organizer", zone, slotMinutes: 30, durationMinutes: null }),
+    "Tue 10 Feb 20:00–21:00 (1 h)",
+  );
+  assert.equal(
+    summary(oneHour, { role: "guest", zone, slotMinutes: 30, durationMinutes: 90 }),
+    "2 slots on 1 day",
+  );
+});

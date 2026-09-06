@@ -36,6 +36,9 @@ const initTimeSlotShow = () => {
   const eventZone = grid.dataset.eventTimeZone || null;
   const finalized = grid.hasAttribute("data-finalized");
   const cancelled = grid.hasAttribute("data-cancelled");
+  const durationMinutes = grid.dataset.durationMinutes
+    ? Number(grid.dataset.durationMinutes)
+    : null;
   const notBefore = grid.dataset.notBefore
     ? DateTime.fromISO(grid.dataset.notBefore)
     : null;
@@ -102,6 +105,7 @@ const initTimeSlotShow = () => {
       role: role === "organizer" ? "organizer" : "guest",
       zone: selectedTimeZone,
       slotMinutes,
+      durationMinutes,
     });
   };
 

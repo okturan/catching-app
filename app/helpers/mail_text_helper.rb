@@ -13,6 +13,12 @@ module MailTextHelper
     "#{start_time.in_time_zone(zone).strftime('%a %-d %b %Y %H:%M')}–#{end_time.in_time_zone(zone).strftime('%H:%M')} (#{zone.name})"
   end
 
+  # "20:00 (Europe/Berlin)": one clock reading with its zone named.
+  def clock_in(zone_name, instant)
+    zone = zone_named(zone_name)
+    "#{instant.in_time_zone(zone).strftime('%H:%M')} (#{zone.name})"
+  end
+
   # Coalesces instants into per-day ranges: { "Tue 10 Feb 2031" => ["09:00–10:30", ...] }
   def coalesced_ranges(instants, slot_minutes, zone_name, max_days: 10)
     zone = zone_named(zone_name)

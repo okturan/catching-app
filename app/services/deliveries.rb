@@ -32,12 +32,22 @@ module Deliveries
     enqueue(delivery, nil)
   end
 
+  # After finalize!: everyone active with a link, the organizer included as
+  # a receipt, never capped. An unclaimed guest gets a fresh pending token
+  # for the link in the mail (the Resend mechanism: the live token keeps
+  # working, the previous pending one retires); a claimed guest is linked to
+  # the signed-in page by the mailer; the organizer's copy carries no link.
+  # The set window travels in the params so a retried job never reads the
+  # row, and the batch marks the guests as told about this revision.
   def finalized!(event:)
     ensure_not_cancelled!(event)
+    window = [ event.start_time, event.end_time ]
     event.participants.active.linked.find_each do |participant|
+      raw_token = participant.guest? && !participant.claimed? ? participant.issue_pending_token! : nil
       delivery = record!(event: event, participant: participant, kind: :finalized, recipient_email: participant.email)
-      enqueue(delivery, nil)
+      enqueue(delivery, raw_token, window: window)
     end
+    event.update_columns(notified_revision: event.revision)
   end
 
   def reveal_link!(event:, guest:, organizer:, request_ip:)

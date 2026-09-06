@@ -37,9 +37,9 @@
       <% end %>
       <% if @event.cancelled? %>
         <div class="event-when is-cancelled">
-          <span>Cancelled on <%= zoned_time(@event.cancelled_at, @event.time_zone, format: "%a %-d %b %Y %H:%M") %></span>
+          <span>Cancelled on <%= zoned_time(@event.cancelled_at, @event.time_zone, format: :date_time) %></span>
           <% if @event.status? %>
-            <span>Was set for <%= zoned_time(@event.start_time, @event.time_zone, format: "%a %-d %b %Y %H:%M") %> to <%= zoned_time(@event.end_time, @event.time_zone) %></span>
+            <span>Was set for <%= zoned_time(@event.start_time, @event.time_zone, format: :date_time) %> to <%= zoned_time(@event.end_time, @event.time_zone) %></span>
           <% end %>
         </div>
       <% elsif @event.status? %>
@@ -91,10 +91,17 @@
           </ul>
         <% end %>
       </div>
-      <% if @participant.organizer? && @event.cancelled? %>
-        <%= link_to "Plan a new event", new_event_path, class: "plate-button-sm" %>
-      <% elsif @participant.organizer? %>
-        <%= link_to "Edit details", scoped_path(:details, edit: true), class: "plate-button-sm" %>
+      <% if (@event.status? && !@event.cancelled?) || @participant.organizer? %>
+        <div class="event-actions">
+          <% if @event.status? && !@event.cancelled? %>
+            <%= link_to "Add to calendar", scoped_path(:calendar), class: "plate-button-sm", data: { turbo: false } %>
+          <% end %>
+          <% if @participant.organizer? && @event.cancelled? %>
+            <%= link_to "Plan a new event", new_event_path, class: "plate-button-sm" %>
+          <% elsif @participant.organizer? %>
+            <%= link_to "Edit details", scoped_path(:details, edit: true), class: "plate-button-sm" %>
+          <% end %>
+        </div>
       <% end %>
     </div>
 
@@ -198,7 +205,8 @@
         data-event-time-zone="<%= @event.time_zone %>"
         data-not-before="<%= TimeSlotParser::PAST_GRACE.ago.utc.iso8601 %>"
         <%= "data-finalized" if @event.status? %>
-        <%= "data-cancelled" if @event.cancelled? %>></table>
+        <%= "data-cancelled" if @event.cancelled? %>
+        <% if @event.duration_minutes %>data-duration-minutes="<%= @event.duration_minutes %>"<% end %>></table>
     </div>
     <div class="grid-action-bar">
       <span id="selection-summary" aria-live="polite">No times selected</span>

@@ -53,6 +53,20 @@ class EventSchedulingWorkflowTest < ActionDispatch::IntegrationTest
     finalized = ActionMailer::Base.deliveries.last(2)
     assert_equal [ "ann@example.com", "guest@example.com" ], finalized.flat_map(&:to).sort
     assert finalized.all? { |mail| mail.subject.include?("Catch up is set for Sat 20 Mar") }
+    finalized.each do |mail|
+      assert_equal [ "catching-app.ics" ], mail.attachments.map(&:filename)
+      assert_includes mail.attachments.first.body.decoded, "DTSTART:#{first_time.utc.strftime('%Y%m%dT%H%M%SZ')}"
+    end
+    guest_finalized = finalized.find { |mail| mail.to == [ "guest@example.com" ] }
+    finalized_link = link_from(guest_finalized, to: "guest@example.com")
+    assert_not_equal guest_link, finalized_link, "the finalized mail carries a fresh pending link"
+    assert_not_includes finalized.find { |mail| mail.to == [ "ann@example.com" ] }.text_part.body.to_s, "://"
+    get finalized_link
+    assert_response :success
+    assert_select "a.plate-button-sm[href=?]", "#{finalized_link}/calendar.ics", text: "Add to calendar"
+    get "#{finalized_link}/calendar.ics"
+    assert_response :success
+    assert_equal "text/calendar; charset=utf-8", response.headers["Content-Type"]
 
     get guest_link
     assert_select "table#time-grid-show[data-finalized][data-role=viewer]"

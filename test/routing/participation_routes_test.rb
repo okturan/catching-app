@@ -18,6 +18,7 @@ class ParticipationRoutesTest < ActionDispatch::IntegrationTest
     assert_routing({ path: "/p/#{TOKEN}/details/edit", method: :get }, controller: "participations/details", action: "edit", token: TOKEN)
     assert_routing({ path: "/p/#{TOKEN}/details", method: :patch }, controller: "participations/details", action: "update", token: TOKEN)
     assert_routing({ path: "/p/#{TOKEN}/cancellation", method: :post }, controller: "participations/cancellations", action: "create", token: TOKEN)
+    assert_routing({ path: "/p/#{TOKEN}/calendar.ics", method: :get }, controller: "participations/calendars", action: "show", token: TOKEN)
     assert_routing({ path: "/p/#{TOKEN}/activities", method: :post }, controller: "participations/activities", action: "create", token: TOKEN)
     assert_routing({ path: "/p/#{TOKEN}/activities/7", method: :patch }, controller: "participations/activities", action: "update", token: TOKEN, id: "7")
     assert_routing({ path: "/p/#{TOKEN}/activities/7", method: :delete }, controller: "participations/activities", action: "destroy", token: TOKEN, id: "7")
@@ -29,6 +30,7 @@ class ParticipationRoutesTest < ActionDispatch::IntegrationTest
     assert_equal "/p/#{TOKEN}/details/edit", edit_participation_details_path(TOKEN)
     assert_equal "/p/#{TOKEN}/details", participation_details_path(TOKEN)
     assert_equal "/p/#{TOKEN}/cancellation", participation_cancellation_path(TOKEN)
+    assert_equal "/p/#{TOKEN}/calendar.ics", participation_calendar_path(TOKEN)
     assert_equal "/p/#{TOKEN}/activities", participation_activities_path(TOKEN)
     assert_equal "/p/#{TOKEN}/activities/7", participation_activity_path(TOKEN, 7)
     assert_equal "/p/#{TOKEN}/activities/7/move", participation_activity_move_path(TOKEN, 7)
@@ -48,6 +50,7 @@ class ParticipationRoutesTest < ActionDispatch::IntegrationTest
     assert_routing({ path: "/participations/3/details/edit", method: :get }, controller: "participations/details", action: "edit", participation_id: "3")
     assert_routing({ path: "/participations/3/details", method: :patch }, controller: "participations/details", action: "update", participation_id: "3")
     assert_routing({ path: "/participations/3/cancellation", method: :post }, controller: "participations/cancellations", action: "create", participation_id: "3")
+    assert_routing({ path: "/participations/3/calendar.ics", method: :get }, controller: "participations/calendars", action: "show", participation_id: "3")
     assert_routing({ path: "/participations/3/activities", method: :post }, controller: "participations/activities", action: "create", participation_id: "3")
     assert_routing({ path: "/participations/3/activities/7", method: :delete }, controller: "participations/activities", action: "destroy", participation_id: "3", id: "7")
     assert_routing({ path: "/participations/3/activities/7/move", method: :post }, controller: "participations/activity_moves", action: "create", participation_id: "3", activity_id: "7")
@@ -56,6 +59,7 @@ class ParticipationRoutesTest < ActionDispatch::IntegrationTest
     assert_equal "/participations/3/invitations", my_participation_invitations_path(3)
     assert_equal "/participations/3/details/edit", edit_my_participation_details_path(3)
     assert_equal "/participations/3/cancellation", my_participation_cancellation_path(3)
+    assert_equal "/participations/3/calendar.ics", my_participation_calendar_path(3)
     assert_equal "/participations/3/activities/7/move", my_participation_activity_move_path(3, 7)
     assert_raises(NoMethodError) { my_participation_claim_path(3) }
   end

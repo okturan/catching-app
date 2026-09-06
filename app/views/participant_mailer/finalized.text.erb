@@ -4,4 +4,32 @@
 <% if @recipient_window != @event_window %>
 In the event's zone: <%= @event_window %>
 <% end %>
-Use the link from your invitation for details. This is the last message about this event.
+<% if @place %>
+Where: <%= @place %>
+<% end %>
+<% if @duration %>
+How long: <%= @duration %>
+<% end %>
+<% if @plan.any? %>
+
+Plan:
+<% @plan.each_with_index do |line, index| %>
+<%= index + 1 %>. <%= line %>
+<% end %>
+<% end %>
+
+<% if @link %>
+Open your link for the details:
+
+<%= @link %>
+<% else %>
+Open your organizer link for the details.
+<% end %>
+
+The attached calendar file adds it to your calendar with a reminder, one tap from the mail.
+
+You will hear from us again only if the organizer changes the plan, reopens the time or cancels.
+<% if @link %>
+
+To stop hearing about this event, open your link and choose Leave this event.
+<% end %>

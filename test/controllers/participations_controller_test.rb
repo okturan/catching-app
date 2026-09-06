@@ -29,10 +29,13 @@ class ParticipationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "dl.event-facts", count: 0
     assert_select "a.plate-button-sm", text: "Edit details", count: 0
 
+    assert_select "#time-grid-show[data-duration-minutes]", count: 0
+
     @event.update!(place: "Ege's place, Kadıköy", place_url: "https://zoom.us/j/1?pwd=secret", duration_minutes: 120)
     get participation_path(@guest_token)
 
     assert_response :success
+    assert_select "#time-grid-show[data-duration-minutes='120']"
     assert_select ".event-panel dl.event-facts", count: 1 do
       assert_select "dt", count: 2
       assert_select "dt", text: "Where"
@@ -224,6 +227,7 @@ class ParticipationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "form[action=?] input[name=_method][value=delete]", participation_path(token)
     assert_select "button", text: "Leave this event"
     assert_select "h1 span.plate", text: "Set in stone"
+    assert_select ".event-panel a.plate-button-sm[href=?]", participation_calendar_path(token), text: "Add to calendar"
   end
 
   test "an organizer token cannot use guest actions" do

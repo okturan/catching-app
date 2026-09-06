@@ -73,6 +73,13 @@
     time { display: block; font-size: 0.85rem; }
     .event-plan-note { display: block; color: $ink-soft; font-size: 0.9rem; }
   }
+  // Plate buttons under the card: Add to calendar once set, Edit details
+  // for the organizer, Plan a new event once cancelled.
+  .event-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
   .event-people {
     border-top: 1px solid $hairline;
     padding-top: 0.75rem;

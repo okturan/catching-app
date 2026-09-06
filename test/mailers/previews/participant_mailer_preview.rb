@@ -12,13 +12,18 @@ class ParticipantMailerPreview < ActionMailer::Preview
     ParticipantMailer.with(delivery: sample(:response_confirmation), token: nil).response_confirmation
   end
 
+  # The guest copy: a link by the claim rule and the calendar file.
   def finalized
-    ParticipantMailer.with(delivery: sample(:finalized), token: nil).finalized
+    ParticipantMailer.with(delivery: sample(:finalized), token: sample_token, window: sample_window).finalized
+  end
+
+  # The organizer's receipt: no link.
+  def finalized_organizer_copy
+    ParticipantMailer.with(delivery: sample(:finalized, organizer: true), token: nil, window: sample_window).finalized
   end
 
   def cancelled
-    start_time = 1.week.from_now.utc.change(hour: 18)
-    ParticipantMailer.with(delivery: sample(:cancelled), token: nil, window: [ start_time, start_time + 2.hours ]).cancelled
+    ParticipantMailer.with(delivery: sample(:cancelled), token: nil, window: sample_window).cancelled
   end
 
   def cancelled_while_pending
@@ -27,10 +32,21 @@ class ParticipantMailerPreview < ActionMailer::Preview
 
   private
 
+  def sample_event
+    Event.includes(:participants, :activities).order(:id).first or raise "seed an event first"
+  end
+
   def sample(kind, organizer: false)
-    event = Event.includes(:participants).order(:id).first or raise "seed an event first"
+    event = sample_event
     participant = organizer ? event.organizer : (event.guests.first || event.organizer)
     MailDelivery.new(event: event, participant: participant, kind: kind, recipient_email: participant.email)
+  end
+
+  # The set window when the sample event has one, otherwise a plausible one.
+  def sample_window
+    event = sample_event
+    start_time = event.start_time || 1.week.from_now.utc.change(hour: 18)
+    [ start_time, event.end_time || start_time + 2.hours ]
   end
 
   def sample_token

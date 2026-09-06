@@ -56,7 +56,13 @@ const formatDuration = (minutes) => {
   return `${hours} h ${rest} min`;
 };
 
-const summary = (selection, { role = "guest", zone = "UTC", slotMinutes = 60 } = {}) => {
+// The action bar sentence. For the organizer a planned length
+// (durationMinutes, from data-duration-minutes) is compared with the
+// selected window: a warning, never a refusal, so the sentence only grows.
+const summary = (
+  selection,
+  { role = "guest", zone = "UTC", slotMinutes = 60, durationMinutes = null } = {},
+) => {
   const instants = [...selection]
     .map((iso) => parseISO(iso).setZone(zone))
     .filter((instant) => instant.isValid)
@@ -74,9 +80,16 @@ const summary = (selection, { role = "guest", zone = "UTC", slotMinutes = 60 } =
 
     const start = instants[0];
     const end = instants[instants.length - 1].plus({ minutes: slotMinutes });
-    return `${start.toFormat("ccc d LLL HH:mm")}–${end.toFormat("HH:mm")} (${formatDuration(
-      instants.length * slotMinutes,
+    const selected = instants.length * slotMinutes;
+    let text = `${start.toFormat("ccc d LLL HH:mm")}–${end.toFormat("HH:mm")} (${formatDuration(
+      selected,
     )})`;
+    const planned = Number(durationMinutes);
+    if (planned > 0) {
+      text += ` · planned ${formatDuration(planned)}`;
+      if (selected < planned) text += ", shorter than planned";
+    }
+    return text;
   }
 
   const days = new Set(instants.map((instant) => instant.toISODate())).size;

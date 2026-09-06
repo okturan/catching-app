@@ -28,6 +28,7 @@ Rails.application.routes.draw do
       end
       resource :details, only: %i[edit update] # organizer
       resource :cancellation, only: :create # organizer: terminal, read-only afterwards
+      resource :calendar, only: :show, path: "calendar.ics", format: false # any participant, finalized
       resources :activities, only: %i[create update destroy] do # organizer: the plan
         resource :move, only: :create, controller: :activity_moves # organizer: move[position]
       end

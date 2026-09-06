@@ -11,7 +11,7 @@
     <p class="details-facts"><%= @event.slot_minutes %>-minute slots · <%= @event.time_zone %></p>
     <% if @event.status? %>
       <p class="details-facts">Set in stone:
-        <%= zoned_time(@event.start_time, @event.time_zone, format: "%a %-d %b %Y %H:%M") %> to
+        <%= zoned_time(@event.start_time, @event.time_zone, format: :date_time) %> to
         <%= zoned_time(@event.end_time, @event.time_zone) %></p>
     <% end %>
 

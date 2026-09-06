@@ -28,10 +28,10 @@
 
 ## 5. Calendar file and the finalized mail
 
-- [ ] 5.1 `CalendarFile` service (CRLF, 75-octet folding, escaping, UID, SEQUENCE, DTSTART/DTEND in UTC, LOCATION, STATUS, DESCRIPTION plan lines, VALARM, page vs mail mode) and its tests including the 8 KB cap
-- [ ] 5.2 `resource :calendar` (`calendar.ics`, format false), `Participations::CalendarsController#show` (any participant, 404 unless finalized, `STATUS:CANCELLED` when cancelled), "Add to calendar" plate button
-- [ ] 5.3 `finalized` mail: facts, plan, guest link by the claimed/unclaimed rule, organizer copy without link, new closing sentence, attachment built from `window:` params; `Deliveries.finalized!` issues pending tokens and sets `notified_revision`; `finalize!` bumps `revision`
-- [ ] 5.4 Finalize summary hint (`data-duration-minutes`, `summary()` extension, node test); update finalizations controller, workflow and mailer tests
+- [x] 5.1 `CalendarFile` service (CRLF, 75-octet folding, escaping, UID, SEQUENCE, DTSTART/DTEND in UTC, LOCATION, STATUS, DESCRIPTION plan lines, VALARM, page vs mail mode) and its tests including the 8 KB cap
+- [x] 5.2 `resource :calendar` (`calendar.ics`, format false), `Participations::CalendarsController#show` (any participant, 404 unless finalized, `STATUS:CANCELLED` when cancelled), "Add to calendar" plate button
+- [x] 5.3 `finalized` mail: facts, plan, guest link by the claimed/unclaimed rule, organizer copy without link, new closing sentence, attachment built from `window:` params; `Deliveries.finalized!` issues pending tokens and sets `notified_revision`; `finalize!` bumps `revision`
+- [x] 5.4 Finalize summary hint (`data-duration-minutes`, `summary()` extension, node test); update finalizations controller, workflow and mailer tests
 
 ## 6. Change notices
 

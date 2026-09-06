@@ -146,9 +146,10 @@ class Event < ApplicationRecord
 
   # Each item with its derived start: start_time plus the lengths of every
   # item before it. Starts exist only once the time is set and the event is
-  # not cancelled, and stop after the first item without a length.
-  def plan_timeline
-    cursor = status? && !cancelled? ? start_time : nil
+  # not cancelled, and stop after the first item without a length. A mailer
+  # passes the start it was handed (from:) so a retried job never reads the row.
+  def plan_timeline(from: nil)
+    cursor = from || (status? && !cancelled? ? start_time : nil)
     activities.map do |activity|
       start = cursor
       cursor = cursor && activity.duration ? cursor + activity.duration.minutes : nil
@@ -194,6 +195,8 @@ class Event < ApplicationRecord
     end
   end
 
+  # Sets the time. The revision bump makes the calendar file published by
+  # the finalized mail outrank any earlier file for the same event.
   def finalize!(starts_at:)
     selected_slots = starts_at.uniq.sort
 
@@ -206,7 +209,8 @@ class Event < ApplicationRecord
       update!(
         start_time: selected_slots.min,
         end_time: selected_slots.max + slot_length,
-        status: true
+        status: true,
+        revision: revision + 1
       )
     end
   end

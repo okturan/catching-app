@@ -123,6 +123,27 @@ class EventTest < ActiveSupport::TestCase
     assert_equal Time.utc(2030, 1, 15, 11), @event.end_time
   end
 
+  test "finalize! bumps the revision with the window so the published file outranks earlier ones" do
+    @event.update_columns(revision: 3, notified_revision: 3)
+
+    @event.finalize!(starts_at: [ Time.utc(2030, 1, 15, 10) ])
+
+    @event.reload
+    assert @event.status?
+    assert_equal 4, @event.revision
+    assert_equal 3, @event.notified_revision, "the batch, not the model, marks guests told"
+    assert_equal Time.utc(2030, 1, 15, 10), @event.start_time
+  end
+
+  test "plan_timeline derives starts from a window handed to it, whatever the row says" do
+    pizza = @event.activities.first
+    movie = @event.activities.create!(name: "Movie", duration: 120, position: 1)
+
+    assert_equal [ nil, nil ], @event.plan_timeline.map(&:last), "pending: nothing derived"
+    assert_equal [ [ pizza, Time.utc(2030, 1, 15, 10) ], [ movie, Time.utc(2030, 1, 15, 11, 30) ] ],
+      @event.plan_timeline(from: Time.utc(2030, 1, 15, 10))
+  end
+
   test "update_details! bumps the revision once per changed save and returns the change set" do
     @event.update_columns(revision: 3, notified_revision: 3)
 

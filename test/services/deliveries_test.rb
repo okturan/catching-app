@@ -34,6 +34,58 @@ class DeliveriesTest < ActiveSupport::TestCase
     assert_nil @guest.reload.pending_token_digest
   end
 
+  test "finalized! links unclaimed guests through a fresh pending token, claimed ones by account, the organizer not at all" do
+    @event.update_columns(status: true, start_time: Time.utc(2030, 1, 15, 10), end_time: Time.utc(2030, 1, 15, 11), revision: 2)
+    pending = participants(:planning_pending)
+    stale = pending.issue_pending_token!
+    live_guest_digest = @guest.token_digest
+
+    assert_difference "MailDelivery.finalized.count", 3 do
+      assert_enqueued_jobs 3, only: MailDeliveryJob do
+        Deliveries.finalized!(event: @event)
+      end
+    end
+
+    pending.reload
+    assert pending.pending_token_digest.present?
+    assert_not_equal Participant.digest(stale), pending.pending_token_digest, "the previous pending token retires"
+    assert_nil pending.pending_token_expires_at
+    assert_equal Participant.digest(raw_token(:planning_pending)), pending.token_digest, "the live token keeps working"
+    assert_nil @guest.reload.pending_token_digest, "a claimed guest gets no token"
+    assert_equal live_guest_digest, @guest.token_digest
+    assert_nil @organizer.reload.pending_token_digest
+    assert_equal 2, @event.reload.notified_revision
+    assert_equal %w[invitee@example.com owner@example.com pending@example.com], MailDelivery.finalized.pluck(:recipient_email).sort
+
+    perform_enqueued_jobs
+    mails = ActionMailer::Base.deliveries.last(3).index_by { |mail| mail.to.first }
+    pending_body = mails["pending@example.com"].text_part.body.to_s
+    assert_match %r{http://example.com/p/[A-Za-z0-9]{32}}, pending_body
+    assert_not_includes pending_body, raw_token(:planning_pending), "never the live token"
+    assert_includes mails["invitee@example.com"].text_part.body.to_s, "http://example.com/participations/#{@guest.id}"
+    assert_not_includes mails["invitee@example.com"].text_part.body.to_s, "/p/"
+    organizer_body = mails["owner@example.com"].text_part.body.to_s
+    assert_not_includes organizer_body, "://"
+    assert_includes organizer_body, "Open your organizer link"
+    mails.each_value { |mail| assert_equal [ "catching-app.ics" ], mail.attachments.map(&:filename) }
+  end
+
+  test "finalized! prints the window from the job's own params after a reopen-shaped change" do
+    finalized = events(:finalized)
+
+    assert_enqueued_jobs 2, only: MailDeliveryJob do
+      Deliveries.finalized!(event: finalized)
+    end
+    finalized.update_columns(status: false, start_time: nil, end_time: nil)
+
+    assert_nothing_raised { perform_enqueued_jobs }
+    mails = ActionMailer::Base.deliveries.last(2)
+    mails.each do |mail|
+      assert_includes mail.text_part.body.to_s, "Tue 15 Jan 2030 10:00–11:00 (UTC)"
+      assert_includes mail.attachments.first.body.decoded, "DTSTART:20300115T100000Z"
+    end
+  end
+
   test "cancelled! tells every active linked participant once, the organizer included, and issues no token" do
     @event.update_columns(revision: 2)
     @guest.update!(declined_at: Time.current)

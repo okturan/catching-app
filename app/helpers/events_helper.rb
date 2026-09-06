@@ -50,12 +50,20 @@ module EventsHelper
     end
   end
 
+  # The two shapes a zoned instant takes: a clock reading, or a full date
+  # with the clock. The JavaScript formatter (zonedLabel) knows the same two.
+  ZONED_FORMATS = { time: "%H:%M", date_time: "%a %-d %b %Y %H:%M" }.freeze
+
   # Every server-rendered instant on a capability page: ISO datetime for the
   # machine, wall clock and zone name for the reader. Pages with a zone
-  # picker rewrite [data-zoned-instant] into the picker's zone.
-  def zoned_time(instant, zone_name, format: "%H:%M")
+  # picker rewrite [data-zoned-instant] into the picker's zone; an element
+  # that carries a date announces it with data-zoned-format="date-time" so
+  # the rewrite keeps the date.
+  def zoned_time(instant, zone_name, format: :time)
     zone = ActiveSupport::TimeZone[zone_name.to_s] || ActiveSupport::TimeZone["UTC"]
     local = instant.in_time_zone(zone)
-    tag.time("#{local.strftime(format)} (#{zone.name})", datetime: instant.utc.iso8601, class: "time", data: { zoned_instant: "" })
+    data = { zoned_instant: "" }
+    data[:zoned_format] = format.to_s.dasherize unless format == :time
+    tag.time("#{local.strftime(ZONED_FORMATS.fetch(format))} (#{zone.name})", datetime: instant.utc.iso8601, class: "time", data: data)
   end
 end
