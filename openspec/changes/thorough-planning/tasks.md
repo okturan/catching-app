@@ -7,10 +7,10 @@
 
 ## 2. Event facts and the details page
 
-- [ ] 2.1 `Event` validations and normalizers for place, place_url, duration_minutes; `update_details!` (one save, revision bump, change set without revision/updated_at); `EventsHelper#place_link`
-- [ ] 2.2 `events/new` gains place, link, planned length; `event_params`; `Event.plan!` passes them; `allowedDurations` helper and the step-change wiring in `time_slot_definer.js` with a node test
-- [ ] 2.3 `scoped_path(edit:)`, `resource :details`, `Participations::DetailsController` (edit/update, organizer-only, cancelled → 303), the details face (`min(440px, 100%)`, details form closes before the plan section), facts block with `dt` in form-label style, zoned dates via `[data-zoned-instant]`
-- [ ] 2.4 Routing, model, controller (both families), view and events tests; `assert_select "form form", count: 0`
+- [x] 2.1 `Event` validations and normalizers for place, place_url, duration_minutes; `update_details!` (one save, revision bump, change set without revision/updated_at); `EventsHelper#place_link`
+- [x] 2.2 `events/new` gains place, link, planned length; `event_params`; `Event.plan!` passes them; `allowedDurations` helper and the step-change wiring in `time_slot_definer.js` with a node test
+- [x] 2.3 `scoped_path(edit:)`, `resource :details`, `Participations::DetailsController` (edit/update, organizer-only, cancelled → 303), the details face (`min(440px, 100%)`, details form closes before the plan section), facts block with `dt` in form-label style, zoned dates via `[data-zoned-instant]`
+- [x] 2.4 Routing, model, controller (both families), view and events tests; `assert_select "form form", count: 0`
 
 ## 3. The plan
 

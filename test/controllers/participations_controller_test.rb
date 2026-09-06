@@ -23,6 +23,64 @@ class ParticipationsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match "pending@example.com", response.body
   end
 
+  test "the card answers where and how long only when the organizer set them" do
+    get participation_path(@guest_token)
+    assert_select "dl.event-facts", count: 0
+    assert_select "a.plate-button-sm", text: "Edit details", count: 0
+
+    @event.update!(place: "Ege's place, Kadıköy", place_url: "https://zoom.us/j/1?pwd=secret", duration_minutes: 120)
+    get participation_path(@guest_token)
+
+    assert_response :success
+    assert_select ".event-panel dl.event-facts", count: 1 do
+      assert_select "dt", count: 2
+      assert_select "dt", text: "Where"
+      assert_select "dt", text: "How long"
+      assert_select ".plate", count: 0
+      assert_select "dd", text: /Ege's place, Kadıköy/
+      assert_select "dd", text: "2 h"
+      assert_select "a.quiet-link[target=_blank][rel=?][href=?]", "noopener noreferrer nofollow", "https://zoom.us/j/1?pwd=secret", count: 1 do
+        assert_select "span.visually-hidden", text: "(opens in a new tab)"
+      end
+      assert_equal "zoom.us", css_select("a.quiet-link").first.children.first.text.strip
+    end
+    assert_equal 1, response.body.scan("zoom.us/j/1").size, "the full link appears only in the anchor's href"
+    assert_select "a[href=?]", edit_participation_details_path(@guest_token), count: 0
+
+    @event.update_columns(slot_minutes: 30)
+    @event.update!(place: nil, place_url: nil, duration_minutes: 90)
+    get participation_path(@guest_token)
+    assert_select "dl.event-facts dt", count: 1, text: "How long"
+    assert_select "dl.event-facts dd", text: "1 h 30 min"
+  end
+
+  test "the organizer sees Edit details in both families while pending or finalized" do
+    get participation_path(@organizer_token)
+    assert_select ".event-panel a.plate-button-sm[href=?]", edit_participation_details_path(@organizer_token), text: "Edit details"
+
+    sign_in users(:owner)
+    get my_participation_path(@organizer)
+    assert_select "a.plate-button-sm[href=?]", edit_my_participation_details_path(@organizer), text: "Edit details"
+
+    get participation_path(raw_token(:finalized_organizer))
+    assert_select "a.plate-button-sm[href=?]", edit_participation_details_path(raw_token(:finalized_organizer)), text: "Edit details"
+
+    @event.update_columns(cancelled_at: Time.current)
+    get participation_path(@organizer_token)
+    assert_select "a[href=?]", edit_participation_details_path(@organizer_token), count: 0
+  end
+
+  test "another account's participation leaks no place link" do
+    @event.update!(place_url: "https://zoom.us/j/1?pwd=secret")
+    sign_in users(:outsider)
+
+    get my_participation_path(@guest)
+
+    assert_response :not_found
+    assert_select "#link-not-found"
+    assert_no_match "zoom.us", response.body
+  end
+
   test "capability pages carry cache, index and canonical hygiene" do
     get participation_path(@guest_token)
 

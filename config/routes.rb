@@ -28,6 +28,7 @@ Rails.application.routes.draw do
         resource :resend, only: :create
         resource :link_reveal, only: :create
       end
+      resource :details, only: %i[edit update] # organizer
     end
   end
 

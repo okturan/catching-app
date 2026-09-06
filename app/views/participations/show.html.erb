@@ -43,6 +43,18 @@
       <% else %>
         <div class="event-when is-pending">Time to be confirmed by <%= @organizer&.display_name(viewer_role: :guest) %></div>
       <% end %>
+      <% if @event.place.present? || @event.place_url.present? || @event.duration_minutes.present? %>
+        <dl class="event-facts">
+          <% if @event.place.present? || @event.place_url.present? %>
+            <dt>Where</dt>
+            <dd><%= @event.place %><% if @event.place_url.present? %> <%= place_link(@event) %><% end %></dd>
+          <% end %>
+          <% if @event.duration_minutes.present? %>
+            <dt>How long</dt>
+            <dd><%= duration_label(@event.duration_minutes) %></dd>
+          <% end %>
+        </dl>
+      <% end %>
       <div class="event-people">
         <% if @participant.organizer? %>
           <strong><%= @counts[:invited] %></strong> invited,
@@ -58,6 +70,9 @@
           </ul>
         <% end %>
       </div>
+      <% if @participant.organizer? && !@event.cancelled? %>
+        <%= link_to "Edit details", scoped_path(:details, edit: true), class: "plate-button-sm" %>
+      <% end %>
     </div>
 
     <% if @revealed_url %>

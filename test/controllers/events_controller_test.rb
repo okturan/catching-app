@@ -27,6 +27,22 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "select#timezone-picker-new[name='event[time_zone]']"
     assert_select "select[name='event[invited_user_ids][]']", count: 0
     assert_select "table#time-grid-define[data-slot-minutes='30']"
+    assert_select "input[name='event[place]'][maxlength='200'][placeholder=?]", "Ege's place, Kadıköy — or 'Zoom'"
+    assert_select "input[name='event[place_url]'][type=url][placeholder=?]", "Link to join or a map link"
+    assert_select "select#event_duration_minutes[name='event[duration_minutes]']" do
+      assert_select "option", count: 22
+      assert_select "option[value='']", "Not set"
+      assert_select "option[value='30']:not([disabled])", "30 min"
+      assert_select "option[value='90']:not([disabled])", "1 h 30 min"
+      assert_select "option[value='45'][disabled]", "45 min"
+      assert_select "option[value='240']:not([disabled])", "4 h"
+      assert_select "option[value='1440']:not([disabled])", "24 h"
+      assert_select "option[selected]", count: 0
+    end
+    values = css_select("select#event_duration_minutes option").map { |option| option["value"] }.reject(&:empty?).map(&:to_i)
+    assert_equal (15..240).step(15).to_a + [ 300, 360, 480, 720, 1440 ], values
+    disabled = css_select("select#event_duration_minutes option[disabled]").map { |option| option["value"].to_i }
+    assert_equal values.reject { |minutes| (minutes % 30).zero? }, disabled
 
     sign_in @owner
     get new_event_path
@@ -56,6 +72,30 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     follow_redirect!
     assert_match "ann@example.com", response.body
     assert_match "Nothing has gone to your guests yet", response.body
+  end
+
+  test "place, link and planned length are saved with the plan and echoed on a 422" do
+    facts = { place: "  Ege's   place ", place_url: "HTTPS://zoom.us/j/1", duration_minutes: "90" }
+
+    post events_path, params: valid_params(event: facts)
+
+    event = Event.order(:id).last
+    assert_redirected_to pending_events_path
+    assert_equal "Ege's place", event.place
+    assert_equal "https://zoom.us/j/1", event.place_url
+    assert_equal 90, event.duration_minutes
+
+    post events_path, params: valid_params(event: { place: "Ege's place", place_url: "https://zoom.us/j/1", duration_minutes: "90" }, time_slots: { time_slot_array: "" })
+
+    assert_response :unprocessable_entity
+    assert_select "input[name='event[place]'][value=?]", "Ege's place"
+    assert_select "input[name='event[place_url]'][value=?]", "https://zoom.us/j/1"
+    assert_select "select#event_duration_minutes option[value='90'][selected]"
+
+    post events_path, params: valid_params(event: { place_url: "javascript:alert(1)", duration_minutes: "45" })
+    assert_response :unprocessable_entity
+    assert_match "must be a web address starting with http:// or https://", response.body
+    assert_match "must be a whole number of 30-minute slots", response.body
   end
 
   test "a signed-in organizer is claimed and cannot override the email" do

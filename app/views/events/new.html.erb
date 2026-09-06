@@ -14,6 +14,16 @@
       <div class="form-events">
         <%= f.input :name, placeholder: "A fabulous meeting!" %>
         <%= f.input :description, as: :text, placeholder: "Do whatever!" %>
+        <%= f.input :place, label: "Place", placeholder: "Ege's place, Kadıköy — or 'Zoom'", input_html: { maxlength: 200 } %>
+        <%= f.input :place_url, as: :url, label: "Link", placeholder: "Link to join or a map link", input_html: { maxlength: 2000 } %>
+        <div class="mb-3">
+          <label class="form-label" for="event_duration_minutes">Planned length</label>
+          <%= select_tag "event[duration_minutes]", duration_select_options(@event.slot_minutes, @event.duration_minutes),
+            id: "event_duration_minutes", include_blank: "Not set", class: "form-select" %>
+          <% if @event.errors[:duration_minutes].any? %>
+            <div class="invalid-feedback d-block"><%= @event.errors[:duration_minutes].to_sentence %></div>
+          <% end %>
+        </div>
 
         <% unless user_signed_in? %>
           <div class="mb-3">

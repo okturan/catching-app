@@ -57,8 +57,10 @@ class ParticipationScopedController < ApplicationController
     @event.status? ? "viewer" : @participant.role
   end
 
-  def scoped_path(name = nil, *args)
-    helper = [ token_request? ? "participation" : "my_participation", name ].compact.join("_")
+  # Path to a nested action in the viewer's own route family; edit: true names
+  # the edit page of a singular resource (edit_participation_details_path).
+  def scoped_path(name = nil, *args, edit: false)
+    helper = [ (edit ? "edit" : nil), token_request? ? "participation" : "my_participation", name ].compact.join("_")
     viewer = token_request? ? @resolution.canonical_token : @participant
     public_send("#{helper}_path", viewer, *args)
   end

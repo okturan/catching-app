@@ -51,6 +51,16 @@
     gap: 0.15rem;
   }
   .event-when.is-pending { color: $ink-soft; font-family: $body-font; font-weight: 600; }
+  // Where and how long: labels in the form-label style, values in body type.
+  .event-facts {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: 0.35rem 1rem;
+    margin: 0;
+    font-size: 0.95rem;
+    dt { font-weight: 600; margin: 0; }
+    dd { margin: 0; overflow-wrap: anywhere; }
+  }
   .event-people {
     border-top: 1px solid $hairline;
     padding-top: 0.75rem;

@@ -5,6 +5,7 @@ import {
   populateTimeZoneSelect,
   slotISO,
 } from "./time_zones";
+import { allowedDurations } from "../lib/durations";
 import { localDateRangeIsAllowed, localDayColumns } from "../lib/time_grid";
 import { renderDefinerTable } from "../lib/grid_table";
 import {
@@ -17,6 +18,21 @@ import {
 } from "../lib/paint";
 
 const SELECTABLE = ".slot.selectable[data-date]";
+
+// The planned length must be a whole number of slots: lengths that stop
+// fitting the step are disabled, and a selection that stopped fitting falls
+// back to "Not set" (the blank option).
+const syncDurationOptions = (select, stepMinutes) => {
+  if (!select) return;
+  const options = [...select.options].filter((option) => option.value !== "");
+  const { allowed } = allowedDurations(stepMinutes, options.map((option) => option.value));
+  const fits = new Set(allowed);
+  options.forEach((option) => {
+    option.disabled = !fits.has(option.value);
+  });
+  const chosen = select.options[select.selectedIndex];
+  if (chosen && chosen.disabled) select.value = "";
+};
 
 const initTimeSlotDefiner = () => {
   const grid = document.querySelector("#time-grid-define");
@@ -33,6 +49,7 @@ const initTimeSlotDefiner = () => {
   const endDateInput = document.querySelector("#event-end");
   const timeSlotInput = document.querySelector("#time_slot_array");
   const stepSelect = document.querySelector("#event_slot_minutes");
+  const durationSelect = document.querySelector("#event_duration_minutes");
   const summaryElement = document.querySelector("#selection-summary");
   const scrollContainer = grid.closest(".time-grid-scroll");
   const modeControl = paintModeControl(document.querySelector("#paint-mode"), {
@@ -143,6 +160,7 @@ const initTimeSlotDefiner = () => {
         grid.dataset.slotMinutes = String(next);
         selection.clear();
         rescaled.forEach((iso) => selection.add(iso));
+        syncDurationOptions(durationSelect, next);
         note = "";
         draw();
       },
@@ -176,6 +194,7 @@ const initTimeSlotDefiner = () => {
     scrollContainer,
   });
 
+  syncDurationOptions(durationSelect, slotMinutes);
   seedDateRange();
   draw();
 };

@@ -44,6 +44,138 @@ class EventTest < ActiveSupport::TestCase
     assert_includes @event.errors[:start_time], "can't be blank"
   end
 
+  test "place is squished, blank becomes nil and 200 characters is the limit" do
+    event = plan(place: "  Ege's   place, Kadıköy ")
+    assert_equal "Ege's place, Kadıköy", event.place
+
+    event.update!(place: "   ")
+    assert_nil event.place
+
+    event.place = "x" * 201
+    assert_not event.valid?
+    assert_includes event.errors[:place], "is too long (maximum is 200 characters)"
+  end
+
+  test "place_url keeps everything but a downcased scheme and refuses non-web addresses" do
+    @event.place_url = " HTTPS://Zoom.us/J/1 "
+    assert @event.valid?
+    assert_equal "https://Zoom.us/J/1", @event.place_url
+
+    @event.place_url = "   "
+    assert_nil @event.place_url
+
+    [ "javascript:alert(1)", "ftp://files.example", "https://user@evil.example", "https://", "not a url", "//zoom.us", "https:///path" ].each do |bad|
+      @event.place_url = bad
+      assert_not @event.valid?, "#{bad.inspect} should be refused"
+      assert_equal [ "must be a web address starting with http:// or https://" ], @event.errors[:place_url], bad.inspect
+    end
+
+    @event.place_url = "https://#{'a' * 1990}.example"
+    assert_not @event.valid?
+    assert_includes @event.errors[:place_url], "must be a web address starting with http:// or https://"
+  end
+
+  test "database refuses a place_url the model did not see" do
+    assert_raises(ActiveRecord::StatementInvalid) do
+      Event.transaction(requires_new: true) { @event.update_columns(place_url: "javascript:x") }
+    end
+    assert_nil @event.reload.place_url
+  end
+
+  test "duration_minutes is a whole number of slots, at most a day" do
+    thirty = plan(slot_minutes: 30, starts_at: [ Time.utc(2031, 2, 10, 9) ])
+    thirty.duration_minutes = 45
+    assert_not thirty.valid?
+    assert_equal [ "must be a whole number of 30-minute slots" ], thirty.errors[:duration_minutes]
+
+    fifteen = plan(slot_minutes: 15, starts_at: [ Time.utc(2031, 2, 10, 9) ])
+    fifteen.update!(duration_minutes: 45)
+    assert_equal 45, fifteen.reload.duration_minutes
+
+    fifteen.duration_minutes = 1441
+    assert_not fifteen.valid?
+    assert_equal [ "must be at most 24 hours" ], fifteen.errors[:duration_minutes]
+
+    fifteen.duration_minutes = 0
+    assert_not fifteen.valid?
+    assert_equal [ "must be greater than 0" ], fifteen.errors[:duration_minutes]
+
+    fifteen.duration_minutes = "abc"
+    assert_not fifteen.valid?
+    assert_equal [ "is not a number" ], fifteen.errors[:duration_minutes]
+
+    fifteen.duration_minutes = ""
+    assert fifteen.valid?
+    assert_nil fifteen.duration_minutes
+
+    assert_raises(ActiveRecord::StatementInvalid) do
+      Event.transaction(requires_new: true) { fifteen.update_columns(duration_minutes: 20) }
+    end
+  end
+
+  test "a planned length is a hint that finalize! never reads" do
+    @event.update!(duration_minutes: 120)
+
+    @event.finalize!(starts_at: [ Time.utc(2030, 1, 15, 10) ])
+
+    assert @event.status?
+    assert_equal 120, @event.reload.duration_minutes
+    assert_equal Time.utc(2030, 1, 15, 11), @event.end_time
+  end
+
+  test "update_details! bumps the revision once per changed save and returns the change set" do
+    @event.update_columns(revision: 3, notified_revision: 3)
+
+    changes = @event.update_details!(place: "Ege's place", duration_minutes: 120)
+
+    assert_equal %w[duration_minutes place], changes.keys.sort
+    assert_equal [ nil, "Ege's place" ], changes["place"]
+    @event.reload
+    assert_equal 4, @event.revision
+    assert_equal "Ege's place", @event.place
+    assert_equal 120, @event.duration_minutes
+  end
+
+  test "update_details! with nothing changed bumps nothing" do
+    updated_at = @event.updated_at
+
+    changes = @event.update_details!(name: @event.name, place: "")
+
+    assert_empty changes
+    @event.reload
+    assert_equal 0, @event.revision
+    assert_equal updated_at, @event.updated_at
+  end
+
+  test "update_details! is refused on a cancelled event and allowed on a finalized one" do
+    @event.update_columns(cancelled_at: Time.current)
+    error = assert_raises(Event::ClosedError) { @event.update_details!(name: "New name") }
+    assert_equal "This event was cancelled", error.message
+    assert_equal "Planning session", @event.reload.name
+
+    finalized = events(:finalized)
+    finalized.update_details!(place: "Zoom")
+    finalized.reload
+    assert_equal 1, finalized.revision
+    assert_equal "Zoom", finalized.place
+    assert finalized.status?
+    assert_equal Time.utc(2030, 1, 15, 10), finalized.start_time
+    assert_equal Time.utc(2030, 1, 15, 11), finalized.end_time
+  end
+
+  test "update_details! validates inside the lock and leaves slots and participants alone" do
+    slots = @event.time_slots.order(:id).map(&:attributes)
+    people = @event.participants.order(:id).map(&:attributes)
+
+    assert_raises(ActiveRecord::RecordInvalid) { @event.update_details!(name: "Renamed", place_url: "ftp://files.example") }
+    assert_equal "Planning session", @event.reload.name
+
+    @event.update_details!(name: "Renamed", description: "Same people, new name")
+    assert_equal "Renamed", @event.reload.name
+    assert_equal slots, @event.time_slots.order(:id).map(&:attributes)
+    assert_equal people, @event.participants.order(:id).map(&:attributes)
+  end
+
   test "database rejects a finalized event without a whole number of slots" do
     assert_raises(ActiveRecord::StatementInvalid) do
       Event.transaction(requires_new: true) do

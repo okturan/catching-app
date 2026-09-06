@@ -11,7 +11,18 @@ class OrganizerPlansEventTest < ApplicationSystemTestCase
     fill_in "Your name", with: "Ann Organizer"
     fill_in "Your email (we send your organizer link there)", with: "ann@example.com"
     fill_in "Invite people (one address per line or comma-separated)", with: "bob@example.com"
+    fill_in "Place", with: "Ege's place, Kadıköy"
+    fill_in "Link", with: "https://zoom.us/j/1"
     assert_select "Slot length", selected: "30 minutes"
+
+    assert_selector "#event_duration_minutes option[value='45']:disabled", visible: :all
+    select "1 h 30 min", from: "Planned length"
+    select "60 minutes", from: "Slot length"
+    assert_selector "#event_duration_minutes option[value='90']:disabled", visible: :all
+    assert_select "Planned length", selected: "Not set"
+    select "30 minutes", from: "Slot length"
+    assert_selector "#event_duration_minutes option[value='90']:enabled", visible: :all
+    select "1 h 30 min", from: "Planned length"
 
     assert_selector "#time-grid-define .slot[data-date]", minimum: 24
     first_cell = find('#time-grid-define .slot[data-row="20"][data-col="1"]')
@@ -32,6 +43,17 @@ class OrganizerPlansEventTest < ApplicationSystemTestCase
 
     assert_text "No replies yet"
     assert_selector "input[type=submit][value='Send 1 invitation']"
-    assert_equal 1, Event.find_by(name: "Board games night").guests.count
+    assert_selector "dl.event-facts dd", text: "1 h 30 min"
+    assert_selector "dl.event-facts a.quiet-link[href='https://zoom.us/j/1']", text: "zoom.us"
+    event = Event.find_by(name: "Board games night")
+    assert_equal 1, event.guests.count
+    assert_equal [ "Ege's place, Kadıköy", "https://zoom.us/j/1", 90 ], [ event.place, event.place_url, event.duration_minutes ]
+
+    click_link "Edit details"
+    assert_text "30-minute slots · #{event.time_zone}"
+    fill_in "Place", with: "Zoom"
+    click_button "Save details"
+    assert_text "Details saved."
+    assert_selector "dl.event-facts dd", text: /Zoom/
   end
 end

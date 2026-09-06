@@ -1,0 +1,54 @@
+<% content_for :head do %>
+  <meta name="robots" content="noindex">
+  <meta name="turbo-cache-control" content="no-cache">
+<% end %>
+<% content_for :canonical_url, root_url %>
+<% content_for :meta_title, "Edit details · #{@event.name} · Catching App" %>
+
+<div class="container py-5" id="event-details">
+  <h1>Edit details</h1>
+  <div class="form-inputs details-face">
+    <p class="details-facts"><%= @event.slot_minutes %>-minute slots · <%= @event.time_zone %></p>
+    <% if @event.status? %>
+      <p class="details-facts">Set in stone:
+        <%= zoned_time(@event.start_time, @event.time_zone, format: "%a %-d %b %Y %H:%M") %> to
+        <%= zoned_time(@event.end_time, @event.time_zone) %></p>
+    <% end %>
+
+    <%= form_with model: @event, url: scoped_path(:details), method: :patch, id: "details-form" do |form| %>
+      <% if @event.errors[:base].any? %>
+        <div class="alert alert-danger position-static" role="alert"><%= @event.errors[:base].to_sentence %></div>
+      <% end %>
+
+      <div class="mb-3">
+        <%= form.label :name, "Name", class: "form-label" %>
+        <%= form.text_field :name, class: class_names("form-control", "is-invalid" => @event.errors[:name].any?), maxlength: 120, required: true %>
+        <% if @event.errors[:name].any? %><div class="invalid-feedback d-block"><%= @event.errors[:name].to_sentence %></div><% end %>
+      </div>
+      <div class="mb-3">
+        <%= form.label :description, "Description", class: "form-label" %>
+        <%= form.text_area :description, class: class_names("form-control", "is-invalid" => @event.errors[:description].any?), rows: 4, maxlength: 2000, required: true %>
+        <% if @event.errors[:description].any? %><div class="invalid-feedback d-block"><%= @event.errors[:description].to_sentence %></div><% end %>
+      </div>
+      <div class="mb-3">
+        <%= form.label :place, "Place", class: "form-label" %>
+        <%= form.text_field :place, class: class_names("form-control", "is-invalid" => @event.errors[:place].any?), maxlength: 200, placeholder: "Ege's place, Kadıköy — or 'Zoom'" %>
+        <% if @event.errors[:place].any? %><div class="invalid-feedback d-block"><%= @event.errors[:place].to_sentence %></div><% end %>
+      </div>
+      <div class="mb-3">
+        <%= form.label :place_url, "Link", class: "form-label" %>
+        <%= form.url_field :place_url, class: class_names("form-control", "is-invalid" => @event.errors[:place_url].any?), maxlength: 2000, placeholder: "Link to join or a map link" %>
+        <% if @event.errors[:place_url].any? %><div class="invalid-feedback d-block"><%= @event.errors[:place_url].to_sentence %></div><% end %>
+      </div>
+      <div class="mb-4">
+        <%= form.label :duration_minutes, "Planned length", class: "form-label" %>
+        <%= form.select :duration_minutes, duration_select_options(@event.slot_minutes, @event.duration_minutes),
+          { include_blank: "Not set" }, class: class_names("form-select", "is-invalid" => @event.errors[:duration_minutes].any?) %>
+        <% if @event.errors[:duration_minutes].any? %><div class="invalid-feedback d-block"><%= @event.errors[:duration_minutes].to_sentence %></div><% end %>
+      </div>
+
+      <%= form.submit "Save details", class: "btn btn-primary" %>
+    <% end %>
+  </div>
+  <p><%= link_to "Back to the event", scoped_path, class: "quiet-link" %></p>
+</div>

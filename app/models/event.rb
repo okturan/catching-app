@@ -2,6 +2,11 @@ class Event < ApplicationRecord
   class ClosedError < StandardError; end
 
   SLOT_MINUTES = [ 15, 30, 60 ].freeze
+  MAX_DURATION_MINUTES = 1440
+  WEB_ADDRESS_MESSAGE = "must be a web address starting with http:// or https://".freeze
+  # The fields an organizer edits on the details page; changing any of them
+  # is a new revision of what guests see.
+  DETAIL_ATTRIBUTES = %w[name description place place_url duration_minutes].freeze
 
   has_many :participants, dependent: :destroy, inverse_of: :event
   has_one :organizer, -> { organizer }, class_name: "Participant", inverse_of: :event
@@ -12,12 +17,22 @@ class Event < ApplicationRecord
 
   normalizes :name, with: ->(name) { name.squish }
   normalizes :description, with: ->(description) { description.strip }
+  normalizes :place, with: ->(place) { place.squish.presence }
+  # Strip, then downcase the scheme only: "HTTPS://Zoom.us/J/1" keeps its path.
+  normalizes :place_url, with: ->(url) {
+    stripped = url.strip
+    stripped.presence && stripped.sub(/\A[a-z][a-z0-9+.\-]*(?=:)/i, &:downcase)
+  }
 
   validates :name, presence: true, length: { maximum: 120 }
   validates :description, presence: true, length: { maximum: 2000 }
+  validates :place, length: { maximum: 200 }
   validates :slot_minutes, inclusion: { in: SLOT_MINUTES }
+  validates :duration_minutes, numericality: { only_integer: true }, allow_nil: true
   validates :start_time, :end_time, presence: true, if: :status?
   validate :time_zone_is_known
+  validate :place_url_is_a_web_address
+  validate :duration_is_whole_slots
   validate :end_time_follows_start_time
   validate :grid_is_frozen_after_replies, on: :update
 
@@ -52,6 +67,23 @@ class Event < ApplicationRecord
 
   def slot_length
     slot_minutes.minutes
+  end
+
+  def cancelled?
+    cancelled_at.present?
+  end
+
+  # The organizer's details edit: one locked save. Only a change to a field
+  # guests can see bumps the revision, so a no-op leaves the row untouched.
+  # Returns the change set (attribute => [old, new]) without the bookkeeping.
+  def update_details!(attributes)
+    with_lock do
+      ensure_not_cancelled!
+      assign_attributes(attributes)
+      self.revision += 1 if changed.intersect?(DETAIL_ATTRIBUTES)
+      save!
+      saved_changes.except("revision", "updated_at")
+    end
   end
 
   def replace_time_slots!(participant:, starts_at:)
@@ -142,6 +174,10 @@ class Event < ApplicationRecord
     raise ClosedError, "Availability is closed for this event" if status?
   end
 
+  def ensure_not_cancelled!
+    raise ClosedError, "This event was cancelled" if cancelled?
+  end
+
   def ensure_replies!
     return if participants.counting.guest.exists?
 
@@ -176,6 +212,30 @@ class Event < ApplicationRecord
     return if time_zone.present? && ActiveSupport::TimeZone[time_zone]
 
     errors.add(:time_zone, "is not a known time zone")
+  end
+
+  # http(s), a host, no userinfo: the same shape the database check pins.
+  def place_url_is_a_web_address
+    return if place_url.nil?
+
+    uri = URI.parse(place_url)
+    return if %w[http https].include?(uri.scheme) && uri.host.present? && uri.userinfo.nil? && place_url.length <= 2000
+
+    errors.add(:place_url, WEB_ADDRESS_MESSAGE)
+  rescue URI::InvalidURIError
+    errors.add(:place_url, WEB_ADDRESS_MESSAGE)
+  end
+
+  def duration_is_whole_slots
+    return if duration_minutes.nil? || errors[:duration_minutes].any?
+
+    if duration_minutes <= 0
+      errors.add(:duration_minutes, "must be greater than 0")
+    elsif duration_minutes > MAX_DURATION_MINUTES
+      errors.add(:duration_minutes, "must be at most 24 hours")
+    elsif slot_minutes.to_i.positive? && (duration_minutes % slot_minutes).nonzero?
+      errors.add(:duration_minutes, "must be a whole number of #{slot_minutes}-minute slots")
+    end
   end
 
   def end_time_follows_start_time

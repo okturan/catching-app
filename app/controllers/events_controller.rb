@@ -44,7 +44,7 @@ class EventsController < ApplicationController
   private
 
   def event_params
-    params.fetch(:event, {}).permit(:name, :description, :slot_minutes, :time_zone)
+    params.fetch(:event, {}).permit(:name, :description, :slot_minutes, :time_zone, :place, :place_url, :duration_minutes)
   end
 
   def requested_slot_minutes
