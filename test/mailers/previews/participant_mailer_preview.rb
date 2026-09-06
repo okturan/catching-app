@@ -16,6 +16,15 @@ class ParticipantMailerPreview < ActionMailer::Preview
     ParticipantMailer.with(delivery: sample(:finalized), token: nil).finalized
   end
 
+  def cancelled
+    start_time = 1.week.from_now.utc.change(hour: 18)
+    ParticipantMailer.with(delivery: sample(:cancelled), token: nil, window: [ start_time, start_time + 2.hours ]).cancelled
+  end
+
+  def cancelled_while_pending
+    ParticipantMailer.with(delivery: sample(:cancelled), token: nil, window: nil).cancelled
+  end
+
   private
 
   def sample(kind, organizer: false)

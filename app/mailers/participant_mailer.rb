@@ -1,6 +1,7 @@
 # Every transactional mail. Parameters: delivery (the MailDelivery ledger
-# row, which carries event, participant and recipient) and token (the raw
-# capability token for the two templates that carry a link).
+# row, which carries event, participant and recipient), token (the raw
+# capability token for the templates that carry a link) and, for cancelled,
+# window (the set start and end at cancellation, or nil).
 class ParticipantMailer < ApplicationMailer
   helper MailTextHelper
   include MailTextHelper
@@ -45,6 +46,23 @@ class ParticipantMailer < ApplicationMailer
       to: @delivery.recipient_email,
       reply_to: @event.organizer&.email,
       subject: subject_for("#{mail_safe(@event.name)} is set for #{date}")
+    )
+  end
+
+  # No link and no promise of more mail. The window comes from the params,
+  # so a job that runs after the row changed still prints what was set.
+  def cancelled
+    @organizer = @event.organizer
+    start_time, end_time = params[:window]
+    if start_time && end_time
+      zone = @participant&.time_zone.presence || @event.time_zone
+      @recipient_window = window_in(zone, start_time, end_time)
+      @event_window = window_in(@event.time_zone, start_time, end_time)
+    end
+    mail(
+      to: @delivery.recipient_email,
+      reply_to: @organizer&.email,
+      subject: subject_for("#{mail_safe(@event.name)} is cancelled")
     )
   end
 

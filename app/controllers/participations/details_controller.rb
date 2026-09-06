@@ -4,7 +4,7 @@ module Participations
   # never fields. Allowed while pending or finalized, refused once cancelled.
   class DetailsController < ParticipationScopedController
     before_action :require_organizer!
-    before_action :refuse_cancelled
+    before_action :refuse_cancelled, only: :edit
 
     def edit
     end

@@ -18,7 +18,9 @@
           <%= link_to my_participation_path(participation), class: "event-face" do %>
             <h3><%= event.name %></h3>
             <span class="event-face-time">
-              <% if event.status? %>
+              <% if event.cancelled? %>
+                <span class="body-font">cancelled</span>
+              <% elsif event.status? %>
                 <%= event.start_time.utc.strftime("%a %-d %b, %H:%M") %> UTC
               <% else %>
                 <span class="body-font">pending</span>
@@ -26,6 +28,7 @@
             </span>
             <p><%= event.description %></p>
             <span class="event-face-state">
+              <% if event.cancelled? %>cancelled ·<% end %>
               <% if participation.organizer? %>
                 <%= pluralize(event.guests.active.count, "guest") %>
               <% else %>

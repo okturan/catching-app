@@ -1,6 +1,9 @@
 class ParticipationsController < ParticipationScopedController
   include ParticipationPage
 
+  # Leave is the guest's kill switch and works on a cancelled event too.
+  skip_before_action :refuse_closed_writes, only: :destroy
+
   def show
     mark_link_opened if token_request? && @participant.organizer?
     load_participation_page

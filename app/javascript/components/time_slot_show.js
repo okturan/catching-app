@@ -35,6 +35,7 @@ const initTimeSlotShow = () => {
   const slotMinutes = Number(grid.dataset.slotMinutes || 60);
   const eventZone = grid.dataset.eventTimeZone || null;
   const finalized = grid.hasAttribute("data-finalized");
+  const cancelled = grid.hasAttribute("data-cancelled");
   const notBefore = grid.dataset.notBefore
     ? DateTime.fromISO(grid.dataset.notBefore)
     : null;
@@ -138,7 +139,7 @@ const initTimeSlotShow = () => {
     renderFinalWindow();
 
     const allPast = offered.length > 0 && offered.every(isPast);
-    if (allPast && summaryElement && !finalized) {
+    if (allPast && summaryElement && !finalized && !cancelled) {
       summaryElement.textContent = "All the offered times have passed";
       if (targetForm) {
         targetForm

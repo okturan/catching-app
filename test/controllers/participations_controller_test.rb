@@ -211,6 +211,21 @@ class ParticipationsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Availability is closed for this event", flash[:alert]
   end
 
+  test "a finalized guest page keeps Leave and drops the paint and decline forms" do
+    token = raw_token(:finalized_guest)
+
+    get participation_path(token)
+
+    assert_response :success
+    assert_select "table#time-grid-show[data-role=viewer][data-finalized]:not([data-cancelled])"
+    assert_select "#availability-form", count: 0
+    assert_select "button[form=availability-form]", count: 0
+    assert_select "form[action=?]", participation_decline_path(token), count: 0
+    assert_select "form[action=?] input[name=_method][value=delete]", participation_path(token)
+    assert_select "button", text: "Leave this event"
+    assert_select "h1 span.plate", text: "Set in stone"
+  end
+
   test "an organizer token cannot use guest actions" do
     offer = @event.time_slots.where(participant_id: @organizer.id).order(:start_time).pluck(:start_time)
 

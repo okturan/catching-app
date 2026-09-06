@@ -256,6 +256,103 @@ class EventTest < ActiveSupport::TestCase
     assert_equal [ nil, nil, nil ], finalized.plan_timeline.map(&:last)
   end
 
+  test "cancel! stamps the event once, bumps the revision and deletes nothing" do
+    @event.update_columns(revision: 3, notified_revision: 3)
+    MailDelivery.create!(event: @event, participant: @guest, kind: :invitation, recipient_email: @guest.email)
+    counts = -> { [ Event.count, Participant.count, TimeSlot.count, Activity.count, MailDelivery.count ] }
+    before = counts.call
+
+    @event.cancel!
+
+    @event.reload
+    assert @event.cancelled?
+    assert_in_delta Time.current, @event.cancelled_at, 5.seconds
+    assert_equal 4, @event.revision
+    assert_not @event.open?
+    assert @event.closed?
+    assert_not @event.status?
+    assert_equal before, counts.call
+    assert_equal @guest, Participant.find_by_token(raw_token(:planning_guest))
+    assert_equal @organizer, Participant.find_by_token(raw_token(:planning_organizer))
+    assert_equal users(:invitee).id, @guest.reload.user_id
+
+    error = assert_raises(Event::ClosedError) { @event.cancel! }
+    assert_equal "This event was cancelled", error.message
+    assert_equal 4, @event.reload.revision
+  end
+
+  test "cancelling a finalized event keeps its window" do
+    finalized = events(:finalized)
+
+    finalized.cancel!
+
+    finalized.reload
+    assert finalized.cancelled?
+    assert finalized.status?
+    assert finalized.closed?
+    assert_not finalized.open?
+    assert_equal Time.utc(2030, 1, 15, 10), finalized.start_time
+    assert_equal Time.utc(2030, 1, 15, 11), finalized.end_time
+    assert_equal 1, finalized.revision
+  end
+
+  test "cancelled_at cannot be changed or cleared once set" do
+    @event.cancel!
+    stamped = @event.reload.cancelled_at
+
+    @event.cancelled_at = 1.day.ago
+    assert_not @event.valid?
+    assert_equal [ "cannot be changed once cancelled" ], @event.errors[:cancelled_at]
+
+    @event.cancelled_at = nil
+    assert_not @event.valid?
+    assert_equal [ "cannot be changed once cancelled" ], @event.errors[:cancelled_at]
+
+    assert_raises(ActiveRecord::RecordInvalid) { @event.update!(cancelled_at: nil) }
+    assert_equal stamped, @event.reload.cancelled_at
+  end
+
+  test "open, finalized and cancelled are three states and not_cancelled reads two of them" do
+    assert @event.open?
+    assert_not @event.closed?
+    assert_not events(:finalized).open?
+    assert events(:finalized).closed?
+    assert_includes Event.not_cancelled, @event
+    assert_includes Event.not_cancelled, events(:finalized)
+
+    @event.cancel!
+
+    assert_not_includes Event.not_cancelled, @event
+    assert_includes Event.not_cancelled, events(:finalized)
+  end
+
+  test "every writer refuses a cancelled event with one message before any other check" do
+    finalized = events(:finalized)
+    finalized.cancel!
+    error = assert_raises(Event::ClosedError) { finalized.finalize!(starts_at: [ Time.utc(2030, 1, 15, 10) ]) }
+    assert_equal "This event was cancelled", error.message, "cancelled wins over the finalized message"
+
+    @event.cancel!
+    slots = @event.time_slots.order(:id).pluck(:id)
+    writers = {
+      "replace_time_slots!" => -> { @event.replace_time_slots!(participant: @guest, starts_at: [ Time.utc(2030, 1, 15, 11) ]) },
+      "mark_unavailable!" => -> { @event.mark_unavailable!(participant: @guest) },
+      "finalize!" => -> { @event.finalize!(starts_at: [ Time.utc(2030, 1, 15, 10) ]) },
+      "update_details!" => -> { @event.update_details!(name: "Renamed") },
+      "add_plan_item!" => -> { @event.add_plan_item!(name: "Late") }
+    }
+    writers.each do |name, writer|
+      error = assert_raises(Event::ClosedError, name) { writer.call }
+      assert_equal "This event was cancelled", error.message, name
+    end
+    assert_equal slots, @event.time_slots.order(:id).pluck(:id)
+    assert_nil @guest.reload.declined_at
+    @event.reload
+    assert_equal "Planning session", @event.name
+    assert_equal 1, @event.revision
+    assert_equal [ "Board games" ], @event.activities.pluck(:name)
+  end
+
   test "database rejects a finalized event without a whole number of slots" do
     assert_raises(ActiveRecord::StatementInvalid) do
       Event.transaction(requires_new: true) do

@@ -3,6 +3,8 @@ module Participations
   # token possession only; email equality never links anything.
   class ClaimsController < ParticipationScopedController
     before_action :authenticate_user!
+    # Memory stays allowed: a cancelled event can still be kept in an account.
+    skip_before_action :refuse_closed_writes
 
     def show
       redirect_to my_participation_path(@participant), notice: "This event is already in your account." if claimed_by_current_user?

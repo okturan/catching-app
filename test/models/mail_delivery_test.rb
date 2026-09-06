@@ -93,6 +93,13 @@ class MailDeliveryTest < ActiveSupport::TestCase
     assert_raises(MailDelivery::CapExceeded) { check!(recipient: "another@example.com", request_ip: "203.0.113.9") }
   end
 
+  test "a cancelled finalized event still earns the organizer the full allowance" do
+    events(:finalized).cancel!
+
+    assert MailDelivery::Caps.organizer_has_finalized?(participants(:finalized_organizer))
+    assert_not MailDelivery::Caps.organizer_has_finalized?(participants(:other_organizer))
+  end
+
   test "organizer link mails are limited to one per address per hour" do
     assert MailDelivery::Caps.organizer_link_allowed?("owner@example.com")
     record(kind: :organizer_link, recipient: "Owner+x@example.com", sender: nil)

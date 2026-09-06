@@ -6,9 +6,12 @@
 class ParticipationScopedController < ApplicationController
   include TimeSlotParams
 
+  CANCELLED_MESSAGE = "This event was cancelled".freeze
+
   skip_before_action :authenticate_user!, if: :token_request?
   before_action :set_participant
   before_action :canonicalize_token_path, if: :token_request?
+  before_action :refuse_closed_writes, unless: -> { request.get? }
   before_action :promote_pending_token, if: :token_request?, unless: -> { request.get? }
   after_action :forbid_caching
 
@@ -16,6 +19,7 @@ class ParticipationScopedController < ApplicationController
     by: -> { request.path_parameters[:token] || request.remote_ip }
 
   rescue_from ActiveRecord::RecordNotFound, with: :render_link_not_found
+  rescue_from Event::ClosedError, with: :event_closed
 
   helper_method :token_request?, :scoped_path, :viewer_role
 
@@ -53,8 +57,9 @@ class ParticipationScopedController < ApplicationController
     @participant.promote_pending!(Participant.digest(@resolution.canonical_token), actor: current_user)
   end
 
+  # Painting needs an open event; finalized and cancelled pages are read.
   def viewer_role
-    @event.status? ? "viewer" : @participant.role
+    @event.open? ? @participant.role : "viewer"
   end
 
   # Path to a nested action in the viewer's own route family; edit: true names
@@ -73,12 +78,27 @@ class ParticipationScopedController < ApplicationController
     raise ActiveRecord::RecordNotFound unless @participant.organizer?
   end
 
-  # Organizer pages that edit facts and the plan refuse a cancelled event
-  # with one alert; reads keep working for every valid link.
+  # Every write on a cancelled event answers one alert, before any token is
+  # promoted or any row touched. Leave (ParticipationsController#destroy)
+  # and Claim (Participations::ClaimsController) skip this callback: the
+  # guest's kill switch and memory stay available. Reads keep working for
+  # every valid link.
+  def refuse_closed_writes
+    refuse_cancelled
+  end
+
+  # The same alert for organizer pages whose GET must refuse as well
+  # (Edit details).
   def refuse_cancelled
     return unless @event.cancelled?
 
-    redirect_to scoped_path, alert: "This event was cancelled", status: :see_other
+    redirect_to scoped_path, alert: CANCELLED_MESSAGE, status: :see_other
+  end
+
+  # A model refusal on a closed event, raised by a writer, lands on the page
+  # with the model's message.
+  def event_closed(error)
+    redirect_to scoped_path, alert: error.message, status: :see_other
   end
 
   def require_opened_organizer!

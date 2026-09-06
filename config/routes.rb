@@ -27,6 +27,7 @@ Rails.application.routes.draw do
         resource :link_reveal, only: :create
       end
       resource :details, only: %i[edit update] # organizer
+      resource :cancellation, only: :create # organizer: terminal, read-only afterwards
       resources :activities, only: %i[create update destroy] do # organizer: the plan
         resource :move, only: :create, controller: :activity_moves # organizer: move[position]
       end

@@ -31,11 +31,18 @@
     </div>
 
     <div class="event-panel">
-      <h1><%= @event.name %><% if @event.status? %> <span class="plate">Set in stone</span><% end %></h1>
+      <h1><%= @event.name %><% if @event.cancelled? %> <span class="plate plate-ink">Cancelled</span><% elsif @event.status? %> <span class="plate">Set in stone</span><% end %></h1>
       <% if @event.description.present? %>
         <%= simple_format(@event.description, { class: "event-description" }) %>
       <% end %>
-      <% if @event.status? %>
+      <% if @event.cancelled? %>
+        <div class="event-when is-cancelled">
+          <span>Cancelled on <%= zoned_time(@event.cancelled_at, @event.time_zone, format: "%a %-d %b %Y %H:%M") %></span>
+          <% if @event.status? %>
+            <span>Was set for <%= zoned_time(@event.start_time, @event.time_zone, format: "%a %-d %b %Y %H:%M") %> to <%= zoned_time(@event.end_time, @event.time_zone) %></span>
+          <% end %>
+        </div>
+      <% elsif @event.status? %>
         <div class="event-when">
           <span><%= event_window(@event) %></span>
           <span id="final-window-local"></span>
@@ -84,7 +91,9 @@
           </ul>
         <% end %>
       </div>
-      <% if @participant.organizer? && !@event.cancelled? %>
+      <% if @participant.organizer? && @event.cancelled? %>
+        <%= link_to "Plan a new event", new_event_path, class: "plate-button-sm" %>
+      <% elsif @participant.organizer? %>
         <%= link_to "Edit details", scoped_path(:details, edit: true), class: "plate-button-sm" %>
       <% end %>
     </div>
@@ -95,25 +104,29 @@
       </div>
     <% end %>
 
-    <% if @participant.guest? && !@event.status? %>
+    <% if @participant.guest? %>
       <div class="organizer-panel guest-panel">
-      <%= form_with url: scoped_path, method: :patch, id: "availability-form" do |form| %>
-        <input name="time_slots[time_slot_array]" id="new-time-slot-array" type="hidden">
-        <input name="participant[time_zone]" type="hidden">
-        <div class="mb-2">
-          <%= form.label :name, "Your name", for: "participant_name", class: "form-label" %>
-          <%= form.text_field :name, value: @participant.name, id: "participant_name", name: "participant[name]", class: "form-control", maxlength: 100 %>
-        </div>
+      <% if @event.open? %>
+        <%= form_with url: scoped_path, method: :patch, id: "availability-form" do |form| %>
+          <input name="time_slots[time_slot_array]" id="new-time-slot-array" type="hidden">
+          <input name="participant[time_zone]" type="hidden">
+          <div class="mb-2">
+            <%= form.label :name, "Your name", for: "participant_name", class: "form-label" %>
+            <%= form.text_field :name, value: @participant.name, id: "participant_name", name: "participant[name]", class: "form-control", maxlength: 100 %>
+          </div>
+        <% end %>
+        <p class="guest-hint">Paint the times that work for you on the grid, then press Save. Your reply goes to the organizer.</p>
       <% end %>
-      <p class="guest-hint">Paint the times that work for you on the grid, then press Save. Your reply goes to the organizer.</p>
       <div class="d-flex gap-2 flex-wrap">
-        <%= button_to "None of these times work", scoped_path(:decline), method: :post, class: "btn btn-outline-secondary",
-          params: { "participant[time_zone]" => "" }, form: { data: { turbo_confirm: "Tell the organizer none of these times work for you?" } } %>
+        <% if @event.open? %>
+          <%= button_to "None of these times work", scoped_path(:decline), method: :post, class: "btn btn-outline-secondary",
+            params: { "participant[time_zone]" => "" }, form: { data: { turbo_confirm: "Tell the organizer none of these times work for you?" } } %>
+        <% end %>
         <%= button_to "Leave this event", scoped_path, method: :delete, class: "btn btn-outline-danger",
           params: { "participant[time_zone]" => "" }, form: { data: { turbo_confirm: "Leave this event for good? Your link will stop working." } } %>
       </div>
       </div>
-    <% elsif @participant.organizer? && !@event.status? %>
+    <% elsif @participant.organizer? && @event.open? %>
       <%= form_with url: scoped_path(:finalization), method: :post, id: "finalize-form" do |form| %>
         <input id="final-time-slot-array" name="time_slots[time_slot_array]" type="hidden" value="">
       <% end %>
@@ -126,7 +139,8 @@
     <% if @participant.organizer? %>
       <section class="mt-4 organizer-panel" aria-labelledby="participants-heading">
         <h5 id="participants-heading">Guests</h5>
-        <% if @participant.link_opened_at.nil? %>
+        <% if @event.cancelled? %>
+        <% elsif @participant.link_opened_at.nil? %>
           <p class="text-warning">
             Open the organizer link we emailed to <%= @participant.email %> to send invitations.
           </p>
@@ -154,12 +168,12 @@
                 </td>
                 <td><%= guest_state_label(guest, @deliveries, slot_count: guest.time_slots.size) %></td>
                 <td class="text-nowrap">
-                  <% if guest.left_at.nil? && !@event.status? && @participant.link_opened_at.present? %>
+                  <% if guest.left_at.nil? && @event.open? && @participant.link_opened_at.present? %>
                     <%= button_to "Resend", scoped_path(:participant_resend, guest), method: :post, class: "btn btn-link btn-sm p-0 me-2" %>
                     <%= button_to "Show link to copy", scoped_path(:participant_link_reveal, guest), method: :post, class: "btn btn-link btn-sm p-0 me-2",
                       form: { data: { turbo_confirm: "Anyone with this link can answer as this guest. Show it?" } } %>
                   <% end %>
-                  <% if guest.left_at.nil? && !@event.status? %>
+                  <% if guest.left_at.nil? && @event.open? %>
                     <%= button_to "Remove", scoped_path(:participant, guest), method: :delete, class: "btn btn-link btn-sm p-0 text-danger",
                       form: { data: { turbo_confirm: "Remove #{guest.email} from this event?" } } %>
                   <% end %>
@@ -169,6 +183,10 @@
           </tbody>
         </table>
       </section>
+      <% unless @event.cancelled? %>
+        <%= button_to "Cancel this event", scoped_path(:cancellation), method: :post, class: "btn btn-outline-danger",
+          form: { class: "mt-3", data: { turbo_confirm: "Cancel #{@event.name} for everyone? Everyone with a link gets one last email. This cannot be undone." } } %>
+      <% end %>
     <% end %>
   </div>
 
@@ -179,7 +197,8 @@
         data-slot-minutes="<%= @event.slot_minutes %>"
         data-event-time-zone="<%= @event.time_zone %>"
         data-not-before="<%= TimeSlotParser::PAST_GRACE.ago.utc.iso8601 %>"
-        <%= "data-finalized" if @event.status? %>></table>
+        <%= "data-finalized" if @event.status? %>
+        <%= "data-cancelled" if @event.cancelled? %>></table>
     </div>
     <div class="grid-action-bar">
       <span id="selection-summary" aria-live="polite">No times selected</span>
@@ -187,11 +206,11 @@
         <label><input type="radio" name="paint-mode" value="scroll" checked><span>Scroll</span></label>
         <label><input type="radio" name="paint-mode" value="paint"><span>Paint</span></label>
       </fieldset>
-      <% if @participant.guest? && !@event.status? %>
+      <% if @participant.guest? && @event.open? %>
         <button type="submit" form="availability-form" class="btn-meeting px-5">Save</button>
-      <% elsif @participant.organizer? && !@event.status? && @counts[:replied].positive? %>
+      <% elsif @participant.organizer? && @event.open? && @counts[:replied].positive? %>
         <button type="submit" form="finalize-form" class="btn-meeting px-5">Set in stone</button>
-      <% elsif @participant.organizer? && !@event.status? %>
+      <% elsif @participant.organizer? && @event.open? %>
         <span class="text-muted">No replies yet. Invitations sent to <%= @counts[:invited] %>.</span>
       <% end %>
     </div>

@@ -51,6 +51,8 @@
     gap: 0.15rem;
   }
   .event-when.is-pending { color: $ink-soft; font-family: $body-font; font-weight: 600; }
+  // The cancelled line: words in the body face, the instants in the mono face.
+  .event-when.is-cancelled { font-family: $body-font; font-weight: 600; }
   // Where and how long: labels in the form-label style, values in body type.
   .event-facts {
     display: grid;

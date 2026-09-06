@@ -8,12 +8,13 @@ class OrganizerLinksControllerTest < ActionDispatch::IntegrationTest
     assert_select "form[action=?]", organizer_links_path
   end
 
-  test "recovery issues a pending organizer token and touches nothing else" do
+  test "recovery issues a pending organizer token per not-cancelled event and touches nothing else" do
     organizer = participants(:planning_organizer)
 
-    assert_difference "MailDelivery.organizer_link.count", 1 do
+    assert_difference "MailDelivery.organizer_link.count", 2 do
       post organizer_links_path, params: { organizer_link: { email: "Owner@example.com" } }
     end
+    assert participants(:finalized_organizer).reload.pending_token_digest.present?, "a finalized event still recovers"
 
     assert_redirected_to new_organizer_link_path
     assert_equal OrganizerLinksController::NOTICE, flash[:notice]
@@ -38,13 +39,32 @@ class OrganizerLinksControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_equal 1, responses.uniq.size
-    assert_equal 1, MailDelivery.organizer_link.count, "the second request within the hour sends nothing"
+    assert_equal 2, MailDelivery.organizer_link.count, "the second request within the hour sends nothing"
   end
 
-  test "finalized events get no recovery link" do
-    post organizer_links_path, params: { organizer_link: { email: "owner@example.com" } }
+  test "a cancelled event gets no recovery link while a finalized one still does" do
+    events(:planning).cancel!
 
-    assert_nil participants(:finalized_organizer).reload.pending_token_digest
-    assert participants(:planning_organizer).reload.pending_token_digest.present?
+    assert_difference "MailDelivery.organizer_link.count", 1 do
+      post organizer_links_path, params: { organizer_link: { email: "owner@example.com" } }
+    end
+
+    assert_redirected_to new_organizer_link_path
+    assert_equal OrganizerLinksController::NOTICE, flash[:notice]
+    assert_nil participants(:planning_organizer).reload.pending_token_digest
+    assert participants(:finalized_organizer).reload.pending_token_digest.present?
+    assert_equal events(:finalized).id, MailDelivery.organizer_link.last.event_id
+  end
+
+  test "an address whose only event is cancelled gets the constant notice and nothing else" do
+    events(:other_event).cancel!
+
+    assert_no_difference "MailDelivery.count" do
+      post organizer_links_path, params: { organizer_link: { email: "other-owner@example.com" } }
+    end
+
+    assert_redirected_to new_organizer_link_path
+    assert_equal OrganizerLinksController::NOTICE, flash[:notice]
+    assert_nil participants(:other_organizer).reload.pending_token_digest
   end
 end

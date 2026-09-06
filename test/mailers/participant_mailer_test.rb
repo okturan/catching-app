@@ -86,6 +86,46 @@ class ParticipantMailerTest < ActionMailer::TestCase
     assert_includes text, "Tue 15 Jan 2030 10:00–11:00 (UTC)"
   end
 
+  test "cancelled names the organizer, prints the window from its params in both zones and carries no link" do
+    finalized = events(:finalized)
+    guest = participants(:finalized_guest)
+    guest.update!(time_zone: "Europe/Berlin")
+    participants(:finalized_organizer).update!(name: "Olivia https://evil.example Owner")
+    finalized.cancel!
+    row = MailDelivery.create!(event: finalized, participant: guest, kind: :cancelled, recipient_email: guest.email, sender_email: "owner@example.com")
+
+    mail = ParticipantMailer.with(delivery: row, token: nil, window: [ Time.utc(2030, 1, 15, 10), Time.utc(2030, 1, 15, 11) ]).cancelled
+
+    assert_equal "Catching App: Finalized event is cancelled", mail.subject
+    assert_equal [ "invitee@example.com" ], mail.to
+    assert_equal [ "owner@example.com" ], mail.reply_to
+    [ mail.html_part.body.to_s, mail.text_part.body.to_s ].each do |body|
+      assert_includes body, "Olivia evil.example Owner cancelled"
+      assert_includes body, "Finalized event"
+      assert_includes body, "It was set for Tue 15 Jan 2030 11:00–12:00 (Europe/Berlin)."
+      assert_includes body, "In the event's zone: Tue 15 Jan 2030 10:00–11:00 (UTC)"
+      assert_includes body, "Nothing else will be sent about this event."
+      assert_not_includes body, "/p/"
+      assert_not_includes body, "://"
+    end
+  end
+
+  test "cancelled without a window says nothing about a set time" do
+    @event.cancel!
+    row = delivery(:cancelled, @organizer)
+
+    mail = ParticipantMailer.with(delivery: row, token: nil, window: nil).cancelled
+
+    assert_equal "Catching App: Planning session is cancelled", mail.subject
+    assert_equal [ "owner@example.com" ], mail.to
+    text = mail.text_part.body.to_s
+    assert_includes text, "Olivia Owner cancelled Planning session."
+    assert_includes text, "Nothing else will be sent about this event."
+    assert_not_includes text, "It was set for"
+    assert_not_includes text, "In the event's zone"
+    assert_not_includes text, "://"
+  end
+
   test "header injection through the event name is neutralized" do
     @event.update!(name: "Dinner\r\nBcc: victim@example.com")
     row = delivery(:invitation, @guest)

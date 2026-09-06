@@ -35,6 +35,7 @@ class Event < ApplicationRecord
   validate :duration_is_whole_slots
   validate :end_time_follows_start_time
   validate :grid_is_frozen_after_replies, on: :update
+  validate :cancellation_is_final, on: :update
 
   scope :for_user, ->(user) {
     joins(:participants).merge(Participant.active).where(participants: { user_id: user.id }).distinct
@@ -42,6 +43,7 @@ class Event < ApplicationRecord
   scope :organized_by, ->(user) {
     joins(:participants).merge(Participant.active.organizer).where(participants: { user_id: user.id }).distinct
   }
+  scope :not_cancelled, -> { where(cancelled_at: nil) }
 
   # The only creation path: event, organizer, offer and guest rows in one
   # transaction. Invitee emails are already parsed and normalized.
@@ -69,8 +71,29 @@ class Event < ApplicationRecord
     slot_minutes.minutes
   end
 
+  # Three states. Open: still planning, everything works. Finalized: the
+  # time is set, availability is closed. Cancelled: terminal, read-only but
+  # for Leave and Claim; a finalized event keeps its window when cancelled.
   def cancelled?
     cancelled_at.present?
+  end
+
+  def open?
+    !status? && !cancelled?
+  end
+
+  def closed?
+    status? || cancelled?
+  end
+
+  # The organizer calls it off. Nothing is deleted and nothing else changes:
+  # tokens, claims, slots, the plan and a set window all stay, so every link
+  # keeps opening a page that says so.
+  def cancel!
+    with_lock do
+      ensure_not_cancelled!
+      update!(cancelled_at: Time.current, revision: revision + 1)
+    end
   end
 
   # The organizer's details edit: one locked save. Only a change to a field
@@ -242,7 +265,9 @@ class Event < ApplicationRecord
     end
   end
 
+  # Cancelled wins over finalized: a cancelled event has one message.
   def ensure_pending!
+    ensure_not_cancelled!
     raise ClosedError, "Availability is closed for this event" if status?
   end
 
@@ -314,6 +339,12 @@ class Event < ApplicationRecord
     return if start_time.blank? || end_time.blank? || end_time > start_time
 
     errors.add(:end_time, "must be after the start time")
+  end
+
+  def cancellation_is_final
+    return unless cancelled_at_changed? && cancelled_at_was.present?
+
+    errors.add(:cancelled_at, "cannot be changed once cancelled")
   end
 
   def grid_is_frozen_after_replies

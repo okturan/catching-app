@@ -21,10 +21,10 @@
 
 ## 4. Cancellation
 
-- [ ] 4.1 `Event#cancel!`, `cancelled?/open?/closed?`, `ensure_pending!` message order, `ensure_not_cancelled!`, immutability validation, `Event.not_cancelled`
-- [ ] 4.2 Base controller: `viewer_role`, `refuse_closed_writes` (Leave and Claim exempt), `rescue_from Event::ClosedError`; `Participations::CancellationsController`; cancelled page states (ink "Cancelled" plate, `data-cancelled`, Leave and Claim only, "Plan a new event"); dashboard "cancelled"
-- [ ] 4.3 `cancelled` mail template; `Deliveries.cancelled!` (every active linked participant including the organizer, no token, never capped) and the `Deliveries` cancelled guard; recovery scope `Event.not_cancelled`
-- [ ] 4.4 Tests: model refusals with exact messages, Deliveries guard, controller both families, Leave and Claim still work, mailer, recovery, dashboard
+- [x] 4.1 `Event#cancel!`, `cancelled?/open?/closed?`, `ensure_pending!` message order, `ensure_not_cancelled!`, immutability validation, `Event.not_cancelled`
+- [x] 4.2 Base controller: `viewer_role`, `refuse_closed_writes` (Leave and Claim exempt), `rescue_from Event::ClosedError`; `Participations::CancellationsController`; cancelled page states (ink "Cancelled" plate, `data-cancelled`, Leave and Claim only, "Plan a new event"); dashboard "cancelled"
+- [x] 4.3 `cancelled` mail template; `Deliveries.cancelled!` (every active linked participant including the organizer, no token, never capped) and the `Deliveries` cancelled guard; recovery scope `Event.not_cancelled`
+- [x] 4.4 Tests: model refusals with exact messages, Deliveries guard, controller both families, Leave and Claim still work, mailer, recovery, dashboard
 
 ## 5. Calendar file and the finalized mail
 
