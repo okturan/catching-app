@@ -63,8 +63,31 @@ class ParticipantMailer < ApplicationMailer
     )
   end
 
+  # One coalesced notice: why it was sent, what is true now and, for an
+  # offer change, where the recipient's own picks stand. Guests only, the
+  # link by the claim rule. The body reads the current row on purpose: a
+  # notice describes the event as it is when the job runs.
+  def event_updated
+    @organizer = @event.organizer
+    @reason = params.fetch(:reason).to_s
+    @changes = (params[:changes] || {}).to_h.stringify_keys
+    @renamed = @changes["name"]
+    @place = mail_safe(@event.place).presence
+    @duration = @event.duration_minutes && duration_label(@event.duration_minutes)
+    @plan = @event.activities.map { |activity| plan_item_line(activity) }
+    @situation = offer_situation if @reason == "offer"
+    @reason_line = reason_line
+    @link = guest_link
+    mail(
+      to: @delivery.recipient_email,
+      reply_to: @organizer&.email,
+      subject: subject_for("#{mail_safe(@organizer&.name)} changed #{mail_safe(@event.name)}")
+    )
+  end
+
   # No link and no promise of more mail. The window comes from the params,
-  # so a job that runs after the row changed still prints what was set.
+  # so a job that runs after the row changed still prints what was set; when
+  # there was one, the attached file withdraws the calendar entry.
   def cancelled
     @organizer = @event.organizer
     start_time, end_time = params[:window]
@@ -72,6 +95,7 @@ class ParticipantMailer < ApplicationMailer
       zone = @participant&.time_zone.presence || @event.time_zone
       @recipient_window = window_in(zone, start_time, end_time)
       @event_window = window_in(@event.time_zone, start_time, end_time)
+      attach_calendar(window: [ start_time, end_time ], status: :cancelled)
     end
     mail(
       to: @delivery.recipient_email,
@@ -112,13 +136,48 @@ class ParticipantMailer < ApplicationMailer
   def plan_lines(start_time, zone)
     both_zones = zone_named(zone).name != zone_named(@event.time_zone).name
     @event.plan_timeline(from: start_time).map do |activity, start|
-      line = mail_safe(activity.name)
-      line += " (#{duration_label(activity.duration)})" if activity.duration
+      line = plan_item_line(activity)
       next line unless start
 
       line += " at #{clock_in(zone, start)}"
       line += ", #{clock_in(@event.time_zone, start)}" if both_zones
       line
+    end
+  end
+
+  # "Pizza (30 min)": the name through mail_safe and the length, never the
+  # description.
+  def plan_item_line(activity)
+    line = mail_safe(activity.name)
+    line += " (#{duration_label(activity.duration)})" if activity.duration
+    line
+  end
+
+  # The recipient's own situation after an offer change, read from the row
+  # at send time: a voided guest has nothing left, a guest who replied
+  # before the change still holds some picks, a declined guest hears that
+  # times were added (removal-only revisions never reach them).
+  def offer_situation
+    return nil if @participant.nil?
+
+    if @participant.reply_voided_at.present?
+      "None of the times you picked are offered any more. Please pick again."
+    elsif @participant.declined_at.present?
+      "You said none of the times worked. New times were added."
+    elsif @participant.responded_at && @event.offer_revised_at && @participant.responded_at < @event.offer_revised_at
+      "Some of the offered times changed (#{@event.offer_revision_added} added, #{@event.offer_revision_removed} removed). " \
+        "Your remaining picks still stand; look again."
+    end
+  end
+
+  # The one reason line at the top of a notice.
+  def reason_line
+    organizer = mail_safe(@organizer&.name)
+    event = mail_safe(@event.name)
+    case @reason
+    when "details" then "#{organizer} changed the details of #{event}."
+    when "offer" then "#{organizer} changed the offered times for #{event}."
+    else "#{organizer} changed #{event}. Here is what is set now."
     end
   end
 

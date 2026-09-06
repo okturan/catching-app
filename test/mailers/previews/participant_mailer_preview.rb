@@ -22,6 +22,23 @@ class ParticipantMailerPreview < ActionMailer::Preview
     ParticipantMailer.with(delivery: sample(:finalized, organizer: true), token: nil, window: sample_window).finalized
   end
 
+  # One change notice per reason: the details form (with a rename), the
+  # offer form and the Tell the guests button.
+  def event_updated_details
+    event = sample_event
+    changes = { "name" => [ "Film night", event.name ], "place" => [ nil, event.place ] }
+    ParticipantMailer.with(delivery: sample(:event_updated), token: sample_token, reason: :details, changes: changes).event_updated
+  end
+
+  def event_updated_offer
+    ParticipantMailer.with(delivery: sample(:event_updated), token: sample_token, reason: :offer, changes: nil).event_updated
+  end
+
+  def event_updated_all
+    ParticipantMailer.with(delivery: sample(:event_updated), token: sample_token, reason: :all, changes: nil).event_updated
+  end
+
+  # A cancel after the time was set: the file withdraws the calendar entry.
   def cancelled
     ParticipantMailer.with(delivery: sample(:cancelled), token: nil, window: sample_window).cancelled
   end

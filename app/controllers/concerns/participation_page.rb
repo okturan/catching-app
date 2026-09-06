@@ -26,6 +26,9 @@ module ParticipationPage
         declined: active_guests.where.not(declined_at: nil).count,
         unsent: @event.participants.unsent.count
       }
+      # The Tell the guests reminder: a revision no mail batch has reached,
+      # someone with a link to tell, and an event that is still on.
+      @untold_changes = @event.revision > @event.notified_revision && !@event.cancelled? && @counts[:invited].positive?
     end
   end
 

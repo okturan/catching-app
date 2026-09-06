@@ -153,12 +153,48 @@ class ParticipationsControllerTest < ActionDispatch::IntegrationTest
     assert_select 'meta[property="og:url"][content=?]', root_url
   end
 
-  test "unknown, short and left tokens are one friendly 404" do
+  test "unknown, short and left tokens are one friendly 404 that points at the newest email" do
     [ "b" * 32, "short", raw_token(:planning_left) ].each do |token|
       get participation_path(token)
       assert_response :not_found
       assert_select "#link-not-found a[href=?]", new_organizer_link_path
+      assert_select "#link-not-found h1", text: "This link is not valid."
+      assert_select "#link-not-found p", text: "Open the newest email about this event: a newer link replaces older ones, or ask the organizer to resend your invitation."
     end
+  end
+
+  test "the organizer sees Tell the guests only while a change has not reached anyone with a link" do
+    get participation_path(@organizer_token)
+    assert_response :success
+    assert_select ".event-untold", count: 0
+    assert_select "form[action=?]", participation_notice_path(@organizer_token), count: 0
+
+    @event.update_columns(revision: 2, notified_revision: 1)
+    get participation_path(@organizer_token)
+    assert_select ".event-untold[role=status]", count: 1 do
+      assert_select "span", text: "Guests have not been told about your latest changes."
+      assert_select "form.event-untold-form[action=?][method=post]", participation_notice_path(@organizer_token) do
+        assert_select "button[type=submit].plate-button-sm", text: "Tell the guests"
+      end
+    end
+    assert_select "h1 .plate", count: 0
+
+    sign_in users(:owner)
+    get my_participation_path(@organizer)
+    assert_select "form.event-untold-form[action=?]", my_participation_notice_path(@organizer)
+
+    get participation_path(@guest_token)
+    assert_select ".event-untold", count: 0
+
+    @event.guests.update_all(token_digest: nil)
+    get participation_path(@organizer_token)
+    assert_select ".event-untold", count: 0
+
+    @event.participants.update_all(token_digest: nil)
+    @event.update_columns(cancelled_at: Time.current)
+    sign_in users(:owner)
+    get my_participation_path(@organizer)
+    assert_select ".event-untold", count: 0
   end
 
   test "a mangled link is sent to its canonical path" do

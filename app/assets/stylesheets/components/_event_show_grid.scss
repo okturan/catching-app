@@ -80,6 +80,18 @@
     flex-wrap: wrap;
     gap: 0.5rem;
   }
+  // The organizer's reminder that a change has not reached the guests: one
+  // sentence in the body face and the plate that sends the notice.
+  .event-untold {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: $ink-soft;
+    .event-untold-form { margin: 0; }
+  }
   .event-people {
     border-top: 1px solid $hairline;
     padding-top: 0.75rem;

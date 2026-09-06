@@ -46,6 +46,12 @@
           { include_blank: "Not set" }, class: class_names("form-select", "is-invalid" => @event.errors[:duration_minutes].any?) %>
         <% if @event.errors[:duration_minutes].any? %><div class="invalid-feedback d-block"><%= @event.errors[:duration_minutes].to_sentence %></div><% end %>
       </div>
+      <% if notice_offered? %>
+        <div class="form-check mb-4">
+          <%= check_box_tag "notice[send]", "1", @event.status?, id: "notice_send", class: "form-check-input" %>
+          <%= label_tag "notice_send", "Email the guests about this change", class: "form-check-label" %>
+        </div>
+      <% end %>
 
       <%= form.submit "Save details", class: "btn btn-primary" %>
     <% end %>

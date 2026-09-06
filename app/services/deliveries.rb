@@ -50,6 +50,48 @@ module Deliveries
     event.update_columns(notified_revision: event.revision)
   end
 
+  # One coalesced change notice, only when the organizer asks (the details
+  # checkbox, the offer checkbox or Tell the guests). Recipients are active
+  # linked guests; an offer notice goes only to guests who already replied,
+  # and skips declined guests when nothing was added. Every recipient passes
+  # the notice caps or is skipped and counted; the link follows the claim
+  # rule (a fresh pending token for an unclaimed guest, none for a claimed
+  # one). The organizer never receives one. Returns { sent:, skipped: }.
+  NOTICE_REASONS = %i[details offer all].freeze
+
+  def event_updated!(event:, organizer:, request_ip:, reason:, changes: nil)
+    ensure_not_cancelled!(event)
+    raise ArgumentError, "Open your organizer link before emailing guests" if organizer.link_opened_at.blank?
+    raise ArgumentError, "Unknown notice reason #{reason.inspect}" unless NOTICE_REASONS.include?(reason.to_s.to_sym)
+
+    sent = 0
+    skipped = 0
+    notice_recipients(event, reason.to_s.to_sym).find_each do |guest|
+      begin
+        MailDelivery::Caps.check_update_notice!(event: event, organizer: organizer, recipient_email: guest.email, request_ip: request_ip)
+      rescue MailDelivery::CapExceeded
+        skipped += 1
+        next
+      end
+
+      raw_token = guest.claimed? ? nil : guest.issue_pending_token!
+      delivery = record!(event: event, participant: guest, kind: :event_updated, recipient_email: guest.email,
+        sender_email: MailDelivery.canonical(organizer.email), request_ip: request_ip)
+      enqueue(delivery, raw_token, reason: reason.to_s, changes: changes&.to_h)
+      sent += 1
+    end
+    event.update_columns(notified_revision: event.revision) if sent.positive?
+    { sent: sent, skipped: skipped }
+  end
+
+  def notice_recipients(event, reason)
+    recipients = event.guests.active.linked
+    return recipients unless reason == :offer
+
+    recipients = recipients.where.not(responded_at: nil)
+    event.offer_revision_added.zero? ? recipients.where(declined_at: nil) : recipients
+  end
+
   def reveal_link!(event:, guest:, organizer:, request_ip:)
     ensure_not_cancelled!(event)
     raise ArgumentError, "#{guest.email} left this event" if guest.left?

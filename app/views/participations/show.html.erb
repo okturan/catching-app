@@ -103,6 +103,12 @@
           <% end %>
         </div>
       <% end %>
+      <% if @untold_changes %>
+        <div class="event-untold" role="status">
+          <span>Guests have not been told about your latest changes.</span>
+          <%= button_to "Tell the guests", scoped_path(:notice), method: :post, class: "plate-button-sm", form: { class: "event-untold-form" } %>
+        </div>
+      <% end %>
     </div>
 
     <% if @revealed_url %>

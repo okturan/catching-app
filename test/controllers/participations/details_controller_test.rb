@@ -2,6 +2,9 @@ require "test_helper"
 
 module Participations
   class DetailsControllerTest < ActionDispatch::IntegrationTest
+    include ActiveJob::TestHelper
+    include ActionMailer::TestCase::ClearTestDeliveries
+
     setup do
       @event = events(:planning)
       @organizer = participants(:planning_organizer)
@@ -236,6 +239,84 @@ module Participations
       get edit_participation_details_path(token)
       assert_select ".plan-note", count: 0
       assert_no_match "The plan runs", response.body
+    end
+
+    test "the notice checkbox is offered only to an opened organizer with linked guests, unchecked while pending and checked once set" do
+      get edit_participation_details_path(@organizer_token)
+      assert_response :success
+      assert_select "form#details-form input#notice_send[type=checkbox][name='notice[send]'][value='1']", count: 1
+      assert_select "input#notice_send[checked]", count: 0
+      assert_select "label[for=notice_send]", text: "Email the guests about this change"
+
+      get edit_participation_details_path(raw_token(:finalized_organizer))
+      assert_select "input#notice_send[checked]", count: 1
+
+      @organizer.update_columns(link_opened_at: nil)
+      get edit_participation_details_path(@organizer_token)
+      assert_response :success
+      assert_select "[name='notice[send]']", count: 0
+
+      @organizer.update_columns(link_opened_at: Time.current)
+      @event.guests.update_all(token_digest: nil)
+      get edit_participation_details_path(@organizer_token)
+      assert_select "[name='notice[send]']", count: 0
+    end
+
+    test "a ticked notice mails the guests about a real change and reports the count; an unticked or empty save sends nothing" do
+      assert_no_difference "MailDelivery.count" do
+        patch participation_details_path(@organizer_token), params: { event: { place: "Zoom" } }
+      end
+      assert_equal "Details saved.", flash[:notice]
+      assert_equal "Zoom", @event.reload.place
+
+      assert_no_difference "MailDelivery.count" do
+        patch participation_details_path(@organizer_token), params: { event: { place: "Zoom" }, notice: { send: "1" } }
+      end
+      assert_equal "Details saved.", flash[:notice]
+      assert_equal 1, @event.reload.revision
+
+      assert_difference "MailDelivery.event_updated.count", 2 do
+        perform_enqueued_jobs do
+          patch participation_details_path(@organizer_token), params: { event: { name: "Dune night", place: "Ege's place" }, notice: { send: "1" } }
+        end
+      end
+      assert_response :see_other
+      assert_redirected_to participation_path(@organizer_token)
+      assert_equal "Details saved. 2 guests emailed.", flash[:notice]
+      @event.reload
+      assert_equal 2, @event.revision
+      assert_equal 2, @event.notified_revision
+      mails = ActionMailer::Base.deliveries.last(2)
+      assert_equal %w[invitee@example.com pending@example.com], mails.flat_map(&:to).sort
+      mails.each do |mail|
+        assert_equal "Catching App: Olivia Owner changed Dune night", mail.subject
+        body = mail.text_part.body.to_s
+        assert_includes body, "Olivia Owner changed the details of Dune night."
+        assert_includes body, "The event is now called Dune night (was Planning session)"
+        assert_includes body, "Where: Ege's place"
+      end
+
+      assert_no_difference "MailDelivery.count" do
+        patch participation_details_path(@organizer_token), params: { event: { place: "Kadıköy" }, notice: { send: "1" } }
+      end
+      assert_equal "Details saved. 0 guests emailed. 2 skipped (recently notified). Try again after 10 minutes.", flash[:notice]
+      assert_equal "Kadıköy", @event.reload.place
+      assert_equal 3, @event.revision
+      assert_equal 2, @event.notified_revision, "nothing reached the guests this time"
+    end
+
+    test "a ticked notice from an organizer who never opened the link saves the details and answers the hint" do
+      @organizer.update_columns(link_opened_at: nil)
+
+      assert_no_difference "MailDelivery.count" do
+        patch participation_details_path(@organizer_token), params: { event: { place: "Zoom" }, notice: { send: "1" } }
+      end
+
+      assert_response :see_other
+      assert_redirected_to participation_path(@organizer_token)
+      assert_equal "Details saved.", flash[:notice]
+      assert_equal "Open your organizer link before emailing guests", flash[:alert]
+      assert_equal "Zoom", @event.reload.place
     end
 
     test "the details page is not cached and needs no session through the token family" do

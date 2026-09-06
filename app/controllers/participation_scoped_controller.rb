@@ -113,6 +113,18 @@ class ParticipationScopedController < ApplicationController
     @event.guests.active.find(id)
   end
 
+  # The organizer hears how many guests a notice reached: " N guests
+  # emailed." and, when the cap or the cooldown skipped some, how long to
+  # wait. Leading space so it appends to a flash that already says what
+  # was saved.
+  def notice_report(result)
+    sent = result.fetch(:sent)
+    skipped = result.fetch(:skipped)
+    report = " #{sent} #{'guest'.pluralize(sent)} emailed."
+    report += " #{skipped} skipped (recently notified). Try again after 10 minutes." if skipped.positive?
+    report
+  end
+
   def forbid_caching
     response.headers["Cache-Control"] = "no-store"
   end

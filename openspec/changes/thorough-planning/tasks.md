@@ -35,10 +35,10 @@
 
 ## 6. Change notices
 
-- [ ] 6.1 `MailDelivery::Caps.check_update_notice!` (5 per event and address lifetime excluding failed, 10-minute cooldown, shared daily keys) and the two-kind daily relation in `check_invitation!`
-- [ ] 6.2 `Deliveries.event_updated!` (recipients by reason, declined excluded on removal-only, opened-link requirement, pending token vs `my_participation_url`, skip on cap, `notified_revision`), `reason:` and `changes:` mailer params, `event_updated` templates with body variants
-- [ ] 6.3 `notice[send]` checkbox on the details form, `resource :notice`, `Participations::NoticesController`, "Tell the guests" button; guest not-found copy about newer links; Leave sentence at the end of finalized/event_updated/reopened bodies
-- [ ] 6.4 Rewritten invitation promise and confirmation sentences; tests: caps, deliveries, mailer variants, previous pending link 404s after a notice, controller
+- [x] 6.1 `MailDelivery::Caps.check_update_notice!` (5 per event and address lifetime excluding failed, 10-minute cooldown, shared daily keys) and the two-kind daily relation in `check_invitation!`
+- [x] 6.2 `Deliveries.event_updated!` (recipients by reason, declined excluded on removal-only, opened-link requirement, pending token vs `my_participation_url`, skip on cap, `notified_revision`), `reason:` and `changes:` mailer params, `event_updated` templates with body variants
+- [x] 6.3 `notice[send]` checkbox on the details form, `resource :notice`, `Participations::NoticesController`, "Tell the guests" button; guest not-found copy about newer links; Leave sentence at the end of finalized/event_updated/reopened bodies
+- [x] 6.4 Rewritten invitation promise and confirmation sentences; tests: caps, deliveries, mailer variants, previous pending link 404s after a notice, controller
 
 ## 7. Offer revision
 

@@ -50,7 +50,8 @@ class ParticipantMailerTest < ActionMailer::TestCase
       assert_includes body, "/p/#{@token}"
       assert_not_includes body, "evil.example/desc", "the description never reaches the mail"
       assert_equal body.scan("http://example.com/p/").size, body.scan("://").size, "only the participation link may carry a scheme"
-      assert_includes body, "You will get at most: up to 5 resends, one confirmation when you reply, and one message when the time is set."
+      assert_includes body, "You will get at most: up to 5 resends, one confirmation when you reply, up to 5 notes if the organizer changes the plan, one message each time the time is set or reopened, and one if it is cancelled."
+      assert_not_includes body, "one message when the time is set."
       assert_includes body, "60-minute slots between 15 Jan and 15 Jan 2030 (UTC)"
     end
   end
@@ -69,6 +70,95 @@ class ParticipantMailerTest < ActionMailer::TestCase
     assert_includes text, "(Asia/Kolkata)"
     assert_includes text, "Tue 15 Jan 2030: 09:00–12:00, 14:00–15:00"
     assert_not_includes text, "/p/"
+    closing = "To change your reply, use the link from your invitation. You will hear from us when the time is set, and if the organizer changes the plan."
+    assert text.strip.end_with?(closing), text
+    assert_match(/<p>#{Regexp.escape(closing)}<\/p>\s*<\/body>/, mail.html_part.body.to_s)
+    assert_not_includes mail.html_part.body.to_s, "once more"
+  end
+
+  def notice_mail(participant, reason:, changes: nil, token: nil, event: @event)
+    row = MailDelivery.create!(event: event, participant: participant, kind: :event_updated, recipient_email: participant.email,
+      sender_email: "owner@example.com")
+    ParticipantMailer.with(delivery: row, token: token, reason: reason, changes: changes).event_updated
+  end
+
+  test "event_updated names the reason, the rename, the facts and the plan, and carries no organizer URL" do
+    @event.update!(name: "Dune night", description: "Visit https://evil.example", place: "Ege's place https://maps.example/x",
+      place_url: "https://zoom.us/j/1", duration_minutes: 120)
+    @event.activities.create!(name: "Pizza https://evil.example", duration: 30, position: 1, description: "Margherita https://evil.example/m")
+    @organizer.update!(name: "Ege")
+
+    mail = notice_mail(@guest, reason: :details, changes: { "name" => [ "Film night https://evil.example", "Dune night" ], "place" => [ nil, "Ege's place" ] })
+
+    assert_equal "Catching App: Ege changed Dune night", mail.subject
+    assert_equal [ "invitee@example.com" ], mail.to
+    assert_equal [ "owner@example.com" ], mail.reply_to
+    [ CGI.unescapeHTML(mail.html_part.body.to_s), mail.text_part.body.to_s ].each do |body|
+      assert_includes body, "Ege changed the details of Dune night."
+      assert_includes body, "The event is now called Dune night (was Film night evil.example)"
+      assert_includes body, "Where: Ege's place maps.example/x"
+      assert_includes body, "How long: 2 h"
+      assert_includes body, "Board games (1 h 30 min)"
+      assert_includes body, "Pizza evil.example (30 min)"
+      assert_not_includes body, "Margherita"
+      assert_not_includes body, "cooperative", "plan descriptions stay on the page"
+      assert_not_includes body, "Visit", "the event description never reaches a mail"
+      assert_not_includes body, "zoom.us"
+      assert_includes body, "http://example.com/participations/#{@guest.id}"
+      assert_equal body.scan("://").size, body.scan("http://example.com/participations/#{@guest.id}").size, "only the participation link carries a scheme"
+      assert_not_includes body, "/p/"
+      assert_not_includes body, "offered times", "a details notice says nothing about picks"
+    end
+    leave = "To stop hearing about this event, open your link and choose Leave this event."
+    assert mail.text_part.body.to_s.strip.end_with?(leave), mail.text_part.body.to_s
+    assert_match(/<p>#{Regexp.escape(leave)}<\/p>\s*<\/body>/, mail.html_part.body.to_s)
+  end
+
+  test "event_updated keeps the fixed prefix first, truncates the subject and says nothing about a rename without one" do
+    @event.update!(name: "N" * 120)
+    @organizer.update!(name: "Ege https://evil.example")
+
+    mail = notice_mail(@guest, reason: :all)
+
+    assert mail.subject.start_with?("Catching App: Ege evil.example changed NNN"), mail.subject
+    assert_operator mail.subject.length, :<=, 80
+    [ mail.html_part.body.to_s, mail.text_part.body.to_s ].each do |body|
+      assert_includes body, "Ege evil.example changed #{'N' * 120}. Here is what is set now."
+      assert_not_includes body, "is now called"
+      assert_not_includes body, "Where:"
+      assert_not_includes body, "How long:"
+    end
+  end
+
+  test "event_updated offer variants follow the recipient's situation at send time" do
+    @event.update_columns(offer_revised_at: Time.utc(2030, 1, 10), offer_revision_added: 4, offer_revision_removed: 2)
+    pending = participants(:planning_pending)
+    pending.update_columns(responded_at: Time.utc(2030, 1, 5), reply_voided_at: Time.utc(2030, 1, 10))
+    voided_sentence = "None of the times you picked are offered any more. Please pick again."
+    stale_sentence = "Some of the offered times changed (4 added, 2 removed). Your remaining picks still stand; look again."
+    declined_sentence = "You said none of the times worked. New times were added."
+
+    voided = notice_mail(pending, reason: :offer, token: @token)
+    [ voided.html_part.body.to_s, voided.text_part.body.to_s ].each do |body|
+      assert_includes body, "Olivia Owner changed the offered times for Planning session."
+      assert_includes body, voided_sentence
+      assert_includes body, "http://example.com/p/#{@token}"
+      assert_equal body.scan("://").size, body.scan("http://example.com/p/#{@token}").size
+    end
+
+    stale = notice_mail(@guest, reason: :offer)
+    [ stale.html_part.body.to_s, stale.text_part.body.to_s ].each { |body| assert_includes body, stale_sentence }
+
+    @guest.update_columns(declined_at: Time.utc(2030, 1, 5))
+    declined = notice_mail(@guest, reason: :offer)
+    [ declined.html_part.body.to_s, declined.text_part.body.to_s ].each { |body| assert_includes body, declined_sentence }
+
+    @guest.update_columns(declined_at: nil, responded_at: Time.utc(2030, 1, 11))
+    fresh = notice_mail(@guest, reason: :offer).text_part.body.to_s
+    details = notice_mail(pending, reason: :details, token: @token).text_part.body.to_s
+    [ fresh, details ].each do |body|
+      [ voided_sentence, stale_sentence, declined_sentence ].each { |sentence| assert_not_includes body, sentence }
+    end
   end
 
   def finalized_mail(participant, token: nil, event: events(:finalized), window: nil)
@@ -196,9 +286,19 @@ class ParticipantMailerTest < ActionMailer::TestCase
       assert_includes body, "It was set for Tue 15 Jan 2030 11:00–12:00 (Europe/Berlin)."
       assert_includes body, "In the event's zone: Tue 15 Jan 2030 10:00–11:00 (UTC)"
       assert_includes body, "Nothing else will be sent about this event."
+      assert_includes body, "If you added it to your calendar, the attached file removes it."
       assert_not_includes body, "/p/"
       assert_not_includes body, "://"
     end
+    assert_equal [ "catching-app.ics" ], mail.attachments.map(&:filename)
+    attachment = mail.attachments.first
+    assert_equal "text/calendar", attachment.mime_type
+    file = attachment.body.decoded
+    assert_includes file, "STATUS:CANCELLED"
+    assert_includes file, "DTSTART:20300115T100000Z"
+    assert_includes file, "DTEND:20300115T110000Z"
+    assert_includes file, "SEQUENCE:#{finalized.reload.revision}"
+    assert_not_includes file, "://"
   end
 
   test "cancelled without a window says nothing about a set time" do
@@ -214,7 +314,9 @@ class ParticipantMailerTest < ActionMailer::TestCase
     assert_includes text, "Nothing else will be sent about this event."
     assert_not_includes text, "It was set for"
     assert_not_includes text, "In the event's zone"
+    assert_not_includes text, "attached file"
     assert_not_includes text, "://"
+    assert_empty mail.attachments
   end
 
   test "header injection through the event name is neutralized" do
