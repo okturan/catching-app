@@ -7,7 +7,9 @@ class EventsController < ApplicationController
   rate_limit to: 5, within: 10.minutes, only: :create
 
   def new
-    @event = Event.new(slot_minutes: 30)
+    # No zone: the column default (UTC) would out-rank the browser zone in
+    # populateTimeZoneSelect and paint every visitor the wrong hours.
+    @event = Event.new(slot_minutes: 30, time_zone: nil)
     @organizer = organizer_attributes
   end
 

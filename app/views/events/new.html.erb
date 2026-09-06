@@ -3,51 +3,48 @@
   <p class="lede mb-0">Paint your free hours on the grid, in your own zone. Your friends see them in theirs.</p>
 </div>
 
-<div class="event-new-grid">
-  <div>
-    <%= simple_form_for(@event) do |f| %>
-      <%= f.error_notification %>
-      <% if @event.errors[:base].any? %>
-        <div class="alert alert-danger position-static" role="alert"><%= @event.errors[:base].to_sentence %></div>
+<%# The form element is the two-column grid, so the grid panel and its controls
+    sit inside the form and can be ordered against the submit. %>
+<%= simple_form_for(@event, html: { class: "event-new-grid" }) do |f| %>
+  <%= f.error_notification %>
+  <% if @event.errors[:base].any? %>
+    <div class="alert alert-danger position-static" role="alert"><%= @event.errors[:base].to_sentence %></div>
+  <% end %>
+  <input name="time_slots[time_slot_array]" id="time_slot_array" type="hidden" value="<%= params.dig(:time_slots, :time_slot_array) %>">
+  <div class="form-events">
+    <%= f.input :name, placeholder: "A fabulous meeting!" %>
+    <%= f.input :description, as: :text, placeholder: "Do whatever!" %>
+    <%= f.input :place, label: "Place", placeholder: "Ege's place, Kadıköy — or 'Zoom'", input_html: { maxlength: 200 } %>
+    <%= f.input :place_url, as: :url, label: "Link", placeholder: "Link to join or a map link", input_html: { maxlength: 2000 } %>
+    <div class="mb-3">
+      <label class="form-label" for="event_duration_minutes">Planned length</label>
+      <%= select_tag "event[duration_minutes]", duration_select_options(@event.slot_minutes, @event.duration_minutes),
+        id: "event_duration_minutes", include_blank: "Not set", class: "form-select" %>
+      <% if @event.errors[:duration_minutes].any? %>
+        <div class="invalid-feedback d-block"><%= @event.errors[:duration_minutes].to_sentence %></div>
       <% end %>
-      <input name="time_slots[time_slot_array]" id="time_slot_array" type="hidden" value="<%= params.dig(:time_slots, :time_slot_array) %>">
-      <div class="form-events">
-        <%= f.input :name, placeholder: "A fabulous meeting!" %>
-        <%= f.input :description, as: :text, placeholder: "Do whatever!" %>
-        <%= f.input :place, label: "Place", placeholder: "Ege's place, Kadıköy — or 'Zoom'", input_html: { maxlength: 200 } %>
-        <%= f.input :place_url, as: :url, label: "Link", placeholder: "Link to join or a map link", input_html: { maxlength: 2000 } %>
-        <div class="mb-3">
-          <label class="form-label" for="event_duration_minutes">Planned length</label>
-          <%= select_tag "event[duration_minutes]", duration_select_options(@event.slot_minutes, @event.duration_minutes),
-            id: "event_duration_minutes", include_blank: "Not set", class: "form-select" %>
-          <% if @event.errors[:duration_minutes].any? %>
-            <div class="invalid-feedback d-block"><%= @event.errors[:duration_minutes].to_sentence %></div>
-          <% end %>
-        </div>
+    </div>
 
-        <% unless user_signed_in? %>
-          <div class="mb-3">
-            <label class="form-label" for="organizer_name">Your name</label>
-            <input class="form-control" type="text" id="organizer_name" name="organizer[name]" maxlength="100" required value="<%= @organizer[:name] %>">
-          </div>
-          <div class="mb-3">
-            <label class="form-label" for="organizer_email">Your email (we send your organizer link there)</label>
-            <input class="form-control" type="email" id="organizer_email" name="organizer[email]" autocomplete="email" required value="<%= @organizer[:email] %>">
-          </div>
-        <% end %>
-
-        <div class="mb-3">
-          <label class="form-label" for="invitations_emails">Invite people (one address per line or comma-separated)</label>
-          <textarea class="form-control" id="invitations_emails" name="invitations[emails]" rows="3"><%= params.dig(:invitations, :emails) %></textarea>
-        </div>
-
-        <%= render "events/grid_controls", event: @event, frozen: false, begin_min: nil %>
-
-        <% submit_label = user_signed_in? ? "Plan it" : "Send me my organizer link" %>
-        <%= f.submit submit_label, class: "btn-meeting mb-0" %>
+    <% unless user_signed_in? %>
+      <div class="mb-3">
+        <label class="form-label" for="organizer_name">Your name</label>
+        <input class="form-control" type="text" id="organizer_name" name="organizer[name]" maxlength="100" required value="<%= @organizer[:name] %>">
+      </div>
+      <div class="mb-3">
+        <label class="form-label" for="organizer_email">Your email (we send your organizer link there)</label>
+        <input class="form-control" type="email" id="organizer_email" name="organizer[email]" autocomplete="email" required value="<%= @organizer[:email] %>">
       </div>
     <% end %>
+
+    <div class="mb-3">
+      <label class="form-label" for="invitations_emails">Invite people (one address per line or comma-separated)</label>
+      <textarea class="form-control" id="invitations_emails" name="invitations[emails]" rows="3"><%= params.dig(:invitations, :emails) %></textarea>
+    </div>
+
+    <% submit_label = user_signed_in? ? "Plan it" : "Send me my organizer link" %>
+    <%= f.submit submit_label, class: "btn-meeting mb-0" %>
   </div>
 
-  <%= render "events/definer_grid", event: @event %>
-</div>
+  <%= render "events/definer_grid", event: @event, frozen: false, begin_min: nil,
+        heading: "When could you do it?", hint: :paint %>
+<% end %>

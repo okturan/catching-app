@@ -136,7 +136,7 @@ module Participations
 
       get edit_participation_offer_path(token)
       assert_response :success
-      assert_select "select#event_slot_minutes:not([disabled]):not([aria-describedby])"
+      assert_select "select#event_slot_minutes:not([disabled])[aria-describedby=slot-minutes-hint]"
       assert_select "select#timezone-picker-new:not([disabled])[data-selected='Europe/Berlin']"
       assert_select "#grid-frozen-note", count: 0
       assert_select "input#event-begin[min=?]", Time.current.in_time_zone("Europe/Berlin").to_date.iso8601

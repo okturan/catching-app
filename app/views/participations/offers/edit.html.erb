@@ -10,34 +10,32 @@
   <p class="lede mb-0">Paint the times you can offer now. Guests keep every pick that stays; picks at removed times are dropped.</p>
 </div>
 
-<div class="event-new-grid" id="offer-edit">
-  <div>
-    <%= form_with model: @event, url: scoped_path(:offer), method: :patch, id: "offer-form" do |form| %>
-      <% messages = @event.errors.full_messages %>
-      <% if messages.any? %>
-        <div class="alert alert-danger position-static" role="alert"><%= messages.to_sentence %></div>
-      <% end %>
-      <input name="time_slots[time_slot_array]" id="time_slot_array" type="hidden" value="<%= @hydrated %>">
-      <input id="current-offer" type="hidden" value="<%= @current_offer.to_json %>">
-      <input id="guest-picked-counts" type="hidden" value="<%= @guest_picked_counts.to_json %>">
-      <div class="form-events">
-        <p class="offer-event-name"><%= @event.name %></p>
-        <%= render "events/grid_controls", event: @event, frozen: grid_frozen?, begin_min: @begin_min %>
-        <% if @past_count.positive? %>
-          <p class="offer-note"><%= @past_count == 1 ? "1 past time stays as it is" : "#{@past_count} past times stay as they are" %></p>
-        <% end %>
-        <% if notice_offered? %>
-          <div class="form-check mb-4">
-            <%= hidden_field_tag "notice[send]", "0", id: nil %>
-            <%= check_box_tag "notice[send]", "1", params.dig(:notice, :send) != "0", id: "notice_send", class: "form-check-input" %>
-            <%= label_tag "notice_send", "Email the guests who already replied", class: "form-check-label" %>
-          </div>
-        <% end %>
-        <%= form.submit "Save the new times", class: "btn-meeting mb-0" %>
+<%# The form element is the two-column grid, so the grid panel and its controls
+    sit inside the form and can be ordered against the submit. %>
+<%= form_with model: @event, url: scoped_path(:offer), method: :patch, id: "offer-form", class: "event-new-grid" do |form| %>
+  <% messages = @event.errors.full_messages %>
+  <% if messages.any? %>
+    <div class="alert alert-danger position-static" role="alert"><%= messages.to_sentence %></div>
+  <% end %>
+  <input name="time_slots[time_slot_array]" id="time_slot_array" type="hidden" value="<%= @hydrated %>">
+  <input id="current-offer" type="hidden" value="<%= @current_offer.to_json %>">
+  <input id="guest-picked-counts" type="hidden" value="<%= @guest_picked_counts.to_json %>">
+  <div class="form-events">
+    <p class="offer-event-name"><%= @event.name %></p>
+    <% if @past_count.positive? %>
+      <p class="offer-note"><%= @past_count == 1 ? "1 past time stays as it is" : "#{@past_count} past times stay as they are" %></p>
+    <% end %>
+    <% if notice_offered? %>
+      <div class="form-check mb-4">
+        <%= hidden_field_tag "notice[send]", "0", id: nil %>
+        <%= check_box_tag "notice[send]", "1", params.dig(:notice, :send) != "0", id: "notice_send", class: "form-check-input" %>
+        <%= label_tag "notice_send", "Email the guests who already replied", class: "form-check-label" %>
       </div>
     <% end %>
-    <p class="mt-3"><%= link_to "Back to the event", scoped_path, class: "quiet-link" %></p>
+    <%= form.submit "Save the new times", class: "btn-meeting mb-0" %>
+    <p class="mt-3 mb-0"><%= link_to "Back to the event", scoped_path, class: "quiet-link" %></p>
   </div>
 
-  <%= render "events/definer_grid", event: @event %>
-</div>
+  <%= render "events/definer_grid", event: @event, frozen: grid_frozen?, begin_min: @begin_min,
+        heading: "The times you offer", hint: :paint %>
+<% end %>

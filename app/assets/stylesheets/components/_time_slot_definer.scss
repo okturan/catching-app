@@ -17,6 +17,69 @@
   overscroll-behavior: contain;
 }
 
+// The definer panel: heading, the painting instruction, the controls strip,
+// then the scroll box. The toolbar is inside the panel, so where the sticky
+// action bar lives the scroll box gives back an approximation of its height,
+// the way --action-bar-h does.
+.time-grid-define-wrapper {
+  --grid-controls-h: 240px;
+
+  > h2 {
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.5rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .time-grid-define-wrapper { --grid-controls-h: 340px; }
+}
+
+#grid-paint-hint {
+  margin: 0 0 0.75rem;
+}
+
+// One column at 412px: step and zone full width because zone names are long,
+// then the two dates two-up. min-width: 0 on the item and on the control is
+// what stops a native date input setting a floor wider than the viewport.
+.grid-controls {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  margin-bottom: 0.75rem;
+
+  > * { min-width: 0; }
+
+  > .grid-days,
+  > .grid-frozen-note,
+  > #range-tooltip { grid-column: 1 / -1; }
+
+  .form-select,
+  .form-control { width: 100%; min-width: 0; }
+
+  .form-text { margin-top: 0.25rem; }
+
+  // Reboot floats a legend and blows up its size; this one is a form label.
+  legend.form-label {
+    float: none;
+    width: auto;
+    font-size: inherit;
+    line-height: inherit;
+  }
+}
+
+.grid-days-pair {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  > * { min-width: 0; }
+}
+
+// The sentence only a touch visitor needs, revealed the way paint mode is.
+.touch-only { display: none; }
+
 .time-grid {
   border-collapse: separate;
   border-spacing: 4px;
@@ -238,6 +301,14 @@
 }
 
 @media (any-pointer: coarse) {
+  .touch-only { display: inline; }
+
+  // The action bar sticks to the bottom of the viewport only here, so only
+  // here does the toolbar above the grid have to come out of the scroll box.
+  .time-grid-define-wrapper .time-grid-scroll {
+    max-height: calc(100dvh - var(--navbar-h) - var(--action-bar-h) - var(--grid-controls-h));
+  }
+
   .paint-mode {
     display: inline-flex;
   }

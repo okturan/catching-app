@@ -1,14 +1,26 @@
+// The form element itself, so the grid panel sits inside the form and reading
+// order is tab order. Two explicit rows make the panel's 1 / -1 span resolve;
+// below 900px the placement drops and document order rules.
 .event-new-grid {
   display: grid;
   grid-template-columns: minmax(300px, 420px) minmax(0, 1fr);
+  grid-template-rows: auto auto;
   gap: clamp(1rem, 3vw, 2.5rem);
   max-width: 1400px;
   margin: 0 auto;
   padding: clamp(1rem, 3vw, 2rem) clamp(1rem, 4vw, 2.5rem) 3rem;
   align-items: start;
 
+  > .form-events { grid-column: 1; }
+  > .time-grid-panel { grid-column: 2; grid-row: 1 / -1; }
+  > .alert { grid-column: 1; }
+
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
+    grid-template-rows: none;
+
+    > .form-events,
+    > .time-grid-panel { grid-column: auto; grid-row: auto; }
   }
 }
 
