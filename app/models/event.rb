@@ -1,6 +1,20 @@
 class Event < ApplicationRecord
   class ClosedError < StandardError; end
 
+  # What revise_offer! did: the instants added and removed, the guests whose
+  # picks were trimmed or voided, whether the step or zone moved and whether
+  # the planned length stopped fitting and was cleared. Three outcomes:
+  # delta? (instants changed), grid-only (step or zone alone) and no_op?.
+  Revision = Data.define(:added, :removed, :trimmed_ids, :voided_ids, :grid_changed, :duration_cleared) do
+    def delta?
+      added.any? || removed.any?
+    end
+
+    def no_op?
+      !delta? && !grid_changed
+    end
+  end
+
   SLOT_MINUTES = [ 15, 30, 60 ].freeze
   MAX_DURATION_MINUTES = 1440
   WEB_ADDRESS_MESSAGE = "must be a web address starting with http:// or https://".freeze
@@ -191,7 +205,77 @@ class Event < ApplicationRecord
       ensure_pending!
       now = Time.current
       time_slots.where(participant_id: participant.id).delete_all
-      participant.update!(responded_at: now, declined_at: now)
+      participant.update!(responded_at: now, declined_at: now, reply_voided_at: nil)
+    end
+  end
+
+  # The organizer changes the offered times after planning. The complete
+  # future offer comes in; instants before the parser's cut-off are frozen
+  # and never inserted, deleted or compared. Guest picks at removed instants
+  # are deleted in the same transaction so guest slots stay a subset of the
+  # offer, and a guest left with nothing is voided (reply_voided_at) rather
+  # than reset: the reply stays on record, the guest drops out of consensus
+  # until the next save. Step and zone may move only before the first reply
+  # (grid_is_frozen_after_replies); a planned length that stops fitting the
+  # new step is cleared. Returns a Revision; a submission that changes
+  # nothing writes nothing.
+  def revise_offer!(starts_at:, slot_minutes: nil, time_zone: nil)
+    raise ArgumentError, "Select at least one time slot" if starts_at.blank? || starts_at.any?(&:nil?)
+
+    with_lock do
+      ensure_pending!
+      self.slot_minutes = slot_minutes if slot_minutes.present?
+      self.time_zone = time_zone if time_zone.present?
+      grid_changed = slot_minutes_changed? || time_zone_changed?
+      duration_cleared = clear_unfitting_duration
+      validate!
+      ensure_aligned!(starts_at)
+
+      cutoff = TimeSlotParser::PAST_GRACE.ago
+      organizer_id = organizer.id
+      current = time_slots.where(participant_id: organizer_id).where(start_time: cutoff..).pluck(:start_time).map(&:getutc)
+      wanted = starts_at.map(&:getutc).uniq.select { |start_time| start_time >= cutoff }
+      added = wanted - current
+      removed = current - wanted
+      no_change = Revision.new(added: [], removed: [], trimmed_ids: [], voided_ids: [], grid_changed: grid_changed,
+        duration_cleared: duration_cleared)
+
+      if added.empty? && removed.empty?
+        next no_change unless grid_changed
+
+        self.revision += 1
+        save!
+        next no_change
+      end
+
+      now = Time.current
+      time_slots.where(participant_id: organizer_id, start_time: removed).delete_all if removed.any?
+      if added.any?
+        TimeSlot.insert_all!(added.map do |start_time|
+          { participant_id: organizer_id, event_id: id, start_time: start_time, created_at: now, updated_at: now }
+        end)
+      end
+
+      affected_ids = []
+      if removed.any?
+        guest_rows = time_slots.where(start_time: removed).where.not(participant_id: organizer_id)
+        affected_ids = guest_rows.distinct.pluck(:participant_id)
+        guest_rows.delete_all
+      end
+      voided_ids = participants.guest.where(left_at: nil, declined_at: nil, reply_voided_at: nil)
+        .where.not(responded_at: nil).where.not(id: time_slots.select(:participant_id)).pluck(:id)
+      participants.where(id: voided_ids).update_all(reply_voided_at: now, updated_at: now) if voided_ids.any?
+
+      assign_attributes(offer_revised_at: now, offer_revision_added: added.size, offer_revision_removed: removed.size,
+        revision: revision + 1)
+      save!
+      Revision.new(added: added, removed: removed, trimmed_ids: affected_ids - voided_ids, voided_ids: voided_ids,
+        grid_changed: grid_changed, duration_cleared: duration_cleared)
+    rescue ActiveRecord::RecordInvalid, ArgumentError
+      # A refused step, zone or grid leaves the row as it was in memory too,
+      # so the same object can take the next lock.
+      restore_attributes
+      raise
     end
   end
 
@@ -226,11 +310,12 @@ class Event < ApplicationRecord
       .having(<<~SQL.squish, id: id)
         COUNT(DISTINCT participant_id) = (
           SELECT COUNT(*) FROM participants
-          WHERE event_id = :id AND responded_at IS NOT NULL AND declined_at IS NULL AND left_at IS NULL
+          WHERE event_id = :id AND responded_at IS NOT NULL AND declined_at IS NULL AND left_at IS NULL AND reply_voided_at IS NULL
         )
         AND EXISTS (
           SELECT 1 FROM participants
           WHERE event_id = :id AND role = 'guest' AND responded_at IS NOT NULL AND declined_at IS NULL AND left_at IS NULL
+            AND reply_voided_at IS NULL
         )
       SQL
       .order(:start_time)
@@ -253,6 +338,15 @@ class Event < ApplicationRecord
   end
 
   private
+
+  # A pre-reply step change can leave the planned length off the new grid;
+  # it is a hint, so it is cleared rather than refused. True when cleared.
+  def clear_unfitting_duration
+    return false unless slot_minutes_changed? && duration_minutes.present? && slot_minutes.to_i.positive? && (duration_minutes % slot_minutes).nonzero?
+
+    self.duration_minutes = nil
+    true
+  end
 
   def revise_plan!
     with_lock do

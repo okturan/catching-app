@@ -35,6 +35,15 @@ class DeliveriesTest < ActiveSupport::TestCase
     assert_nil @guest.reload.pending_token_digest
   end
 
+  test "invitation! marks the guests told about every revision so far" do
+    @event.update_columns(revision: 3, notified_revision: 1)
+
+    Deliveries.invitation!(event: @event, guest: participants(:planning_unsent), organizer: @organizer, request_ip: "203.0.113.1")
+
+    assert_equal 3, @event.reload.notified_revision
+    assert participants(:planning_unsent).reload.token_digest.present?
+  end
+
   test "finalized! links unclaimed guests through a fresh pending token, claimed ones by account, the organizer not at all" do
     @event.update_columns(status: true, start_time: Time.utc(2030, 1, 15, 10), end_time: Time.utc(2030, 1, 15, 11), revision: 2)
     pending = participants(:planning_pending)

@@ -197,6 +197,181 @@ class ParticipationsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".event-untold", count: 0
   end
 
+  test "an invitation tells the guest the current state, so nothing is left untold" do
+    @event.guests.where.not(id: participants(:planning_unsent).id).update_all(token_digest: nil, user_id: nil)
+    @event.update_details!(place: "Zoom")
+    assert_equal [ 1, 0 ], [ @event.reload.revision, @event.notified_revision ]
+
+    post participation_invitations_path(@organizer_token)
+    assert_response :redirect
+
+    get participation_path(@organizer_token)
+    assert_response :success
+    assert_select ".event-untold", count: 0
+    assert_equal 1, @event.reload.notified_revision
+  end
+
+  test "a guest who replied before a revision reads what changed, in the event zone and named" do
+    @event.update_columns(time_zone: "Europe/Berlin", offer_revised_at: Time.utc(2030, 1, 10, 19), offer_revision_added: 4, offer_revision_removed: 1)
+    @guest.update_columns(responded_at: Time.utc(2030, 1, 2, 9))
+
+    get participation_path(@guest_token)
+
+    assert_response :success
+    assert_select ".grid-action-bar .grid-notice[role=status]", count: 1 do
+      assert_select "time.time[data-zoned-instant][data-zoned-format='date-time'][datetime=?]", "2030-01-10T19:00:00Z", text: "Thu 10 Jan 2030 20:00 (Europe/Berlin)"
+    end
+    notice = css_select(".grid-notice").first.text.squish
+    assert_equal "The organizer changed the offered times on Thu 10 Jan 2030 20:00 (Europe/Berlin): 4 added, 1 removed. Check your picks and save again.", notice
+    assert_select "#my-time-slots[value=?]", [ "2030-01-15T10:00:00Z" ].to_json
+    assert_select "button[form=availability-form]", "Save"
+
+    @guest.update_columns(responded_at: Time.utc(2030, 1, 11, 9))
+    get participation_path(@guest_token)
+    assert_select ".grid-notice", count: 0
+
+    get participation_path(raw_token(:planning_pending))
+    assert_select ".grid-notice", { count: 0 }, "a guest who never replied sees no notice"
+
+    get participation_path(@organizer_token)
+    assert_select ".grid-notice", text: /changed the offered times/, count: 0
+  end
+
+  test "a voided guest is asked to pick again with nothing pre-painted, and saving un-voids without a second confirmation" do
+    @event.update_columns(offer_revised_at: 2.days.ago, offer_revision_added: 0, offer_revision_removed: 1)
+    @guest.update_columns(responded_at: 3.days.ago, reply_voided_at: 2.days.ago)
+    @guest.time_slots.delete_all
+
+    get participation_path(@guest_token)
+    assert_response :success
+    assert_select ".grid-action-bar .grid-notice[role=status]", text: "None of the times you picked are offered any more. Pick again."
+    assert_select "#my-time-slots[value=?]", [].to_json
+    assert_select "button[form=availability-form]", "Save"
+
+    assert_no_difference "MailDelivery.count" do
+      patch participation_path(@guest_token), params: { time_slots: { time_slot_array: "2030-01-15T11:00:00Z" } }
+    end
+    assert_redirected_to participation_path(@guest_token)
+    assert_equal "Availability saved.", flash[:notice]
+    @guest.reload
+    assert_nil @guest.reply_voided_at
+    assert_nil @guest.declined_at
+    assert_in_delta Time.current, @guest.responded_at, 5.seconds
+    assert @guest.counting?
+
+    follow_redirect!
+    assert_select ".grid-notice", count: 0
+  end
+
+  test "a voided guest declines or leaves without a check violation and the notice is gone" do
+    @guest.update_columns(reply_voided_at: Time.current)
+
+    post participation_decline_path(@guest_token)
+    assert_redirected_to participation_path(@guest_token)
+    @guest.reload
+    assert @guest.declined_at.present?
+    assert_nil @guest.reply_voided_at
+    follow_redirect!
+    assert_select ".grid-notice", count: 0
+
+    @guest.update_columns(declined_at: nil, reply_voided_at: Time.current)
+    delete participation_path(@guest_token)
+    assert_response :see_other
+    @guest.reload
+    assert @guest.left_at.present?
+    assert_nil @guest.reply_voided_at
+  end
+
+  test "a declined guest hears about additions only" do
+    @guest.update_columns(responded_at: Time.utc(2030, 1, 2, 9), declined_at: Time.utc(2030, 1, 2, 9))
+    @guest.time_slots.delete_all
+    @event.update_columns(offer_revised_at: Time.utc(2030, 1, 10), offer_revision_added: 2, offer_revision_removed: 1)
+
+    get participation_path(@guest_token)
+    assert_select ".grid-action-bar .grid-notice[role=status]", text: "You said none of these worked. New times were added."
+
+    @event.update_columns(offer_revision_added: 0, offer_revision_removed: 1)
+    get participation_path(@guest_token)
+    assert_select ".grid-notice", count: 0
+  end
+
+  test "a save carrying an instant the organizer removed is refused and writes nothing" do
+    @event.revise_offer!(starts_at: [ Time.utc(2030, 1, 15, 10) ])
+
+    patch participation_path(@guest_token), params: { time_slots: { time_slot_array: "2030-01-15T10:00:00Z,2030-01-15T11:00:00Z" } }
+
+    assert_response :see_other
+    assert_equal "Select only time slots offered by the organizer", flash[:alert]
+    assert_equal [ Time.utc(2030, 1, 15, 10) ], @guest.time_slots.reload.pluck(:start_time)
+  end
+
+  test "the organizer table and summary name who has not answered the current times" do
+    pending = participants(:planning_pending)
+    pending.update_columns(responded_at: Time.utc(2030, 1, 5, 9))
+    @event.replace_time_slots!(participant: pending, starts_at: [ Time.utc(2030, 1, 15, 10), Time.utc(2030, 1, 15, 11) ])
+    @event.update_columns(offer_revised_at: Time.utc(2030, 1, 10), offer_revision_added: 1, offer_revision_removed: 1)
+    @guest.update_columns(responded_at: Time.utc(2030, 1, 2, 9), reply_voided_at: Time.utc(2030, 1, 10))
+    @guest.time_slots.delete_all
+
+    get participation_path(@organizer_token)
+
+    assert_response :success
+    assert_select "#participant-table td", text: "needs a new reply"
+    assert_select "#participant-table td", text: "replied (2 slots, before the last change)"
+    assert_select ".event-people", text: /2 invited,\s+1 replied,\s+0 cannot make it,\s+1 not yet invited,\s+1 replied before the last change,\s+1 need a new reply/
+    assert_select ".grid-action-bar .grid-notice[role=status]", text: "2 guests have not answered the current times"
+    assert_select "button[form=finalize-form]", text: "Set in stone"
+    assert_select "table#time-grid-show[data-role=organizer]"
+
+    pending.update_columns(responded_at: Time.utc(2030, 1, 11, 9))
+    get participation_path(@organizer_token)
+    assert_select "#participant-table td", text: "replied (2 slots)"
+    assert_select ".grid-notice", text: "1 guest has not answered the current times"
+    assert_select ".event-people", text: /before the last change/, count: 0
+
+    pending.update_columns(reply_voided_at: Time.utc(2030, 1, 10))
+    pending.time_slots.delete_all
+    get participation_path(@organizer_token)
+    assert_select ".grid-notice", text: "2 guests have not answered the current times"
+    assert_select "button[form=finalize-form]", count: 0
+    assert_select ".grid-action-bar", text: /No one has answered the current times yet\./
+    assert_select "table#time-grid-show[data-role=organizer]"
+    post participation_finalization_path(@organizer_token), params: { time_slots: { time_slot_array: "2030-01-15T10:00:00Z" } }
+    assert_response :see_other
+    assert_equal "Wait for at least one reply before confirming", flash[:alert]
+
+    @guest.update_columns(reply_voided_at: nil)
+    @event.replace_time_slots!(participant: @guest, starts_at: [ Time.utc(2030, 1, 15, 10) ])
+    @guest.update_columns(responded_at: Time.utc(2030, 1, 11, 9))
+    pending.update_columns(reply_voided_at: nil, declined_at: Time.utc(2030, 1, 12))
+    get participation_path(@organizer_token)
+    assert_select ".grid-notice", count: 0
+    assert_select "#participant-table td", text: "none of these work"
+    assert_select "#participant-table td", text: "replied (1 slot)"
+  end
+
+  test "when every offered time has passed the organizer is sent to change the times and the guest cannot save" do
+    past = [ 3.days.ago, 2.days.ago ].map { |t| t.utc.beginning_of_hour }
+    @event.time_slots.delete_all
+    now = Time.current
+    TimeSlot.insert_all!(past.map { |t| { participant_id: @organizer.id, event_id: @event.id, start_time: t, created_at: now, updated_at: now } })
+
+    get participation_path(@organizer_token)
+
+    assert_response :success
+    assert_select ".grid-action-bar .grid-every-past", count: 1 do
+      assert_select "span", text: "Every offered time has passed."
+      assert_select "a.plate-button-sm[href=?]", edit_participation_offer_path(@organizer_token), text: "Change the times"
+    end
+    assert_select "button[form=finalize-form]", count: 0
+    assert_select ".grid-notice", count: 0
+    assert_select "#time-grid-show[data-not-before]"
+
+    get participation_path(@guest_token)
+    assert_select ".grid-every-past", count: 0
+    assert_select "button[form=availability-form]", { text: "Save", count: 1 }, "the JavaScript hides Save once it reads data-not-before"
+  end
+
   test "a mangled link is sent to its canonical path" do
     get "/p/#{@guest_token}."
 

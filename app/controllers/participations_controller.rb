@@ -20,6 +20,7 @@ class ParticipationsController < ParticipationScopedController
       @participant.update!(
         responded_at: Time.current,
         declined_at: nil,
+        reply_voided_at: nil,
         name: params.dig(:participant, :name).presence || @participant.name,
         time_zone: params.dig(:participant, :time_zone).presence || @participant.time_zone
       )

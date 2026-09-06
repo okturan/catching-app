@@ -360,7 +360,8 @@ class EventTest < ActiveSupport::TestCase
       "mark_unavailable!" => -> { @event.mark_unavailable!(participant: @guest) },
       "finalize!" => -> { @event.finalize!(starts_at: [ Time.utc(2030, 1, 15, 10) ]) },
       "update_details!" => -> { @event.update_details!(name: "Renamed") },
-      "add_plan_item!" => -> { @event.add_plan_item!(name: "Late") }
+      "add_plan_item!" => -> { @event.add_plan_item!(name: "Late") },
+      "revise_offer!" => -> { @event.revise_offer!(starts_at: [ Time.utc(2030, 1, 15, 12) ]) }
     }
     writers.each do |name, writer|
       error = assert_raises(Event::ClosedError, name) { writer.call }
@@ -444,6 +445,224 @@ class EventTest < ActiveSupport::TestCase
 
   test "consensus is one statement" do
     assert_queries_count(1) { @event.mutually_available_start_times }
+  end
+
+  test "consensus excludes a voided guest and needs a counting one" do
+    voided = participants(:planning_pending)
+    voided.update_columns(responded_at: 2.days.ago, reply_voided_at: 1.day.ago)
+
+    assert_queries_count(1) { assert_equal [ Time.utc(2030, 1, 15, 10) ], @event.mutually_available_start_times }
+
+    @guest.update_columns(reply_voided_at: Time.current)
+    assert_empty @event.mutually_available_start_times, "voided guests are outside the denominator and the guard"
+    error = assert_raises(ArgumentError) { @event.finalize!(starts_at: [ Time.utc(2030, 1, 15, 10) ]) }
+    assert_equal "Wait for at least one reply before confirming", error.message
+    assert_not @event.reload.status?
+  end
+
+  # ---- Offer revision ----
+
+  def hour(day, hour) = Time.utc(2030, 1, day, hour)
+
+  test "revise_offer! adds and removes instants, deletes the guests' picks at removed instants and stamps the event" do
+    @event.update_columns(revision: 2, notified_revision: 2)
+    wanted = [ 11, 12, 13, 14, 15 ].map { |h| hour(15, h) }
+
+    revision = @event.revise_offer!(starts_at: wanted)
+
+    assert_equal 4, revision.added.size
+    assert_equal [ hour(15, 10) ], revision.removed
+    assert revision.delta?
+    assert_not revision.no_op?
+    assert_equal [], revision.trimmed_ids
+    assert_equal [ @guest.id ], revision.voided_ids
+    assert_equal wanted, @event.time_slots.where(participant_id: @organizer.id).order(:start_time).pluck(:start_time)
+    assert_equal 0, @guest.time_slots.count
+    @event.reload
+    assert_in_delta Time.current, @event.offer_revised_at, 5.seconds
+    assert_equal [ 4, 1, 3 ], [ @event.offer_revision_added, @event.offer_revision_removed, @event.revision ]
+    assert_equal 2, @event.notified_revision, "the batch, not the model, marks guests told"
+  end
+
+  test "a trimmed guest keeps the picks that stay and keeps counting" do
+    @event.replace_time_slots!(participant: @guest, starts_at: [ hour(15, 10), hour(15, 11) ])
+    before = @guest.reload.attributes
+
+    revision = @event.revise_offer!(starts_at: [ hour(15, 10) ])
+
+    assert_equal [ @guest.id ], revision.trimmed_ids
+    assert_equal [], revision.voided_ids
+    assert_equal [ hour(15, 10) ], @guest.time_slots.pluck(:start_time)
+    assert_equal before, @guest.reload.attributes, "nothing on a trimmed guest changes"
+    assert_includes @event.participants.counting, @guest
+    assert_equal [ 0, 1 ], [ @event.offer_revision_added, @event.offer_revision_removed ]
+  end
+
+  test "a guest left with nothing is voided, not reset, and other guests are untouched" do
+    declined = @event.participants.create!(role: :guest, email: "declined@example.com", token_digest: "d" * 64,
+      responded_at: 3.days.ago, declined_at: 3.days.ago)
+    pending = participants(:planning_pending)
+    left = participants(:planning_left)
+    snapshot = -> { [ declined, pending, left ].map { |row| row.reload.attributes } }
+    others_before = snapshot.call
+    guest_before = @guest.attributes
+    MailDelivery.create!(event: @event, participant: @guest, kind: :invitation, recipient_email: @guest.email)
+    ledger = @guest.mail_deliveries.order(:id).pluck(:id)
+
+    revision = @event.revise_offer!(starts_at: [ hour(15, 11) ])
+
+    assert_equal [ @guest.id ], revision.voided_ids
+    @guest.reload
+    assert_in_delta Time.current, @guest.reply_voided_at, 5.seconds
+    assert @guest.voided?
+    assert_not @guest.counting?
+    assert_equal 0, @guest.time_slots.count
+    assert_not_includes @event.participants.counting, @guest
+    assert_equal guest_before.except("reply_voided_at", "updated_at"), @guest.attributes.except("reply_voided_at", "updated_at")
+    assert_equal ledger, @guest.mail_deliveries.order(:id).pluck(:id)
+    assert_equal others_before, snapshot.call, "declined, unreplied and left guests are unchanged"
+    assert_nil declined.reply_voided_at
+  end
+
+  test "revise_offer! resubmitting the current offer writes nothing" do
+    @event.update_columns(revision: 2, notified_revision: 2)
+    slots = @event.time_slots.order(:id).map(&:attributes)
+    updated_at = @event.updated_at
+
+    revision = @event.revise_offer!(starts_at: [ hour(15, 11), hour(15, 10), hour(15, 10) ])
+
+    assert revision.no_op?
+    assert_not revision.grid_changed
+    @event.reload
+    assert_equal 2, @event.revision
+    assert_nil @event.offer_revised_at
+    assert_equal [ 0, 0 ], [ @event.offer_revision_added, @event.offer_revision_removed ]
+    assert_equal updated_at, @event.updated_at
+    assert_equal slots, @event.time_slots.order(:id).map(&:attributes)
+  end
+
+  test "revise_offer! with a zone or step change and the same instants bumps the revision only" do
+    berlin = plan(time_zone: "Europe/Berlin", starts_at: [ Time.utc(2031, 2, 10, 9), Time.utc(2031, 2, 10, 10) ])
+    slots = berlin.time_slots.order(:id).map(&:attributes)
+
+    revision = berlin.revise_offer!(starts_at: [ Time.utc(2031, 2, 10, 9), Time.utc(2031, 2, 10, 10) ], time_zone: "Europe/Paris")
+
+    assert_not revision.delta?
+    assert_not revision.no_op?
+    assert revision.grid_changed
+    berlin.reload
+    assert_equal "Europe/Paris", berlin.time_zone
+    assert_equal 1, berlin.revision
+    assert_nil berlin.offer_revised_at
+    assert_equal [ 0, 0 ], [ berlin.offer_revision_added, berlin.offer_revision_removed ]
+    assert_equal slots, berlin.time_slots.order(:id).map(&:attributes)
+
+    revision = berlin.revise_offer!(starts_at: [ Time.utc(2031, 2, 10, 9), Time.utc(2031, 2, 10, 10) ], slot_minutes: 30)
+    assert revision.grid_changed
+    assert_not revision.delta?
+    assert_equal [ 30, 2 ], [ berlin.reload.slot_minutes, berlin.revision ]
+  end
+
+  test "revise_offer! clears a planned length that stops fitting the new step" do
+    thirty = plan(slot_minutes: 30, duration_minutes: 90, starts_at: [ Time.utc(2031, 2, 10, 9), Time.utc(2031, 2, 10, 9, 30) ])
+
+    revision = thirty.revise_offer!(starts_at: [ Time.utc(2031, 2, 10, 9) ], slot_minutes: 60)
+
+    assert revision.duration_cleared
+    assert revision.delta?
+    thirty.reload
+    assert_nil thirty.duration_minutes
+    assert_equal 60, thirty.slot_minutes
+    assert_equal [ Time.utc(2031, 2, 10, 9) ], thirty.time_slots.pluck(:start_time)
+
+    fifteen = plan(slot_minutes: 15, duration_minutes: 90, starts_at: [ Time.utc(2031, 2, 10, 9) ])
+    revision = fifteen.revise_offer!(starts_at: [ Time.utc(2031, 2, 10, 9) ], slot_minutes: 30)
+    assert_not revision.duration_cleared, "90 still fits 30-minute slots"
+    assert_equal 90, fifteen.reload.duration_minutes
+  end
+
+  test "revise_offer! refuses a step or zone change once a guest has replied, writing nothing" do
+    error = assert_raises(ActiveRecord::RecordInvalid) { @event.revise_offer!(starts_at: [ hour(15, 10), hour(15, 11) ], slot_minutes: 30) }
+    assert_match "cannot change after a guest has replied", error.message
+    assert_raises(ActiveRecord::RecordInvalid) { @event.revise_offer!(starts_at: [ hour(15, 10), hour(15, 11) ], time_zone: "Asia/Kolkata") }
+
+    @event.reload
+    assert_equal [ 60, "UTC", 0 ], [ @event.slot_minutes, @event.time_zone, @event.revision ]
+    assert_equal [ hour(15, 10), hour(15, 11) ], @event.time_slots.where(participant_id: @organizer.id).order(:start_time).pluck(:start_time)
+
+    fresh = plan(starts_at: [ Time.utc(2031, 2, 10, 9) ])
+    fresh.revise_offer!(starts_at: [ Time.utc(2031, 2, 10, 4, 30), Time.utc(2031, 2, 10, 5) ], slot_minutes: 30, time_zone: "Asia/Kolkata")
+    fresh.reload
+    assert_equal [ 30, "Asia/Kolkata" ], [ fresh.slot_minutes, fresh.time_zone ]
+    assert_equal [ Time.utc(2031, 2, 10, 4, 30), Time.utc(2031, 2, 10, 5) ], fresh.time_slots.order(:start_time).pluck(:start_time)
+  end
+
+  test "revise_offer! validates against the new grid and refuses blank input before the lock" do
+    error = assert_raises(ArgumentError) { @event.revise_offer!(starts_at: [ hour(15, 10), Time.utc(2030, 1, 15, 10, 30) ]) }
+    assert_equal "Select time slots on the event's 60-minute grid", error.message
+
+    locking_queries = capture_locking_queries do
+      assert_raises(ArgumentError) { @event.revise_offer!(starts_at: []) }
+      assert_raises(ArgumentError) { @event.revise_offer!(starts_at: [ nil ]) }
+    end
+    assert_empty locking_queries
+    assert_equal 0, @event.reload.revision
+  end
+
+  test "revise_offer! never touches instants before the cut-off" do
+    past = 2.days.ago.utc.beginning_of_hour
+    now = Time.current
+    TimeSlot.insert_all!([
+      { participant_id: @organizer.id, event_id: @event.id, start_time: past, created_at: now, updated_at: now },
+      { participant_id: @guest.id, event_id: @event.id, start_time: past, created_at: now, updated_at: now }
+    ])
+    @event.time_slots.where(participant_id: @guest.id, start_time: hour(15, 10)).delete_all
+
+    revision = @event.revise_offer!(starts_at: [ hour(15, 11), hour(15, 12) ])
+
+    assert_equal [ hour(15, 12) ], revision.added
+    assert_equal [ hour(15, 10) ], revision.removed, "the past row is not a removal"
+    assert_equal [], revision.voided_ids, "a guest holding only a past pick is not voided"
+    assert_equal [], revision.trimmed_ids
+    assert_equal [ past, hour(15, 11), hour(15, 12) ], @event.time_slots.where(participant_id: @organizer.id).order(:start_time).pluck(:start_time)
+    assert_equal [ past ], @guest.time_slots.pluck(:start_time)
+    assert_nil @guest.reload.reply_voided_at
+    assert_equal [ 1, 1 ], [ @event.reload.offer_revision_added, @event.offer_revision_removed ]
+
+    same = @event.revise_offer!(starts_at: [ hour(15, 11), hour(15, 12) ])
+    assert same.no_op?, "omitting the past row again is still nothing"
+  end
+
+  test "revise_offer! is refused on a finalized event with the closed message" do
+    finalized = events(:finalized)
+    error = assert_raises(Event::ClosedError) { finalized.revise_offer!(starts_at: [ hour(15, 12) ]) }
+    assert_equal "Availability is closed for this event", error.message
+    assert_equal [ hour(15, 10) ], finalized.time_slots.where(participant_id: participants(:finalized_organizer).id).pluck(:start_time)
+  end
+
+  test "the offer revision counts are a real check" do
+    assert_raises(ActiveRecord::StatementInvalid) do
+      Event.transaction(requires_new: true) { @event.update_columns(offer_revised_at: Time.current) }
+    end
+    assert_raises(ActiveRecord::StatementInvalid) do
+      Event.transaction(requires_new: true) { @event.update_columns(offer_revision_added: 2) }
+    end
+    assert_nil @event.reload.offer_revised_at
+  end
+
+  test "mark_unavailable! and a new save clear the void in one statement" do
+    @guest.update_columns(reply_voided_at: Time.current)
+
+    assert_nothing_raised { @event.mark_unavailable!(participant: @guest) }
+    @guest.reload
+    assert @guest.declined_at.present?
+    assert_nil @guest.reply_voided_at
+
+    @guest.update_columns(declined_at: nil)
+    @guest.update_columns(reply_voided_at: Time.current)
+    @event.replace_time_slots!(participant: @guest, starts_at: [ hour(15, 10) ])
+    @guest.update!(responded_at: Time.current, declined_at: nil, reply_voided_at: nil)
+    assert @guest.reload.counting?
   end
 
   test "replacing availability is atomic and validates its input" do

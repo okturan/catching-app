@@ -1,0 +1,18 @@
+<%# The definer grid and its action bar, shared by events/new and offer/edit.
+    data-not-before carries the parser's past cut-off so cells before it
+    render past and unselectable on both pages. %>
+<div class="time-grid-panel time-grid-define-wrapper">
+  <div class="time-grid-scroll">
+    <table id="time-grid-define" class="time-grid" role="grid" aria-label="Offered times"
+      data-slot-minutes="<%= event.slot_minutes %>"
+      data-time-zone="<%= event.time_zone.presence || params.dig(:event, :time_zone) %>"
+      data-not-before="<%= TimeSlotParser::PAST_GRACE.ago.utc.iso8601 %>"></table>
+  </div>
+  <div class="grid-action-bar">
+    <span id="selection-summary" aria-live="polite">No times selected</span>
+    <fieldset id="paint-mode" class="paint-mode" role="radiogroup" aria-label="Touch mode">
+      <label><input type="radio" name="paint-mode" value="scroll" checked><span>Scroll</span></label>
+      <label><input type="radio" name="paint-mode" value="paint"><span>Paint</span></label>
+    </fieldset>
+  </div>
+</div>

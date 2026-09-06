@@ -1,11 +1,13 @@
 import { DateTime } from "luxon";
 
 import {
+  parseSerializedCounts,
   parseSerializedDateTimes,
   populateTimeZoneSelect,
   slotISO,
 } from "./time_zones";
 import { allowedDurations } from "../lib/durations";
+import { removalWarning } from "../lib/definer";
 import { localDateRangeIsAllowed, localDayColumns } from "../lib/time_grid";
 import { renderDefinerTable } from "../lib/grid_table";
 import {
@@ -34,6 +36,20 @@ const syncDurationOptions = (select, stepMinutes) => {
   if (chosen && chosen.disabled) select.value = "";
 };
 
+const hiddenValue = (selector) => {
+  const input = document.querySelector(selector);
+  return input ? input.value : "";
+};
+
+// Instants guests hold, keyed like the cells: UTC ISO -> count.
+const readCounts = (selector) =>
+  new Map(
+    Object.entries(parseSerializedCounts(hiddenValue(selector)))
+      .map(([iso, count]) => [DateTime.fromISO(iso, { setZone: true }), count])
+      .filter(([instant]) => instant.isValid)
+      .map(([instant, count]) => [slotISO(instant), Number(count) || 0]),
+  );
+
 const initTimeSlotDefiner = () => {
   const grid = document.querySelector("#time-grid-define");
   if (!grid) return;
@@ -56,6 +72,17 @@ const initTimeSlotDefiner = () => {
     onChange: (mode) => grid.classList.toggle("mode-paint", mode === "paint"),
   });
 
+  // Offer page extras: the past cut-off, the current offer and the picks
+  // guests hold on it. Absent on the planning page.
+  const notBefore = grid.dataset.notBefore ? DateTime.fromISO(grid.dataset.notBefore) : null;
+  const isPast = (instant) => Boolean(notBefore && instant.toMillis() < notBefore.toMillis());
+  const currentOfferInput = document.querySelector("#current-offer");
+  const currentOffer = currentOfferInput
+    ? parseSerializedDateTimes(currentOfferInput.value).map(slotISO)
+    : null;
+  const counts = readCounts("#guest-picked-counts");
+  const offerForm = timeSlotInput.form;
+
   let slotMinutes = Number(
     (stepSelect && stepSelect.value) || grid.dataset.slotMinutes || 60,
   );
@@ -70,10 +97,25 @@ const initTimeSlotDefiner = () => {
   let rangeEnd;
   let note = "";
 
+  // On the offer page the summary also names the picks a removal would
+  // drop, and the form asks before submitting such a removal.
+  const syncRemovalWarning = () => {
+    if (!currentOffer) return "";
+    const { warning, confirm } = removalWarning(currentOffer, selection, counts);
+    if (offerForm) {
+      if (confirm) offerForm.dataset.turboConfirm = confirm;
+      else delete offerForm.dataset.turboConfirm;
+    }
+    return warning;
+  };
+
   const setSummary = () => {
     if (!summaryElement) return;
-    const text = summary(selection, { role: "guest", zone: selectedTimeZone });
-    summaryElement.textContent = note ? `${text}. ${note}` : text;
+    const warning = syncRemovalWarning();
+    let text = summary(selection, { role: "guest", zone: selectedTimeZone });
+    if (note) text = `${text}. ${note}`;
+    if (warning) text = `${text}. ${warning}`;
+    summaryElement.textContent = text;
   };
 
   const serialize = () => {
@@ -103,6 +145,15 @@ const initTimeSlotDefiner = () => {
     return dropped;
   };
 
+  // A zone remap can move a selected instant behind the cut-off; past cells
+  // take no paint, so the selection lets it go.
+  const dropPast = () => {
+    if (!notBefore) return;
+    [...selection].forEach((iso) => {
+      if (isPast(DateTime.fromISO(iso))) selection.delete(iso);
+    });
+  };
+
   const draw = () => {
     grid.replaceChildren();
     if (!updateDateRange()) {
@@ -111,10 +162,13 @@ const initTimeSlotDefiner = () => {
     }
     const dropped = dropOutsideRange();
     if (dropped > 0) note = `${dropped} outside the dates dropped`;
+    dropPast();
     renderDefinerTable(grid, localDayColumns(rangeStart, rangeEnd, slotMinutes), {
       selection,
       slotMinutes,
       toISO: slotISO,
+      isPast,
+      counts,
     });
     seedTabindex(grid, SELECTABLE);
     serialize();
@@ -127,6 +181,11 @@ const initTimeSlotDefiner = () => {
         .sort((a, b) => a.toMillis() - b.toMillis());
       beginDateInput.value = instants[0].toISODate();
       endDateInput.value = instants[instants.length - 1].toISODate();
+      // An offer that starts inside the grace window begins before today;
+      // the range must still be submittable.
+      if (beginDateInput.min && beginDateInput.value < beginDateInput.min) {
+        beginDateInput.min = beginDateInput.value;
+      }
       return;
     }
     if (!beginDateInput.value || !endDateInput.value) {

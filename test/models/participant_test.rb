@@ -152,6 +152,32 @@ class ParticipantTest < ActiveSupport::TestCase
     assert_equal [ participants(:planning_unsent) ], event.participants.unsent.to_a
     assert_not_includes event.participants.active, participants(:planning_left)
     assert_includes event.participants.linked, participants(:planning_pending)
+
+    voided = participants(:planning_pending)
+    voided.update_columns(responded_at: 2.days.ago, reply_voided_at: 1.day.ago)
+    assert_not_includes event.participants.counting, voided, "a voided reply does not count"
+    assert_not voided.reload.counting?
+    assert voided.voided?
+    assert participants(:planning_guest).counting?, "a guest who still holds a pick counts"
+    assert_includes event.participants.active.linked, voided, "voided guests keep their link and stay active"
+  end
+
+  test "only an open guest reply can be voided" do
+    declined = participants(:planning_pending)
+    declined.update_columns(responded_at: Time.current, declined_at: Time.current)
+
+    [ declined, participants(:planning_unsent), participants(:planning_organizer), participants(:planning_left) ].each do |row|
+      assert_raises(ActiveRecord::StatementInvalid, row.email) do
+        Participant.transaction(requires_new: true) { row.update_columns(reply_voided_at: Time.current) }
+      end
+      assert_nil row.reload.reply_voided_at
+    end
+
+    voided = participants(:planning_guest)
+    voided.update_columns(reply_voided_at: Time.current)
+    assert_raises(ActiveRecord::StatementInvalid, "declining without clearing the void is refused per statement") do
+      Participant.transaction(requires_new: true) { voided.update_columns(declined_at: Time.current) }
+    end
   end
 
   test "one account holds one participation per event" do
@@ -185,6 +211,19 @@ class ParticipantTest < ActiveSupport::TestCase
     assert_nil guest.token_digest
     assert_nil Participant.find_by_token(raw_token(:planning_guest))
     assert_raises(ArgumentError) { participants(:planning_organizer).leave! }
+  end
+
+  test "a voided guest leaves without a check violation" do
+    guest = participants(:planning_guest)
+    guest.update_columns(reply_voided_at: Time.current)
+
+    assert_nothing_raised { guest.leave! }
+
+    guest.reload
+    assert guest.left_at.present?
+    assert guest.declined_at.present?
+    assert_nil guest.reply_voided_at
+    assert_nil guest.token_digest
   end
 
   test "time zone must be known" do

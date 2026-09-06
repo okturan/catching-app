@@ -41,24 +41,7 @@
           <textarea class="form-control" id="invitations_emails" name="invitations[emails]" rows="3"><%= params.dig(:invitations, :emails) %></textarea>
         </div>
 
-        <%= f.input :slot_minutes, label: "Slot length", collection: [ [ "15 minutes", 15 ], [ "30 minutes", 30 ], [ "60 minutes", 60 ] ],
-          include_blank: false, selected: @event.slot_minutes, input_html: { class: "form-select" } %>
-
-        <div class="mb-3">
-          <label class="form-label" for="timezone-picker-new">I am in:</label>
-          <select class="form-select" id="timezone-picker-new" name="event[time_zone]" data-selected="<%= @event.time_zone.presence || params.dig(:event, :time_zone) %>"></select>
-        </div>
-
-        <div class="mb-3">
-          <label class="form-label" for="event-begin">Start date:</label>
-          <input class="form-control" type="date" id="event-begin" value="" />
-        </div>
-        <div class="mb-4">
-          <label class="form-label" for="event-end">End date:</label>
-          <input class="form-control" type="date" id="event-end" value="" />
-        </div>
-        <div class="text-danger" id="range-tooltip" role="status">
-        </div>
+        <%= render "events/grid_controls", event: @event, frozen: false, begin_min: nil %>
 
         <% submit_label = user_signed_in? ? "Plan it" : "Send me my organizer link" %>
         <%= f.submit submit_label, class: "btn-meeting mb-0" %>
@@ -66,16 +49,5 @@
     <% end %>
   </div>
 
-  <div class="time-grid-panel time-grid-define-wrapper">
-    <div class="time-grid-scroll">
-      <table id="time-grid-define" class="time-grid" role="grid" aria-label="Offered times" data-slot-minutes="<%= @event.slot_minutes %>" data-time-zone="<%= @event.time_zone.presence || params.dig(:event, :time_zone) %>"></table>
-    </div>
-    <div class="grid-action-bar">
-      <span id="selection-summary" aria-live="polite">No times selected</span>
-      <fieldset id="paint-mode" class="paint-mode" role="radiogroup" aria-label="Touch mode">
-        <label><input type="radio" name="paint-mode" value="scroll" checked><span>Scroll</span></label>
-        <label><input type="radio" name="paint-mode" value="paint"><span>Paint</span></label>
-      </fieldset>
-    </div>
-  </div>
+  <%= render "events/definer_grid", event: @event %>
 </div>

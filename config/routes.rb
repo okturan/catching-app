@@ -27,6 +27,7 @@ Rails.application.routes.draw do
         resource :link_reveal, only: :create
       end
       resource :details, only: %i[edit update] # organizer
+      resource :offer, only: %i[edit update] # organizer, while open: Change the times
       resource :notice, only: :create # organizer: Tell the guests
       resource :cancellation, only: :create # organizer: terminal, read-only afterwards
       resource :calendar, only: :show, path: "calendar.ics", format: false # any participant, finalized

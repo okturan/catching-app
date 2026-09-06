@@ -14,6 +14,9 @@ module Deliveries
     delivery = record!(event: event, participant: guest, kind: :invitation, recipient_email: guest.email,
       sender_email: MailDelivery.canonical(organizer.email), request_ip: request_ip)
     enqueue(delivery, raw_token)
+    # The invitation describes the event as it stands, so the guests it
+    # reaches know about every revision so far.
+    event.update_columns(notified_revision: event.revision)
     raw_token
   end
 

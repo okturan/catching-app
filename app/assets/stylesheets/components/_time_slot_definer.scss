@@ -181,6 +181,32 @@
   font-weight: 600;
 }
 
+// Inline notices at the top of the action bar: what changed under a guest,
+// or who has not answered the current times. One sentence, body face.
+.grid-action-bar .grid-notice {
+  width: 100%;
+  margin: 0;
+  font-weight: 600;
+  color: $ink-soft;
+  time { font-size: 0.9rem; color: $ink; }
+}
+
+// The organizer's dead end: every offered time is behind the cut-off.
+.grid-every-past {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  font-weight: 600;
+  color: $ink-soft;
+}
+
+// Offer page: step and zone frozen after the first reply, the past-times
+// caption and the event being changed.
+.grid-frozen-note { margin: 0; font-size: 0.85rem; font-weight: 600; color: $ink-soft; }
+.offer-note { margin: 0 0 1rem; font-size: 0.9rem; font-weight: 600; color: $ink-soft; }
+.offer-event-name { font-size: 1.2rem; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 0.75rem; }
+
 .paint-mode {
   display: none;
   gap: 4px;

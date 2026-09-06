@@ -10,8 +10,13 @@ module ParticipationPage
     @role = viewer_role
     @plan = @event.plan_timeline
 
-    @offered_slots = slot_times(@organizer)
-    @my_slots = slot_times(@participant)
+    offered = slot_instants(@organizer)
+    @offered_slots = offered.map(&:iso8601)
+    # Every offered instant is behind the parser's cut-off: nothing can be
+    # painted or set until the organizer changes the times.
+    @every_offer_past = offered.any? && offered.all? { |start_time| start_time < TimeSlotParser::PAST_GRACE.ago }
+    @my_slots = slot_instants(@participant).map(&:iso8601)
+    @revision_notice = revision_notice
     @consensus_slots = @event.mutually_available_start_times.map(&:iso8601)
     others = @event.participants.counting.where.not(id: @participant.id).select(:id)
     @availability_counts = @event.time_slots.where(participant_id: others).group(:start_time).count.transform_keys(&:iso8601)
@@ -24,7 +29,9 @@ module ParticipationPage
         invited: active_guests.linked.count,
         replied: active_guests.counting.count,
         declined: active_guests.where.not(declined_at: nil).count,
-        unsent: @event.participants.unsent.count
+        unsent: @event.participants.unsent.count,
+        stale: @event.offer_revised_at ? active_guests.counting.where(responded_at: ...@event.offer_revised_at).count : 0,
+        voided: active_guests.where.not(reply_voided_at: nil).count
       }
       # The Tell the guests reminder: a revision no mail batch has reached,
       # someone with a link to tell, and an event that is still on.
@@ -32,20 +39,22 @@ module ParticipationPage
     end
   end
 
-  def slot_times(participant)
+  def slot_instants(participant)
     return [] unless participant
 
-    @event.time_slots.where(participant_id: participant.id).order(:start_time).pluck(:start_time).map(&:iso8601)
+    @event.time_slots.where(participant_id: participant.id).order(:start_time).pluck(:start_time)
   end
 
-  # Delivery state for the organizer table.
-  def guest_state(guest)
-    return :left if guest.left?
-    return :declined if guest.declined_at.present?
-    return :replied if guest.responded_at.present?
-    return :not_sent if guest.token_digest.nil?
+  # What a guest who already replied must hear about the offer, while the
+  # event is open: their reply was voided, or it predates the last revision
+  # (a declined guest only when times were added). Nil for the organizer,
+  # for a guest who never replied, and once the guest has saved again.
+  def revision_notice
+    return nil unless @event.open? && @participant.guest? && @participant.responded_at.present?
+    return :voided if @participant.reply_voided_at.present?
+    return nil unless @event.offer_revised_at.present? && @participant.responded_at < @event.offer_revised_at
+    return :stale if @participant.declined_at.nil?
 
-    last = (@deliveries[guest.id] || []).last
-    last ? last.state : :queued
+    @event.offer_revision_added.positive? ? :declined_added : nil
   end
 end

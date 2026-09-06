@@ -1,0 +1,34 @@
+<%# The definer's controls, builder-agnostic so events/new (simple_form_for)
+    and offer/edit (form_with) share one contract: select#event_slot_minutes,
+    select#timezone-picker-new[data-selected], the unnamed #event-begin and
+    #event-end date inputs and #range-tooltip. frozen: true renders step and
+    zone disabled with the caption that says why; begin_min: an ISO date
+    for #event-begin[min] or nil. %>
+<% time_zone = event.time_zone.presence || params.dig(:event, :time_zone) %>
+<% described_by = frozen ? "grid-frozen-note" : nil %>
+<div class="mb-3">
+  <label class="form-label" for="event_slot_minutes">Slot length</label>
+  <%= select_tag "event[slot_minutes]",
+    options_for_select([ [ "15 minutes", 15 ], [ "30 minutes", 30 ], [ "60 minutes", 60 ] ], event.slot_minutes),
+    id: "event_slot_minutes", class: "form-select", disabled: frozen, aria: { describedby: described_by } %>
+</div>
+
+<div class="<%= frozen ? 'mb-2' : 'mb-3' %>">
+  <label class="form-label" for="timezone-picker-new">I am in:</label>
+  <%= select_tag "event[time_zone]", nil, id: "timezone-picker-new", class: "form-select", disabled: frozen,
+    data: { selected: time_zone }, aria: { describedby: described_by } %>
+</div>
+<% if frozen %>
+  <p class="grid-frozen-note mb-3" id="grid-frozen-note">Fixed since the first reply</p>
+<% end %>
+
+<div class="mb-3">
+  <label class="form-label" for="event-begin">Start date:</label>
+  <%= tag.input type: "date", id: "event-begin", class: "form-control", value: "", min: begin_min %>
+</div>
+<div class="mb-4">
+  <label class="form-label" for="event-end">End date:</label>
+  <%= tag.input type: "date", id: "event-end", class: "form-control", value: "" %>
+</div>
+<div class="text-danger" id="range-tooltip" role="status">
+</div>

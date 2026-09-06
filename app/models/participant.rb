@@ -23,7 +23,9 @@ class Participant < ApplicationRecord
   validate :time_zone_is_known
 
   scope :active, -> { where(left_at: nil) }
-  scope :counting, -> { where.not(responded_at: nil).where(declined_at: nil, left_at: nil) }
+  # Who counts for consensus: replied, not declined, not left, and not
+  # voided by an offer revision that removed every pick.
+  scope :counting, -> { where.not(responded_at: nil).where(declined_at: nil, left_at: nil, reply_voided_at: nil) }
   scope :linked, -> { where.not(token_digest: nil) }
   scope :unsent, -> { guest.active.where(token_digest: nil) }
 
@@ -68,7 +70,12 @@ class Participant < ApplicationRecord
   end
 
   def counting?
-    responded_at.present? && declined_at.nil? && left_at.nil?
+    responded_at.present? && declined_at.nil? && left_at.nil? && reply_voided_at.nil?
+  end
+
+  # Replied, then left with no offered pick by an offer revision.
+  def voided?
+    reply_voided_at.present?
   end
 
   def left?
@@ -136,7 +143,7 @@ class Participant < ApplicationRecord
       now = Time.current
       time_slots.delete_all
       update!(
-        responded_at: now, declined_at: now, left_at: now, user_id: nil,
+        responded_at: now, declined_at: now, left_at: now, reply_voided_at: nil, user_id: nil,
         token_digest: nil, pending_token_digest: nil, pending_token_expires_at: nil
       )
     end

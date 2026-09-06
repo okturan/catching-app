@@ -8,6 +8,7 @@ import {
 } from "./time_zones";
 import { offeredGrid } from "../lib/time_grid";
 import { renderOfferedTable } from "../lib/grid_table";
+import { filterStash } from "../lib/stash";
 import {
   attachPainting,
   paintModeControl,
@@ -81,7 +82,9 @@ const initTimeSlotShow = () => {
   try {
     const stashed = window.sessionStorage.getItem(stashKey);
     if (stashed) {
-      stashed.split(",").filter(Boolean).forEach((iso) => selection.add(iso));
+      // Only cells the organizer still offers come back, so a save refused
+      // for a removed instant cannot be repeated by the re-apply.
+      filterStash(stashed.split(","), offeredKeys).forEach((iso) => selection.add(iso));
       window.sessionStorage.removeItem(stashKey);
       restored = selection.size > 0;
     }
@@ -142,9 +145,12 @@ const initTimeSlotShow = () => {
     grid.classList.toggle("hide-unoffered", Boolean(hideSwitch && hideSwitch.checked));
     renderFinalWindow();
 
+    // Every offered instant is behind the cut-off: a guest reads why Save is
+    // gone; the organizer's action bar already says so server-side, with
+    // the plate that changes the times, so the summary stays quiet.
     const allPast = offered.length > 0 && offered.every(isPast);
     if (allPast && summaryElement && !finalized && !cancelled) {
-      summaryElement.textContent = "All the offered times have passed";
+      summaryElement.textContent = role === "organizer" ? "" : "All the offered times have passed.";
       if (targetForm) {
         targetForm
           .querySelectorAll("[type=submit]")

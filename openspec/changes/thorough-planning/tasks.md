@@ -42,12 +42,12 @@
 
 ## 7. Offer revision
 
-- [ ] 7.1 `reply_voided_at` behaviour: `counting` scope and `counting?`, consensus predicate (still one statement), clearing in `ParticipationsController#update`, `mark_unavailable!`, `leave!`
-- [ ] 7.2 `Event#revise_offer!` with the three outcomes (instant delta / step-or-zone only / nothing), past frozen, guest row deletion, voiding, `duration_minutes` cleared when it stops fitting, `Revision` return value
-- [ ] 7.3 `resource :offer`, `Participations::OffersController` (organizer-only, finalized → "Reopen the time before changing the offer", cancelled → 303), partials `events/_grid_controls` (builder-agnostic) and `events/_definer_grid`, `events/new` refactored onto them with its ID contract unchanged
-- [ ] 7.4 Definer JS: `data-not-before` past cells, `#current-offer`, `#guest-picked-counts` badges with extended `aria-label`, `removalWarning` and `turbo_confirm`, disabled step/zone with `aria-describedby`; `filterStash` in `time_slot_show.js`; node tests for the pure helpers
-- [ ] 7.5 Guest inline notices (`role="status"`), organizer table states and counts, action-bar warnings including "Every offered time has passed"; `event_updated` offer variants
-- [ ] 7.6 Tests: model cases (added/removed/trimmed/voided/no-op/Berlin→Paris/past-frozen/frozen after reply/consensus excludes voided/`ensure_replies!`), fixture integrity, controller both families and the definer ID contract on `offer/edit`, mailer, system (voided guest re-replies)
+- [x] 7.1 `reply_voided_at` behaviour: `counting` scope and `counting?`, consensus predicate (still one statement), clearing in `ParticipationsController#update`, `mark_unavailable!`, `leave!`
+- [x] 7.2 `Event#revise_offer!` with the three outcomes (instant delta / step-or-zone only / nothing), past frozen, guest row deletion, voiding, `duration_minutes` cleared when it stops fitting, `Revision` return value
+- [x] 7.3 `resource :offer`, `Participations::OffersController` (organizer-only, finalized → "Reopen the time before changing the offer", cancelled → 303), partials `events/_grid_controls` (builder-agnostic) and `events/_definer_grid`, `events/new` refactored onto them with its ID contract unchanged
+- [x] 7.4 Definer JS: `data-not-before` past cells, `#current-offer`, `#guest-picked-counts` badges with extended `aria-label`, `removalWarning` and `turbo_confirm`, disabled step/zone with `aria-describedby`; `filterStash` in `time_slot_show.js`; node tests for the pure helpers
+- [x] 7.5 Guest inline notices (`role="status"`), organizer table states and counts, action-bar warnings including "Every offered time has passed"; `event_updated` offer variants
+- [x] 7.6 Tests: model cases (added/removed/trimmed/voided/no-op/Berlin→Paris/past-frozen/frozen after reply/consensus excludes voided/`ensure_replies!`), fixture integrity, controller both families and the definer ID contract on `offer/edit`, mailer, system (voided guest re-replies)
 
 ## 8. Reopen
 

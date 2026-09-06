@@ -1,3 +1,4 @@
+import { definerCellState } from "./definer";
 import { cellKey, localSlotLabels } from "./time_grid";
 
 const element = (tag, className) => {
@@ -61,8 +62,23 @@ const buildHead = (grid, days) => {
   grid.appendChild(thead);
 };
 
-// Definer: every cell of every local day in the range is selectable.
-const renderDefinerTable = (grid, columns, { selection, slotMinutes, toISO }) => {
+// A "+N" badge and the matching aria-label suffix on a cell others hold.
+const addCountBadge = (cell, count, suffix) => {
+  if (count <= 0) return;
+  const badge = element("span", "others");
+  badge.textContent = `+${count}`;
+  cell.appendChild(badge);
+  cell.setAttribute("aria-label", `${cell.getAttribute("aria-label")}, ${suffix}`);
+};
+
+// Definer: every cell of every local day in the range is selectable, except
+// cells before isPast's cut-off (the offer page freezes the past). counts
+// (UTC ISO -> guests holding the instant) badges the cells guests picked.
+const renderDefinerTable = (
+  grid,
+  columns,
+  { selection, slotMinutes, toISO, isPast = () => false, counts = new Map() },
+) => {
   grid.replaceChildren();
   if (columns.length === 0) return;
 
@@ -84,10 +100,17 @@ const renderDefinerTable = (grid, columns, { selection, slotMinutes, toISO }) =>
       }
       const iso = toISO(slot);
       const cell = makeCell({ instant: slot, iso, row, col, slotMinutes, text: labels[col][row] });
-      cell.classList.add("selectable");
-      const selected = selection.has(iso);
-      cell.classList.toggle("active", selected);
-      cell.setAttribute("aria-selected", String(selected));
+      const { past, count } = definerCellState(slot, { isPast, counts, key: iso });
+      if (past) {
+        cell.classList.add("past");
+        cell.setAttribute("aria-disabled", "true");
+      } else {
+        cell.classList.add("selectable");
+        const selected = selection.has(iso);
+        cell.classList.toggle("active", selected);
+        cell.setAttribute("aria-selected", String(selected));
+      }
+      addCountBadge(cell, count, `${count} guest${count === 1 ? "" : "s"} picked this`);
       tr.appendChild(cell);
     });
 
@@ -148,15 +171,7 @@ const renderOfferedTable = (
       }
 
       const others = counts.get(entry.iso) || 0;
-      if (others > 0) {
-        const badge = element("span", "others");
-        badge.textContent = `+${others}`;
-        cell.appendChild(badge);
-        cell.setAttribute(
-          "aria-label",
-          `${cell.getAttribute("aria-label")}, ${others} other${others === 1 ? "" : "s"} available`,
-        );
-      }
+      addCountBadge(cell, others, `${others} other${others === 1 ? "" : "s"} available`);
 
       tr.appendChild(cell);
     });
