@@ -24,11 +24,5 @@ module Participations
     def details_params
       params.fetch(:event, {}).permit(:name, :description, :place, :place_url, :duration_minutes)
     end
-
-    def refuse_cancelled
-      return unless @event.cancelled?
-
-      redirect_to scoped_path, alert: "This event was cancelled", status: :see_other
-    end
   end
 end

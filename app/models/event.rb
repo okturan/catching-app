@@ -86,6 +86,63 @@ class Event < ApplicationRecord
     end
   end
 
+  # Plan writes: one lock each, refused once cancelled, and a revision bump
+  # so guests and calendar files see a new SEQUENCE. None of them mails
+  # anyone; the organizer tells the guests afterwards.
+  def add_plan_item!(attributes)
+    revise_plan! do
+      activities.create!(attributes.to_h.merge(position: (activities.maximum(:position) || -1) + 1))
+    end
+  end
+
+  def update_plan_item!(item, attributes)
+    revise_plan! { item.update!(attributes) }
+  end
+
+  def remove_plan_item!(item)
+    revise_plan! { item.destroy! }
+  end
+
+  # One write per rearrangement: the plan is renumbered densely from its
+  # (position, id) order, then the item lands at the target index, clamped
+  # to the plan. A target equal to the current index changes nothing.
+  def move_plan_item!(item, position)
+    with_lock do
+      ensure_not_cancelled!
+      items = activities.reload.to_a
+      renumber_plan!(items)
+      from = items.index(item) or raise ActiveRecord::RecordNotFound
+      target = position.clamp(0, items.size - 1)
+      next if from == target
+
+      items.insert(target, items.delete_at(from))
+      renumber_plan!(items)
+      increment!(:revision)
+    end
+  end
+
+  # Each item with its derived start: start_time plus the lengths of every
+  # item before it. Starts exist only once the time is set and the event is
+  # not cancelled, and stop after the first item without a length.
+  def plan_timeline
+    cursor = status? && !cancelled? ? start_time : nil
+    activities.map do |activity|
+      start = cursor
+      cursor = cursor && activity.duration ? cursor + activity.duration.minutes : nil
+      [ activity, start ]
+    end
+  end
+
+  def plan_minutes
+    activities.sum { |activity| activity.duration.to_i }
+  end
+
+  def window_minutes
+    return nil unless status? && start_time && end_time
+
+    ((end_time - start_time) / 60).to_i
+  end
+
   def replace_time_slots!(participant:, starts_at:)
     raise ArgumentError, "Select at least one time slot" if starts_at.blank? || starts_at.any?(&:nil?)
     raise ArgumentError, "Participant belongs to another event" unless participant.event_id == id
@@ -169,6 +226,21 @@ class Event < ApplicationRecord
   end
 
   private
+
+  def revise_plan!
+    with_lock do
+      ensure_not_cancelled!
+      result = yield
+      increment!(:revision)
+      result
+    end
+  end
+
+  def renumber_plan!(items)
+    items.each_with_index do |activity, index|
+      activity.update_columns(position: index) unless activity.position == index
+    end
+  end
 
   def ensure_pending!
     raise ClosedError, "Availability is closed for this event" if status?

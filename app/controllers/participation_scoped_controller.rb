@@ -73,6 +73,14 @@ class ParticipationScopedController < ApplicationController
     raise ActiveRecord::RecordNotFound unless @participant.organizer?
   end
 
+  # Organizer pages that edit facts and the plan refuse a cancelled event
+  # with one alert; reads keep working for every valid link.
+  def refuse_cancelled
+    return unless @event.cancelled?
+
+    redirect_to scoped_path, alert: "This event was cancelled", status: :see_other
+  end
+
   def require_opened_organizer!
     require_organizer!
     return if @participant.link_opened_at.present?

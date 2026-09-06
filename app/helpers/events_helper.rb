@@ -1,6 +1,7 @@
 module EventsHelper
   DURATION_STEP = 15
   DURATION_TAIL = [ 300, 360, 480, 720, 1440 ].freeze
+  PLAN_DURATIONS = [ 15, 30, 45, 60, 90, 120, 150, 180, 240 ].freeze
 
   # "1 h 30 min", "2 h", "45 min": a length, never a clock reading, so no zone.
   def duration_label(minutes)
@@ -24,6 +25,20 @@ module EventsHelper
     disabled = step.positive? ? duration_choices.reject { |minutes| (minutes % step).zero? } : []
     options_for_select(duration_choices.map { |minutes| [ duration_label(minutes), minutes ] },
       selected: selected, disabled: disabled)
+  end
+
+  # Lengths offered for one plan item; an item that already has another
+  # length keeps it in the list so saving the row never clears it.
+  def plan_duration_options(selected)
+    choices = (PLAN_DURATIONS | [ selected ].compact).sort
+    options_for_select(choices.map { |minutes| [ duration_label(minutes), minutes ] }, selected)
+  end
+
+  # "Pizza · 30 min", or the name alone when the item has no length.
+  def plan_item_label(activity)
+    return activity.name if activity.duration.nil?
+
+    "#{activity.name} · #{duration_label(activity.duration)}"
   end
 
   # The one place a place link is rendered: an anchor on a value the model

@@ -176,6 +176,86 @@ class EventTest < ActiveSupport::TestCase
     assert_equal people, @event.participants.order(:id).map(&:attributes)
   end
 
+  test "plan writes are locked, refused once cancelled and each bumps the revision once" do
+    @event.update_columns(revision: 3, notified_revision: 3)
+
+    item = @event.add_plan_item!(name: " Pizza ", duration: 30)
+    assert_equal [ "Pizza", 1 ], [ item.name, item.position ]
+    @event.update_plan_item!(item, duration: 45)
+    @event.move_plan_item!(item, 0)
+    @event.remove_plan_item!(item)
+
+    assert_equal 7, @event.reload.revision
+    assert_equal [ "Board games" ], @event.activities.pluck(:name)
+
+    @event.update_columns(cancelled_at: Time.current)
+    error = assert_raises(Event::ClosedError) { @event.add_plan_item!(name: "Late") }
+    assert_equal "This event was cancelled", error.message
+    assert_raises(Event::ClosedError) { @event.update_plan_item!(activities(:planning_activity), name: "Late") }
+    assert_raises(Event::ClosedError) { @event.move_plan_item!(activities(:planning_activity), 0) }
+    assert_raises(Event::ClosedError) { @event.remove_plan_item!(activities(:planning_activity)) }
+    assert_equal 7, @event.reload.revision
+    assert_equal [ "Board games" ], @event.activities.reload.pluck(:name)
+  end
+
+  test "the first plan item starts at zero and a refused item bumps nothing" do
+    event = events(:other_event)
+
+    first = event.add_plan_item!(name: "Pizza")
+    assert_equal 0, first.position
+    assert_raises(ActiveRecord::RecordInvalid) { event.add_plan_item!(name: "") }
+    assert_raises(ActiveRecord::RecordInvalid) { event.update_plan_item!(first, duration: 1441) }
+
+    assert_equal 1, event.reload.revision
+    assert_equal [ "Pizza" ], event.activities.pluck(:name)
+    assert_nil first.reload.duration
+  end
+
+  test "move_plan_item! renumbers ties densely, clamps the target and is a no-op at the ends" do
+    event = events(:other_event)
+    a, b, c = %w[A B C].map { |name| event.activities.create!(name: name, position: 0) }
+
+    event.move_plan_item!(a, 1)
+    assert_equal [ b, a, c ], event.activities.reload.to_a
+    assert_equal [ 0, 1, 2 ], event.activities.pluck(:position)
+    assert_equal 1, event.reload.revision
+
+    event.move_plan_item!(c, 0)
+    assert_equal [ c, b, a ], event.activities.reload.to_a
+    event.move_plan_item!(c, 99)
+    assert_equal [ b, a, c ], event.activities.reload.to_a
+    assert_equal [ 0, 1, 2 ], event.activities.pluck(:position)
+    assert_equal 3, event.reload.revision
+
+    event.move_plan_item!(b, -1)
+    event.move_plan_item!(c, 5)
+    assert_equal [ b, a, c ], event.activities.reload.to_a
+    assert_equal 3, event.reload.revision
+
+    assert_raises(ActiveRecord::RecordNotFound) { event.move_plan_item!(activities(:planning_activity), 0) }
+    assert_equal 3, event.reload.revision
+  end
+
+  test "plan_timeline derives starts once set and not cancelled, and stops after an item without a length" do
+    finalized = events(:finalized)
+    pizza = finalized.activities.create!(name: "Pizza", duration: 30, position: 1)
+    dune = finalized.activities.create!(name: "Dune", duration: 155, position: 2)
+
+    assert_equal [ [ pizza, Time.utc(2030, 1, 15, 10) ], [ dune, Time.utc(2030, 1, 15, 10, 30) ] ], finalized.plan_timeline
+    assert_equal 185, finalized.plan_minutes
+    assert_equal 60, finalized.window_minutes
+
+    arrive = finalized.activities.create!(name: "Arrive", position: 0)
+    finalized.activities.reset
+    assert_equal [ [ arrive, Time.utc(2030, 1, 15, 10) ], [ pizza, nil ], [ dune, nil ] ], finalized.plan_timeline
+
+    assert_equal [ [ activities(:planning_activity), nil ] ], @event.plan_timeline
+    assert_nil @event.window_minutes
+
+    finalized.update_columns(cancelled_at: Time.current)
+    assert_equal [ nil, nil, nil ], finalized.plan_timeline.map(&:last)
+  end
+
   test "database rejects a finalized event without a whole number of slots" do
     assert_raises(ActiveRecord::StatementInvalid) do
       Event.transaction(requires_new: true) do

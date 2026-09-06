@@ -8,6 +8,7 @@ module ParticipationPage
     @organizer = @event.organizer
     @guests = @event.guests.order(:created_at)
     @role = viewer_role
+    @plan = @event.plan_timeline
 
     @offered_slots = slot_times(@organizer)
     @my_slots = slot_times(@participant)

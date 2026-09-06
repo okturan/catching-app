@@ -11,9 +11,7 @@ Rails.application.routes.draw do
   resource :dashboard, only: :show
 
   get "events/pending", to: "events#pending", as: :pending_events
-  resources :events, only: %i[new create] do
-    resources :activities, only: %i[index show new create]
-  end
+  resources :events, only: %i[new create]
   resources :organizer_links, only: %i[new create]
 
   # Actions shared by the token family (/p/:token) and the session family
@@ -29,6 +27,9 @@ Rails.application.routes.draw do
         resource :link_reveal, only: :create
       end
       resource :details, only: %i[edit update] # organizer
+      resources :activities, only: %i[create update destroy] do # organizer: the plan
+        resource :move, only: :create, controller: :activity_moves # organizer: move[position]
+      end
     end
   end
 

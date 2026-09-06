@@ -14,10 +14,10 @@
 
 ## 3. The plan
 
-- [ ] 3.1 `Participations::ActivitiesController` (create/update/destroy) and `ActivityMovesController` (`move[position]`, dense renumbering under the lock, revision bump), organizer-only, refused on cancelled
-- [ ] 3.2 Plan editor on the details page with per-row forms and accessible labels; plan rows on every participant's card; derived starts with `data-zoned-instant` once finalized; "The plan runs longer than the set time" note
-- [ ] 3.3 Delete `ActivitiesController`, its views, routes, test, the two show-page links and the `.container-cards` rules; fix the participation controller assertion; seeds become a two-item plan
-- [ ] 3.4 Tests: model, controller (both families, 404 for guests and other events' items), view, node `zonedLabel`, system (organizer adds and reorders, guest sees the order)
+- [x] 3.1 `Participations::ActivitiesController` (create/update/destroy) and `ActivityMovesController` (`move[position]`, dense renumbering under the lock, revision bump), organizer-only, refused on cancelled
+- [x] 3.2 Plan editor on the details page with per-row forms and accessible labels; plan rows on every participant's card; derived starts with `data-zoned-instant` once finalized; "The plan runs longer than the set time" note
+- [x] 3.3 Delete `ActivitiesController`, its views, routes, test, the two show-page links and the `.container-cards` rules; fix the participation controller assertion; seeds become a two-item plan
+- [x] 3.4 Tests: model, controller (both families, 404 for guests and other events' items), view, node `zonedLabel`, system (organizer adds and reorders, guest sees the order)
 
 ## 4. Cancellation
 

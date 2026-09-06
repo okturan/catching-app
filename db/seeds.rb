@@ -35,12 +35,11 @@ else
   end
 
   [
-    { name: "Movies", duration: 2, description: "Watch a favorite film together" },
-    { name: "Gaming", duration: 1, description: "Play an online game together" },
-    { name: "Karaoke", duration: 2, description: "Unleash your inner rockstar" }
+    { name: "Pizza first", duration: 30, position: 0 },
+    { name: "The movie", duration: 120, position: 1 }
   ].each do |attributes|
     event.activities.find_or_create_by!(attributes)
   end
 
-  puts "Seeded #{User.count} users, #{Event.count} event, and #{Activity.count} activities."
+  puts "Seeded #{User.count} users, #{Event.count} event, and a plan of #{Activity.count} items."
 end

@@ -60,6 +60,63 @@
   .details-facts { color: $ink-soft; font-weight: 600; margin: 0 0 1rem; }
   .details-facts time { font-weight: 500; font-size: 0.9rem; color: $ink; }
   > p { width: min(440px, 100%); margin: 0 auto; padding: 0 0.25rem; }
+
+  .plan-editor {
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid $hairline;
+    display: grid;
+    gap: 1rem;
+    h2 { font-size: 1.2rem; font-weight: 800; margin: 0; }
+  }
+  .plan-note, .plan-empty { margin: 0; color: $ink-soft; }
+  .plan-note { font-weight: 600; }
+  .plan-items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 1rem;
+  }
+  .plan-item {
+    display: grid;
+    gap: 0.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid $hairline;
+  }
+  .plan-item-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.75rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+    time { font-size: 0.85rem; font-weight: 500; white-space: nowrap; }
+  }
+  .plan-item-form {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr) auto;
+    gap: 0.5rem;
+    align-items: center;
+    .plan-field-name { grid-column: 1 / -1; }
+  }
+  .plan-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    form { margin: 0; }
+  }
+  .plan-add-form {
+    display: grid;
+    gap: 0.75rem;
+    .form-label { margin-bottom: 0.25rem; }
+    .btn-primary { justify-self: start; }
+  }
+  .plan-add-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+    gap: 0.75rem;
+  }
 }
 
 .back-link {

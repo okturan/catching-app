@@ -61,6 +61,16 @@
     dt { font-weight: 600; margin: 0; }
     dd { margin: 0; overflow-wrap: anywhere; }
   }
+  // The plan: an ordered list read top to bottom, a derived start in the
+  // mono face once the time is set, the note as a muted second line.
+  .event-plan {
+    margin: 0;
+    padding-left: 1.25rem;
+    li { margin: 0 0 0.3rem; }
+    li:last-child { margin-bottom: 0; }
+    time { display: block; font-size: 0.85rem; }
+    .event-plan-note { display: block; color: $ink-soft; font-size: 0.9rem; }
+  }
   .event-people {
     border-top: 1px solid $hairline;
     padding-top: 0.75rem;

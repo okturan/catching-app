@@ -43,7 +43,7 @@
       <% else %>
         <div class="event-when is-pending">Time to be confirmed by <%= @organizer&.display_name(viewer_role: :guest) %></div>
       <% end %>
-      <% if @event.place.present? || @event.place_url.present? || @event.duration_minutes.present? %>
+      <% if @event.place.present? || @event.place_url.present? || @event.duration_minutes.present? || @plan.any? %>
         <dl class="event-facts">
           <% if @event.place.present? || @event.place_url.present? %>
             <dt>Where</dt>
@@ -52,6 +52,20 @@
           <% if @event.duration_minutes.present? %>
             <dt>How long</dt>
             <dd><%= duration_label(@event.duration_minutes) %></dd>
+          <% end %>
+          <% if @plan.any? %>
+            <dt>Plan</dt>
+            <dd>
+              <ol class="event-plan">
+                <% @plan.each do |activity, start| %>
+                  <li>
+                    <span class="event-plan-item"><%= plan_item_label(activity) %></span>
+                    <% if start %><%= zoned_time(start, @event.time_zone) %><% end %>
+                    <% if activity.description.present? %><span class="event-plan-note"><%= activity.description %></span><% end %>
+                  </li>
+                <% end %>
+              </ol>
+            </dd>
           <% end %>
         </dl>
       <% end %>
@@ -107,15 +121,6 @@
 
     <% if token_request? && !@participant.claimed? && !@participant.left? %>
       <p class="mt-3"><%= link_to "Keep this event in your account", scoped_path(:claim), class: "btn btn-link" %></p>
-    <% end %>
-
-    <% unless token_request? %>
-      <div class="mt-3 d-flex gap-2">
-        <%= link_to "View activities", event_activities_path(@event), class: "btn btn-outline-primary" %>
-        <% if @participant.organizer? %>
-          <%= link_to "Add an activity", new_event_activity_path(@event), class: "btn btn-primary" %>
-        <% end %>
-      </div>
     <% end %>
 
     <% if @participant.organizer? %>

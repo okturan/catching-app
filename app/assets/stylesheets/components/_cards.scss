@@ -1,4 +1,4 @@
-// Event panels on the dashboard and activity lists.
+// Event panels on the dashboard.
 .event-face {
   @extend .face;
   padding: 1.25rem 1.5rem;
@@ -45,20 +45,4 @@
 .event-list {
   display: grid;
   gap: 1rem;
-}
-
-.container-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 1rem;
-}
-
-.card__container .card {
-  @extend .face;
-  display: block;
-  padding: 1.25rem;
-  color: $ink;
-  height: 100%;
-  h2 { font-size: 1.2rem; font-weight: 800; margin: 0 0 0.5rem; }
-  p { color: $ink-soft; margin: 0 0 0.25rem; }
 }
