@@ -18,7 +18,7 @@ module Deliveries
     # guests it reaches know about every revision so far. A later invitee or
     # a Resend to one guest tells nobody else, so it must not hide a change
     # the guests already linked were never told about.
-    event.update_columns(notified_revision: event.revision) if event.guests.active.linked.where.not(id: guest.id).none?
+    mark_notified(event) if event.guests.active.linked.where.not(id: guest.id).none?
     raw_token
   end
 
@@ -50,9 +50,9 @@ module Deliveries
     event.participants.active.linked.find_each do |participant|
       raw_token = participant.guest? && !participant.claimed? ? participant.issue_pending_token! : nil
       delivery = record!(event: event, participant: participant, kind: :finalized, recipient_email: participant.email)
-      enqueue(delivery, raw_token, window: window)
+      enqueue(delivery, raw_token, window: window, sequence: event.revision)
     end
-    event.update_columns(notified_revision: event.revision)
+    mark_notified(event)
   end
 
   # One coalesced change notice, only when the organizer asks (the details
@@ -85,7 +85,7 @@ module Deliveries
       enqueue(delivery, raw_token, reason: reason.to_s, changes: changes&.to_h)
       sent += 1
     end
-    event.update_columns(notified_revision: event.revision) if sent.positive?
+    mark_notified(event) if sent.positive?
     { sent: sent, skipped: skipped }
   end
 
@@ -118,10 +118,10 @@ module Deliveries
     event.participants.active.linked.find_each do |participant|
       delivery = record!(event: event, participant: participant, kind: :cancelled, recipient_email: participant.email,
         sender_email: organizer && MailDelivery.canonical(organizer.email))
-      enqueue(delivery, nil, window: window)
+      enqueue(delivery, nil, window: window, sequence: event.revision)
       told += 1
     end
-    event.update_columns(notified_revision: event.revision)
+    mark_notified(event)
     told
   end
 
@@ -140,10 +140,10 @@ module Deliveries
       raw_token = guest.claimed? ? nil : guest.issue_pending_token!
       delivery = record!(event: event, participant: guest, kind: :reopened, recipient_email: guest.email,
         sender_email: organizer && MailDelivery.canonical(organizer.email))
-      enqueue(delivery, raw_token, previous_window: previous_window)
+      enqueue(delivery, raw_token, previous_window: previous_window, sequence: event.revision)
       told += 1
     end
-    event.update_columns(notified_revision: event.revision)
+    mark_notified(event)
     told
   end
 
@@ -154,6 +154,13 @@ module Deliveries
 
   def enqueue(delivery, raw_token, **extra)
     ParticipantMailer.with(delivery: delivery, token: raw_token, **extra).public_send(delivery.kind).deliver_later
+  end
+
+  # Monotonic: a batch enqueued from an older page must never lower the mark
+  # and make "Tell the guests" reappear for changes everyone already heard.
+  def mark_notified(event)
+    Event.where(id: event.id).where(notified_revision: ...event.revision).update_all(notified_revision: event.revision)
+    event.notified_revision = [ event.notified_revision, event.revision ].max
   end
 
   def ensure_not_cancelled!(event)

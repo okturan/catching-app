@@ -209,4 +209,21 @@ class CalendarFileTest < ActiveSupport::TestCase
     assert_includes CalendarFile.new(pending, mode: :mail, window: [ Time.utc(2030, 1, 15, 9), Time.utc(2030, 1, 15, 10) ]).body,
       "DTSTART:20300115T090000Z"
   end
+
+  test "a lone carriage return or a control character cannot inject a property" do
+    @event.update_columns(place: "Ege's place", description: "Line\u0007one\rATTENDEE:mailto:victim@example.com")
+    body = CalendarFile.new(@event, mode: :page).body
+
+    assert_equal body.scan(/\r/).size, body.scan(/\r\n/).size, "every CR belongs to a CRLF line end"
+    assert_no_match(/^ATTENDEE:/, body.lines.map(&:chomp).join("\n"))
+    assert_includes body, "DESCRIPTION:Lineone", "control characters are stripped"
+  end
+
+  test "the sequence can be pinned by the caller so a delayed job cannot publish a newer one" do
+    @event.update_columns(revision: 7)
+
+    assert_includes CalendarFile.new(@event, mode: :page).body, "SEQUENCE:7"
+    assert_includes CalendarFile.new(@event, mode: :mail, window: [ @event.start_time, @event.end_time ], sequence: 3).body,
+      "SEQUENCE:3"
+  end
 end

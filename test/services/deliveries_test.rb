@@ -99,6 +99,18 @@ class DeliveriesTest < ActiveSupport::TestCase
     assert MailDelivery.reopened.all? { |row| row.reload.delivered_at.present? }
   end
 
+  test "finalized! is never capped" do
+    10.times do |i|
+      MailDelivery.create!(event: events(:other_event), kind: :invitation, recipient_email: @guest.email,
+        sender_email: "f#{i}@example.com")
+    end
+
+    assert_difference "MailDelivery.finalized.count", 2 do
+      Deliveries.finalized!(event: events(:finalized))
+    end
+    assert MailDelivery.finalized.exists?(recipient_email: "invitee@example.com")
+  end
+
   test "reopened! is never capped and prints the window from the job's own params" do
     10.times do |i|
       MailDelivery.create!(event: events(:other_event), kind: :invitation, recipient_email: @guest.email,

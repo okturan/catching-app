@@ -4,6 +4,8 @@ It was set for <%= @recipient_window %>.
 <% if @recipient_window != @event_window %>
 In the event's zone: <%= @event_window %>
 <% end %>
-If you added it to your calendar, the attached file removes it.
 <% end %>
 Nothing else will be sent about this event.
+<% if @recipient_window %>
+If you added it to your calendar, the attached file removes it.
+<% end %>

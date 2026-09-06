@@ -397,7 +397,7 @@ class ParticipationsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "#participant-table td", text: "needs a new reply"
     assert_select "#participant-table td", text: "replied (2 slots, before the last change)"
-    assert_select ".event-people", text: /2 invited,\s+1 replied,\s+0 cannot make it,\s+1 not yet invited,\s+1 replied before the last change,\s+1 need a new reply/
+    assert_select ".event-people", text: /2 invited,\s+1 replied,\s+0 cannot make it,\s+1 not yet invited,\s+1 replied before the last change,\s+1 needs a new reply/
     assert_select ".grid-action-bar .grid-notice[role=status]", text: "2 guests have not answered the current times"
     assert_select "button[form=finalize-form]", text: "Set in stone"
     assert_select "table#time-grid-show[data-role=organizer]"

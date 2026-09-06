@@ -24,7 +24,7 @@
         <p class="offer-event-name"><%= @event.name %></p>
         <%= render "events/grid_controls", event: @event, frozen: grid_frozen?, begin_min: @begin_min %>
         <% if @past_count.positive? %>
-          <p class="offer-note"><%= @past_count %> past times stay as they are</p>
+          <p class="offer-note"><%= @past_count == 1 ? "1 past time stays as it is" : "#{@past_count} past times stay as they are" %></p>
         <% end %>
         <% if notice_offered? %>
           <div class="form-check mb-4">

@@ -202,10 +202,12 @@ class ParticipantMailer < ApplicationMailer
     end
   end
 
+  # The sequence travels with the window: a job delayed past a reopen or a
+  # cancel must publish the revision it was enqueued at, never a newer one.
   def attach_calendar(window:, status:)
     attachments[CALENDAR_ATTACHMENT] = {
       mime_type: CALENDAR_MIME_TYPE,
-      content: CalendarFile.new(@event, mode: :mail, window: window, status: status).body
+      content: CalendarFile.new(@event, mode: :mail, window: window, status: status, sequence: params[:sequence]).body
     }
   end
 

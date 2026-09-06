@@ -22,6 +22,11 @@ module Participations
       requested = offer_params
       step = requested[:slot_minutes].presence&.to_i
       starts_at = parsed_time_slots(slot_minutes: Event::SLOT_MINUTES.include?(step) ? step : @event.slot_minutes)
+      # An instant can cross the cut-off while the page is open; revise_offer!
+      # freezes the past anyway, so drop them instead of refusing the save.
+      cutoff = TimeSlotParser::PAST_GRACE.ago
+      starts_at = starts_at.select { |instant| instant >= cutoff }
+      raise ArgumentError, "Select at least one time slot" if starts_at.empty?
       revision = @event.revise_offer!(starts_at: starts_at, slot_minutes: step, time_zone: requested[:time_zone].presence)
 
       notice = outcome_sentence(revision)

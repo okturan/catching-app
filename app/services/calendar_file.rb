@@ -25,7 +25,7 @@ class CalendarFile
 
   attr_reader :event, :mode, :window, :status
 
-  def initialize(event, mode:, window: nil, status: nil)
+  def initialize(event, mode:, window: nil, status: nil, sequence: nil)
     raise ArgumentError, "mode must be :page or :mail" unless MODES.include?(mode)
 
     @event = event
@@ -34,6 +34,9 @@ class CalendarFile
     raise ArgumentError, "a set time is needed for a calendar file" if @window.compact.size != 2
 
     @status = status || (event.cancelled? ? :cancelled : :confirmed)
+    # The sequence travels with the window so a delayed or retried job cannot
+    # publish a stale window at a newer revision.
+    @sequence = sequence || event.revision
     raise ArgumentError, "status must be :confirmed or :cancelled" unless STATUSES.key?(@status)
   end
 
@@ -60,7 +63,7 @@ class CalendarFile
       "BEGIN:VEVENT",
       "UID:#{uid}",
       "DTSTAMP:#{utc(Time.current)}",
-      "SEQUENCE:#{event.revision}",
+      "SEQUENCE:#{@sequence}",
       "DTSTART:#{utc(start_time)}",
       "DTEND:#{utc(end_time)}",
       "SUMMARY:#{escape(name)}",
@@ -120,7 +123,7 @@ class CalendarFile
 
   # TEXT values: the four characters RFC 5545 reserves, replaced literally.
   def escape(value)
-    value.to_s.gsub("\r\n", "\n").gsub(/[\\;,\n]/, ESCAPES)
+    value.to_s.gsub(/\r\n?/, "\n").gsub(/[\u0000-\u0009\u000b\u000c\u000e-\u001f\u007f]/, "").gsub(/[\\;,\n]/, ESCAPES)
   end
 
   # Content lines longer than 75 octets continue on the next line after a

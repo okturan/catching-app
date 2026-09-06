@@ -89,7 +89,7 @@
           <strong><%= @counts[:declined] %></strong> cannot make it,
           <strong><%= @counts[:unsent] %></strong> not yet invited<% if @counts[:stale].positive? %>,
           <strong><%= @counts[:stale] %></strong> replied before the last change<% end %><% if @counts[:voided].positive? %>,
-          <strong><%= @counts[:voided] %></strong> need a new reply<% end %>
+          <strong><%= @counts[:voided] %></strong> <%= @counts[:voided] == 1 ? "needs" : "need" %> a new reply<% end %>
         <% else %>
           Organized by <strong><%= @organizer&.display_name(viewer_role: :guest) %></strong>. Also invited:
           <ul>
@@ -232,7 +232,8 @@
         <% if @event.duration_minutes %>data-duration-minutes="<%= @event.duration_minutes %>"<% end %>></table>
     </div>
     <div class="grid-action-bar">
-      <% case @revision_notice %>
+      <%# When nothing offered is still in the future, "save again" would be a lie. %>
+      <% case (@every_offer_past ? nil : @revision_notice) %>
       <% when :stale %>
         <p class="grid-notice" role="status">The organizer changed the offered times on
           <%= zoned_time(@event.offer_revised_at, @event.time_zone, format: :date_time) %>:
@@ -267,7 +268,7 @@
       <% elsif @participant.organizer? && @event.open? && @counts[:voided].positive? %>
         <span class="text-muted">No one has answered the current times yet.</span>
       <% elsif @participant.organizer? && @event.open? %>
-        <span class="text-muted">No replies yet. Invitations sent to <%= @counts[:invited] %>.</span>
+        <span class="text-muted">No replies yet. Invitations sent to <%= pluralize(@counts[:invited], "person", plural: "people") %>.</span>
       <% end %>
     </div>
   </div>

@@ -13,6 +13,7 @@ class OrganizerRevisesOfferTest < ApplicationSystemTestCase
     assert_text "Change the times"
     assert_selector "#time-grid-define .slot.active", count: 2
     assert_selector "#time-grid-define .slot[data-date='#{TEN}'] .others", text: "+1"
+    assert_selector "#time-grid-define .slot[data-date='#{TEN}'][aria-label$=', 1 guest picked this']"
     assert_equal "#{TEN},#{ELEVEN}", hidden_value("#time_slot_array")
     assert_selector "select#event_slot_minutes:disabled"
     assert_text "Fixed since the first reply"

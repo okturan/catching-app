@@ -17,6 +17,10 @@ class ParticipationsController < ParticipationScopedController
 
     @event.transaction do
       @event.replace_time_slots!(participant: @participant, starts_at: starts_at)
+      # A revision that voided this guest may have committed between the load
+      # above and the lock inside replace_time_slots!; reload so clearing
+      # reply_voided_at is a real change and reaches the row.
+      @participant.reload
       @participant.update!(
         responded_at: Time.current,
         declined_at: nil,

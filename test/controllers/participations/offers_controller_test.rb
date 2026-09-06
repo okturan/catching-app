@@ -123,7 +123,7 @@ module Participations
       assert_response :success
       assert_select "input#time_slot_array[value=?]", "#{@ten},#{@eleven}"
       assert_select "input#current-offer[value=?]", [ @ten, @eleven ].to_json
-      assert_select ".offer-note", text: "1 past times stay as they are"
+      assert_select ".offer-note", text: "1 past time stays as it is"
       counts = JSON.parse(css_select("#guest-picked-counts").first["value"])
       assert_equal 1, counts[@ten]
       assert_nil counts[@eleven], "declined and unreplied guests hold nothing that counts"
