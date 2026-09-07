@@ -1,47 +1,95 @@
-<div id="landingContainer" class="container-fluid"></div>
+<section class="wall-hero" aria-labelledby="hero-title">
+  <div id="clock-wall" class="clock-row" aria-label="The same moment in five cities" role="group"></div>
 
-<div class="wrapper">
-  <div
-    id="carouselExampleIndicators"
-    class="carousel slide"
-    data-bs-ride="carousel"
-    data-bs-interval="7000"
-    data-bs-pause="false"
-  >
-    <div class="carousel-indicators">
-      <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
-      <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="1" aria-label="Slide 2"></button>
-      <button type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide-to="2" aria-label="Slide 3"></button>
+  <div class="time-ruler" id="time-ruler">
+    <p class="time-ruler-hint"><strong>Drag the red line</strong> to move every clock to the same shared moment.</p>
+    <div class="time-ruler-track">
+      <div class="time-ruler-awake" aria-hidden="true"></div>
+      <div class="time-ruler-ticks" aria-hidden="true"><%= ("<span></span>" * 25).html_safe %></div>
+      <label class="visually-hidden" for="shared-moment">Shared moment, hours from now</label>
+      <input type="range" id="shared-moment" min="-720" max="720" step="15" value="0">
     </div>
-
-    <div class="carousel-inner">
-      <div class="carousel-item active">
-        <video autoplay muted playsinline class="video" id="video1">
-          <source src="https://res.cloudinary.com/dvpavvw1u/video/upload/v1633040000/Copy_of_Carousel1ff_kcucbw.mp4" type="video/mp4">
-        </video>
-      </div>
-
-      <div class="carousel-item">
-        <video autoplay muted playsinline class="video" id="video2">
-          <source src="https://res.cloudinary.com/dvpavvw1u/video/upload/v1633038090/Copy_of_Carousel2f_ql17lv.mp4" type="video/mp4">
-        </video>
-      </div>
-
-      <div class="carousel-item">
-        <video autoplay muted playsinline class="video" id="video3">
-          <source src="https://res.cloudinary.com/dvpavvw1u/video/upload/v1633040009/Copy_of_Carousel3fff_jrn3za.mp4" type="video/mp4">
-        </video>
-      </div>
+    <div class="time-ruler-scale" aria-hidden="true"><span>−12h</span><span>−6h</span><span>now</span><span>+6h</span><span>+12h</span></div>
+    <div class="time-ruler-legend">
+      <span><span class="swatch" aria-hidden="true"></span><span id="awake-summary">Yellow marks when everyone is awake.</span></span>
+      <output for="shared-moment" id="shared-moment-label" class="time">now</output>
     </div>
-
-    <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
-      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-      <span class="visually-hidden">Previous</span>
-    </button>
-    <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
-      <span class="carousel-control-next-icon" aria-hidden="true"></span>
-      <span class="visually-hidden">Next</span>
-    </button>
   </div>
-  <div class="push"></div>
-</div>
+
+  <div class="wall-claim">
+    <h1 id="hero-title">We have some catching app to do!</h1>
+    <div class="wall-actions">
+      <p class="lede">Catching App finds a time that works for everyone, shown to each friend in their own time zone. You need an email address, not an account.</p>
+      <%= link_to "Plan a meeting", new_event_path, class: "plate-button" %>
+      <%= link_to "Lost your organizer link?", new_organizer_link_path, class: "quiet-link" %>
+    </div>
+  </div>
+</section>
+
+<section class="stations" aria-labelledby="stations-title">
+  <h2 id="stations-title" class="visually-hidden">How it works</h2>
+  <div class="stations-rail">
+    <div class="station">
+      <h3>Offer the times you can do.</h3>
+      <p>Pick a slot length of 15, 30 or 60 minutes and paint your free hours across up to a month, in your own zone.</p>
+    </div>
+    <div class="station">
+      <h3>Everyone gets their own link.</h3>
+      <p>Your organizer link arrives by email. Open it, add your friends' addresses, and each of them receives a personal link. No sign-up on either side.</p>
+    </div>
+    <div class="station">
+      <h3>Friends paint back, on a phone.</h3>
+      <p>They see your offer in their own time zone, paint what works, or say that none of it does.</p>
+    </div>
+    <div class="station">
+      <h3>Set one window in stone.</h3>
+      <p>The grid shows where everyone overlaps. You pick one continuous window and every friend gets the time in their zone.</p>
+    </div>
+  </div>
+</section>
+
+<section class="sample" aria-labelledby="sample-title">
+  <div class="wall-section">
+    <div>
+      <h2 id="sample-title" class="eyebrowless-heading">Three friends, three zones, one yellow hour.</h2>
+      <p class="lede">The organizer painted Friday to Sunday evenings. Two friends painted back. The grid shows every overlap, and the row where all three meet is the one you confirm.</p>
+      <p class="sample-caption">Illustration with made-up availability. Real grids run to 31 days and follow your slot length.</p>
+    </div>
+    <div>
+      <table class="sample-grid" aria-label="Sample availability grid">
+        <thead>
+          <tr><th scope="col"><span class="visually-hidden">Time</span></th><th scope="col">Fri</th><th scope="col">Sat</th><th scope="col">Sun</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row">18:00</th><td class="one">1</td><td></td><td class="one">1</td></tr>
+          <tr><th scope="row">19:00</th><td class="two">2</td><td class="one">1</td><td class="two">2</td></tr>
+          <tr><th scope="row">20:00</th><td class="two">2</td><td class="all">3</td><td class="two">2</td></tr>
+          <tr><th scope="row">21:00</th><td class="one">1</td><td class="two">2</td><td class="one">1</td></tr>
+          <tr><th scope="row">22:00</th><td></td><td class="one">1</td><td></td></tr>
+        </tbody>
+      </table>
+      <div class="sample-legend">
+        <span class="one">one friend</span>
+        <span class="two">two friends</span>
+        <span class="all">everyone</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="notice-title">
+  <div class="wall-section">
+    <h2 id="notice-title" class="eyebrowless-heading">What is true here</h2>
+    <ul class="notice-list">
+      <li><strong>An email address is enough.</strong> Organizers and guests use personal links; an account only remembers your events.</li>
+      <li><strong>Nothing goes to your friends until you say so.</strong> Invitations leave after you open your organizer link and press Send.</li>
+      <li><strong>Every time is shown in the viewer's own zone,</strong> named next to it, on the page and in every email.</li>
+      <li><strong>Anyone can leave an event,</strong> and nobody is listed in a directory.</li>
+    </ul>
+  </div>
+</section>
+
+<section class="wall-close" aria-labelledby="close-title">
+  <h2 id="close-title">Who are you catching up with?</h2>
+  <%= link_to "Plan a meeting", new_event_path, class: "plate-button" %>
+</section>

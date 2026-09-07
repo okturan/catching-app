@@ -1,38 +1,331 @@
-// Specific CSS for your home-page
-/* .container-homepage {
-  display: flex;
-	align-items: center;
-	justify-content: center;
-  flex-direction: column;
+// Landing page: the clock wall.
 
-} */
- #landingContainer {
-  height: 100px;
-}
-
-#carouselExampleIndicators {
+.wall-hero {
+  max-width: 1280px;
   margin: 0 auto;
-  position:absolute !important;
-  top: 0;
-}
-.carousel-control-prev {
-  visibility: hidden;
-}
-.carousel-control-next {
-  visibility: hidden;
+  padding: clamp(1.5rem, 4vw, 3rem) clamp(1rem, 4vw, 2.5rem) clamp(2rem, 5vw, 4rem);
 }
 
-video {
+.clock-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: clamp(0.75rem, 2.5vw, 2rem);
+  align-items: start;
+  margin: 0 auto;
+  max-width: 1120px;
+
+  // On a phone all five clocks stay; the row scrolls sideways and snaps.
+  @media (max-width: 900px) {
+    grid-auto-flow: column;
+    grid-template-columns: none;
+    grid-auto-columns: minmax(150px, 36vw);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 1rem;
+    padding: 0 1rem 0.75rem;
+    margin-inline: calc(-1 * clamp(1rem, 4vw, 2.5rem));
+    scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
+    .clock-card { scroll-snap-align: start; }
+    .clock-card .plate-time { font-size: 0.9rem; }
+    .clock-card .plate { padding: 0.5em 0.7em; }
+  }
+}
+
+// The shared-moment ruler: drag it and every clock follows.
+.time-ruler {
+  max-width: 1120px;
+  margin: clamp(1.5rem, 3vw, 2.5rem) auto 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.time-ruler-track {
+  position: relative;
+  height: 44px;
+  border-radius: 4px;
+  background: $face;
+  border: 1px solid $hairline;
+  box-shadow: inset 0 1px 3px rgba(20, 20, 20, 0.12);
+  overflow: hidden;
+}
+
+.time-ruler-awake {
+  position: absolute;
+  inset: 0;
+  background-image: none; // painted by the component
+  pointer-events: none;
+}
+
+.time-ruler-ticks {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 0.5%;
+  pointer-events: none;
+  span {
+    width: 1px;
+    height: 100%;
+    background: rgba(20, 20, 20, 0.18);
+    &:nth-child(6n + 1) { background: $ink; }
+  }
+}
+
+.time-ruler input[type="range"] {
+  position: absolute;
+  inset: 0;
   width: 100%;
+  height: 100%;
+  margin: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  cursor: grab;
+  &:active { cursor: grabbing; }
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 6px;
+    height: 44px;
+    border-radius: 2px;
+    background: $signal;
+    border: 0;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
+  }
+  &::-moz-range-thumb {
+    width: 6px;
+    height: 44px;
+    border-radius: 2px;
+    background: $signal;
+    border: 0;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
+  }
+  &::-webkit-slider-runnable-track { background: transparent; }
+  &::-moz-range-track { background: transparent; }
 }
-.carousel-indicators {
-  visibility: hidden;
+
+.time-ruler-scale {
+  display: flex;
+  justify-content: space-between;
+  font-family: $time-font;
+  font-size: 0.7rem;
+  color: $ink-soft;
+  padding: 0 2px;
+  span:nth-child(3) { color: $signal; font-weight: 700; }
 }
-html, body {
-  height: 100% !important;
-  margin: 0 !important;
+
+.time-ruler-hint {
+  font-size: 0.85rem;
+  color: $ink-soft;
+  margin: 0;
+  strong { color: $signal; font-weight: 700; }
 }
-.wrapper {
-  min-height: 100% !important;
-  margin-bottom: -58px !important;
+
+.time-ruler-legend {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.85rem;
+  color: $ink-soft;
+
+  .swatch {
+    display: inline-block;
+    width: 0.9em;
+    height: 0.9em;
+    background: $awake;
+    border: 1px solid rgba(20, 20, 20, 0.3);
+    vertical-align: -0.1em;
+    margin-right: 0.35em;
+  }
+}
+
+.wall-claim {
+  max-width: 1120px;
+  margin: clamp(2.5rem, 6vw, 4.5rem) auto 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: clamp(1.5rem, 4vw, 4rem);
+  align-items: end;
+
+  @media (max-width: 800px) {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  h1 {
+    font-size: clamp(2.4rem, 6.2vw, 5.6rem);
+    line-height: 0.98;
+    font-weight: 800;
+    letter-spacing: -0.035em;
+    margin: 0;
+  }
+}
+
+.wall-actions {
+  display: grid;
+  gap: 1rem;
+  justify-items: start;
+
+  p { margin: 0; }
+}
+
+.plate-button {
+  @extend .plate;
+  @extend .plate-lg;
+  text-decoration: none;
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s;
+
+  &:hover {
+    color: $enamel-text;
+    transform: translateY(-1px);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 -1px 0 rgba(0, 0, 0, 0.35), 0 6px 12px -4px rgba(20, 20, 20, 0.4);
+  }
+  &:active { transform: translateY(0); }
+}
+
+// The four stations, on a wall rail.
+.stations {
+  border-top: 1px solid $hairline;
+  border-bottom: 1px solid $hairline;
+  background: $wall-deep;
+}
+
+.stations-rail {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: clamp(2rem, 5vw, 4rem) clamp(1rem, 4vw, 2.5rem);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(1rem, 3vw, 2.5rem);
+  position: relative;
+
+  @media (max-width: 800px) {
+    grid-template-columns: 1fr 1fr;
+  }
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+
+  .station {
+    display: grid;
+    gap: 0.9rem;
+    align-content: start;
+  }
+  .station h3 {
+    font-size: 1.2rem;
+    font-weight: 800;
+    margin: 0;
+  }
+  .station p {
+    margin: 0;
+    color: $ink-soft;
+    line-height: 1.5;
+  }
+}
+
+// The authored sample plan: a small painted grid, labelled as an illustration.
+.sample {
+  .wall-section { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: clamp(1.5rem, 4vw, 4rem); align-items: center; }
+  @media (max-width: 900px) { .wall-section { grid-template-columns: 1fr; } }
+}
+
+.sample-grid {
+  table-layout: fixed;
+  width: 100%;
+  border-spacing: 4px;
+  font-size: 0.85rem;
+
+  th {
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    color: $ink-soft;
+    padding-bottom: 0.25rem;
+  }
+  th[scope="row"] {
+    text-align: right;
+    padding-right: 0.5rem;
+    text-transform: none;
+    letter-spacing: 0;
+    font-family: $time-font;
+  }
+  td {
+    height: 34px;
+    background: $face;
+    border: 1px solid $hairline;
+    border-radius: 3px;
+    text-align: center;
+    font-family: $time-font;
+    font-size: 0.75rem;
+    color: $ink-soft;
+  }
+  td.one { background: $enamel-wash; }
+  td.two { background: $enamel-half; color: $face; }
+  td.all { background: $awake; color: $ink; font-weight: 700; }
+}
+
+.sample-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 1.5rem;
+  font-size: 0.85rem;
+  color: $ink-soft;
+  margin-top: 0.75rem;
+
+  span::before {
+    content: "";
+    display: inline-block;
+    width: 0.9em;
+    height: 0.9em;
+    border: 1px solid rgba(20, 20, 20, 0.3);
+    vertical-align: -0.1em;
+    margin-right: 0.4em;
+    border-radius: 2px;
+  }
+  .one::before { background: $enamel-wash; }
+  .two::before { background: $enamel-half; }
+  .all::before { background: $awake; }
+}
+
+.sample-caption {
+  font-size: 0.75rem;
+  color: $ink-soft;
+  margin-top: 0.5rem;
+}
+
+// Wall notice: what is true, stated plainly.
+.notice-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0;
+  max-width: 62ch;
+
+  li {
+    padding: 1rem 0;
+    border-top: 1px solid $hairline;
+    font-size: 1.05rem;
+    line-height: 1.45;
+    &:last-child { border-bottom: 1px solid $hairline; }
+    strong { font-weight: 800; }
+  }
+}
+
+.wall-close {
+  text-align: center;
+  padding-bottom: clamp(3rem, 8vw, 6rem);
+  display: grid;
+  justify-items: center;
+  gap: 1.25rem;
+
+  h2 {
+    font-size: clamp(1.6rem, 3.5vw, 2.6rem);
+    font-weight: 800;
+    margin: 0;
+    max-width: 24ch;
+  }
 }

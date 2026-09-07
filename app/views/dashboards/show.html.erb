@@ -1,26 +1,4 @@
-<div class="col-md-10 ms-auto col-xl-6 me-auto">
-  <div>
-    <div class="tabs-container">
-      <div class="tabs">
-        <input type="radio" id="radio-1" name="tabs" data-tab-content="my-events" checked />
-        <label class="tab" for="radio-1"><span class="me-1" aria-hidden="true">🗓</span>My Events<span class="notification"><%= @events.count %></span></label>
-        <input type="radio" id="radio-2" name="tabs" data-tab-content="popular-activities"/>
-        <label class="tab" for="radio-2"><span class="me-1" aria-hidden="true">📊</span>Popular Activities<span class="notification">3</span></label>
-        <input type="radio" id="radio-3" name="tabs" data-tab-content="members" />
-        <label class="tab" for="radio-3"><span class="me-1" aria-hidden="true">👥</span>Members<span class="notification"><%= @members.count %></span></label>
-        <span class="glider"></span>
-      </div>
-      <div class="tab-contents">
-        <div class="tab-content w-100" data-tab-content-id="my-events">
-          <%= render "dashboards/shared/my_events" %>
-        </div>
-        <div class="tab-content w-100 d-none" data-tab-content-id="popular-activities">
-          <%= render "dashboards/shared/my_activities" %>
-        </div>
-        <div class="tab-content w-100 d-none" data-tab-content-id="members">
-          <%= render "dashboards/shared/my_friends" %>
-        </div>
-      </div>
-    </div>
-  </div>
+<div class="dashboard">
+  <h1>Your events</h1>
+  <%= render "dashboards/shared/my_events" %>
 </div>

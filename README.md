@@ -18,14 +18,14 @@ The complete historical set is in [`docs/screenshots/legacy`](docs/screenshots/l
 
 ## Stack
 
-- Ruby 4.0.5 and Rails 8.1.3
+- Ruby 4.0.5 (the Gemfile accepts `~> 4.0.5`) and Rails 8.1.3.1
 - PostgreSQL 18
 - Node.js 24.18.0 LTS and npm 11.16.0
 - Propshaft, esbuild, Dart Sass, Turbo, Bootstrap 5, and Luxon
-- Devise authentication
+- Devise for optional accounts; capability links for everyone else
 - Minitest, RuboCop Rails Omakase, Brakeman, and bundler-audit
 
-Runtime versions are pinned in `.ruby-version`, `.node-version`, `Gemfile.lock`, and `package-lock.json`.
+Runtime versions are pinned in `.ruby-version`, `.node-version`, `Gemfile.lock`, and `package-lock.json`. Dependency updates are applied by hand; `bin/bundler-audit` and `npm audit` run in CI.
 
 ## Local setup
 
@@ -84,13 +84,22 @@ The runtime expects these environment variables:
 - `MAILER_FROM`: sender address
 - `SMTP_ADDRESS`: SMTP server address
 - `SMTP_PORT`, `SMTP_USERNAME`, and `SMTP_PASSWORD`: optional SMTP connection settings
+- `INVITATION_DAILY_BUDGET`: optional ceiling on invitation mails per day (default 500)
+- `LOG_REQUESTS`: set to `false` (the Dockerfile does) so Thruster does not log capability links
 
 The container prepares the database before starting, listens through Thruster on port 80, and exposes `GET /up` as its health endpoint. It assumes TLS is terminated by the reverse proxy and forces HTTPS for application traffic.
 
+## How scheduling works
+
+An organizer plans an event with an email address, a name, a slot length (15, 30 or 60 minutes), a time zone and a painted set of offered times. The organizer receives a link by email; opening it proves the address, and only then can invitations be sent. Each guest receives their own link, paints availability on the organizer's grid (mouse, finger or keyboard), can say that none of the times work, or can leave the event. The organizer finalizes one continuous window that every responder shares. Accounts are optional: they remember participations on a dashboard, and a guest can keep an event in an account from their link.
+
 ## Security model
 
-Event access is limited to the organizer and invited users. Only invitees can submit availability, only against organizer-offered slots, and only the organizer can finalize a continuous slot range shared by every participant. Scheduling writes are transactional, database constraints back the key uniqueness and range invariants, authentication endpoints are rate limited, and production enables TLS, origin checking, CSP, filtered sensitive parameters, and host authorization.
-
-Signed-in users can discover other members by display name so they can invite them to an event. Email addresses and other account details are not exposed in the member directory.
+- Every person on an event is a participant row; links carry a 32-character random token that is stored only as a SHA-256 digest. Re-sent and recovered links are pending tokens that go live on their first use, so a working link is never revoked by a resend, a scanner, or a stranger who knows the organizer's address.
+- Nothing is sent to guests before the organizer has opened the emailed link. Invitations are capped per organizer, per recipient, per event and address, per IP, and by a global daily budget (`INVITATION_DAILY_BUDGET`, default 500), all counted in a delivery ledger. Confirmations and finalized notices are never refused.
+- There is no member directory. Guests see other guests by display name or as "Guest"; the organizer sees the addresses they invited.
+- Scheduling writes run under the event's row lock; database constraints enforce one organizer per event, one address per event, one account per event, quarter-hour instants and whole-slot windows.
+- Capability pages are `no-store` and `noindex`, tokens are masked in request and redirect logs, and Thruster request logging is off in the production image.
+- Authentication endpoints and token-route writes are rate limited per container as a courtesy layer; production forces TLS and host authorization.
 
 See the official [Ruby releases](https://www.ruby-lang.org/en/downloads/releases/) and [Rails maintenance policy](https://guides.rubyonrails.org/maintenance_policy.html) for the support status behind the pinned baseline.

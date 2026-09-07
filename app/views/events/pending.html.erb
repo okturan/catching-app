@@ -1,0 +1,8 @@
+<div class="container py-5" id="pending-event">
+  <h1>Check your inbox</h1>
+  <p>
+    We emailed your organizer link to <strong><%= @organizer_email.presence || "the address you entered" %></strong>.
+  </p>
+  <p>Nothing has gone to your guests yet: open the link in that email and press Send.</p>
+  <p><%= link_to "Didn't get it? Request the link again", new_organizer_link_path %></p>
+</div>

@@ -73,7 +73,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      APP_HOST: example.test
       CI: true
       DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/catching_app_test
       RAILS_ENV: test

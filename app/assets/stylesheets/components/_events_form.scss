@@ -1,24 +1,140 @@
-.form-events {
-  /* background: yellow; */
-  background-size: cover;
-  padding: 40px 20px;
-  /* border-radius: 3px; */
-  border-radius: 15px;
-  box-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-  h2 {
-    font-size: 25px;
-    font-weight: bold;
-    margin-bottom: 30px;
-    text-align: center;
+// The form element itself, so the grid panel sits inside the form and reading
+// order is tab order. Two explicit rows make the panel's 1 / -1 span resolve;
+// below 900px the placement drops and document order rules.
+.event-new-grid {
+  display: grid;
+  grid-template-columns: minmax(300px, 420px) minmax(0, 1fr);
+  // Row 2 is flexible so the panel's extra height lands there and the second
+  // face sits directly under the first instead of being pushed down.
+  grid-template-rows: auto 1fr;
+  gap: clamp(1rem, 3vw, 2.5rem);
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: clamp(1rem, 3vw, 2rem) clamp(1rem, 4vw, 2.5rem) 3rem;
+  align-items: start;
+
+  // Two faces in column 1, the panel spanning both rows in column 2. Pinned,
+  // so the panel's viewport-relative budget is honest: without this the grid
+  // scrolls off screen while the visitor works down the left rail, and no
+  // height given to a box that is not pinned can help. The sticky containing
+  // block is the grid area, which spans every row.
+  > .form-events { grid-column: 1; }
+  > .time-grid-panel {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    position: sticky;
+    top: 1rem;
   }
-/*   .btn {
-    width: 100%;
-    margin-bottom: 20px;
-  } */
-  margin-bottom: 3vw;
-  margin-right: 3vw;
-  margin-left: 1vw;
+
+  // The 422 summary is the form's first child and runs the full width, so the
+  // panel starts a row lower and the two faces fall in behind it.
+  > .error-summary { grid-column: 1 / -1; grid-row: 1; }
+
+  &:has(> .error-summary) {
+    grid-template-rows: auto auto 1fr;
+
+    > .time-grid-panel { grid-row: 2 / -1; }
+  }
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+
+    > .form-events,
+    > .error-summary,
+    > .time-grid-panel { grid-column: auto; grid-row: auto; }
+
+    > .time-grid-panel { position: static; }
+
+    &:has(> .error-summary) {
+      grid-template-rows: none;
+
+      > .time-grid-panel { grid-row: auto; }
+    }
+  }
 }
-.form-control {
-  border-radius: 15px;
+
+.form-events {
+  @extend .face;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  display: grid;
+  gap: 0.25rem;
+
+  h2 {
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.75rem;
+  }
+}
+
+// The 422 summary: a white face with a signal-red edge and one link per error.
+// Red marks it, it never fills it. Focused on render by error_summary.js.
+.error-summary {
+  @extend .face;
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  border-color: $signal;
+
+  h2 {
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.5rem;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 1.25rem;
+  }
+
+  li + li {
+    margin-top: 0.25rem;
+  }
+
+  a {
+    color: $ink;
+    font-weight: 600;
+    text-decoration-color: $signal;
+    text-underline-offset: 0.2em;
+
+    &:hover {
+      color: $signal;
+    }
+  }
+}
+
+// The sentence that says what the button does, and the signed-in stand-in for
+// the two organizer fields. Quiet, but body-sized: it is not fine print.
+.form-note {
+  color: $ink-soft;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  max-width: 62ch;
+  margin: 0.5rem 0 1rem;
+}
+
+.form-control,
+.form-select {
+  border-radius: 4px;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: $enamel;
+}
+
+.page-head {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: clamp(1.5rem, 4vw, 2.5rem) clamp(1rem, 4vw, 2.5rem) 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.75rem 1.5rem;
+
+  h1 {
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    font-weight: 800;
+    margin: 0;
+  }
 }

@@ -1,10 +1,30 @@
-// Define variables for your color scheme
+// The newsroom clock wall: painted wall, white glass faces, black hands,
+// one red second hand, enamel city plates, and the yellow of a painted
+// "everyone is awake" band.
+$wall: #f2efe9;
+$wall-deep: #e6e1d6;
+$face: #ffffff;
+$ink: #141414;
+$ink-soft: #4a4744;
+$hairline: rgba(20, 20, 20, 0.14);
+$enamel: #24405e;
+$enamel-deep: #1a2f47;
+$enamel-text: #ffffff;
+$signal: #d7262a;
+$awake: #ffc65a;
+$awake-deep: #e0a52b;
+$success: #1a7f4b;
 
-// For example:
-$red: #FD1015;
-$blue: #167FFB;
-$yellow: #FFC65A;
-$orange: #E67E22;
-$green: #1EDD88;
-$gray: #0E0000;
-$light-gray: #F4F4F4;
+// Legacy names still referenced by Bootstrap variable overrides.
+$red: $signal;
+$blue: $enamel;
+$yellow: $awake;
+$orange: $awake-deep;
+$green: $success;
+$gray: $ink;
+$light-gray: $wall;
+
+// Washes, precomputed so Sass emits no color-function deprecations.
+$awake-wash: #ffe5b5;      // awake over face, 45%
+$enamel-wash: #c8cfd7;     // enamel over face, 25%
+$enamel-half: #8796a6;     // enamel over face, 55%

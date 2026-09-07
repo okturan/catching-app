@@ -1,0 +1,183 @@
+require "test_helper"
+
+class MailDeliveryTest < ActiveSupport::TestCase
+  setup do
+    @event = events(:planning)
+    @organizer = participants(:planning_organizer)
+  end
+
+  def record(kind: :invitation, recipient: "guest@example.com", sender: @organizer.email, event: @event, created_at: Time.current, failed_at: nil, request_ip: nil)
+    MailDelivery.create!(event: event, participant: nil, kind: kind, recipient_email: recipient,
+      sender_email: MailDelivery.canonical(sender), created_at: created_at, failed_at: failed_at, request_ip: request_ip)
+  end
+
+  def check!(recipient: "guest@example.com", request_ip: nil)
+    MailDelivery::Caps.check_invitation!(event: @event, organizer: @organizer, recipient_email: recipient, request_ip: request_ip)
+  end
+
+  def notice_check!(recipient: "guest@example.com", request_ip: nil)
+    MailDelivery::Caps.check_update_notice!(event: @event, organizer: @organizer, recipient_email: recipient, request_ip: request_ip)
+  end
+
+  test "canonical addresses drop plus tags and gmail dots" do
+    assert_equal "spam@example.com", MailDelivery.canonical("Spam+1@Example.com")
+    assert_equal "johndoe@gmail.com", MailDelivery.canonical("john.doe+news@gmail.com")
+    assert_equal "john.doe@example.com", MailDelivery.canonical("john.doe@example.com")
+  end
+
+  test "every ledger kind is accepted at both layers and nothing else is" do
+    MailDelivery::KINDS.each { |kind| assert_predicate record(kind: kind, sender: nil), :persisted?, "for #{kind}" }
+    assert_equal %w[event_updated cancelled reopened], MailDelivery::KINDS.last(3)
+
+    assert_raises(ActiveRecord::RecordInvalid) { record(kind: "newsletter", sender: nil) }
+    assert_raises(ActiveRecord::StatementInvalid) do
+      MailDelivery.transaction(requires_new: true) do
+        MailDelivery.connection.execute(<<~SQL.squish)
+          INSERT INTO mail_deliveries (event_id, kind, recipient_email, canonical_recipient_email, created_at)
+          VALUES (#{@event.id}, 'newsletter', 'a@example.com', 'a@example.com', NOW())
+        SQL
+      end
+    end
+  end
+
+  test "state follows the ledger columns" do
+    row = record
+    assert_equal :queued, row.state
+    row.update!(delivered_at: Time.current)
+    assert_equal :delivered, row.state
+    row.update!(failed_at: Time.current)
+    assert_equal :failed, row.state
+    assert_equal :unknown, record(created_at: 20.minutes.ago).state
+  end
+
+  test "the global daily budget stops the cannon" do
+    ENV["INVITATION_DAILY_BUDGET"] = "2"
+    2.times { |i| record(recipient: "g#{i}@example.com") }
+
+    assert_raises(MailDelivery::CapExceeded) { check!(recipient: "new@example.com") }
+  ensure
+    ENV.delete("INVITATION_DAILY_BUDGET")
+  end
+
+  test "an organizer without a finalized event gets the starter allowance" do
+    starter = participants(:other_organizer)
+    20.times { |i| record(recipient: "g#{i}@example.com", sender: starter.email, event: events(:other_event)) }
+    assert_raises(MailDelivery::CapExceeded) do
+      MailDelivery::Caps.check_invitation!(event: events(:other_event), organizer: starter, recipient_email: "new@example.com", request_ip: nil)
+    end
+
+    # owner@example.com organizes the finalized fixture event, so it has the full allowance.
+    20.times { |i| record(recipient: "g#{i}@example.com") }
+    assert_nothing_raised { check!(recipient: "new@example.com") }
+  end
+
+  test "plus addressing shares one allowance" do
+    starter = participants(:other_organizer)
+    20.times { |i| record(recipient: "g#{i}@example.com", sender: "other-owner+#{i}@example.com", event: events(:other_event)) }
+
+    assert_raises(MailDelivery::CapExceeded) do
+      MailDelivery::Caps.check_invitation!(event: events(:other_event), organizer: starter, recipient_email: "new@example.com", request_ip: nil)
+    end
+  end
+
+  test "per recipient, per address-and-event, cooldown and IP caps" do
+    10.times { |i| record(recipient: "busy@example.com", sender: "o#{i}@example.com", event: events(:other_event)) }
+    assert_raises(MailDelivery::CapExceeded) { check!(recipient: "busy@example.com") }
+
+    record(recipient: "fresh@example.com", created_at: 2.minutes.ago)
+    assert_raises(MailDelivery::CapExceeded) { check!(recipient: "fresh@example.com") }
+
+    record(recipient: "failed@example.com", created_at: 1.minute.ago, failed_at: Time.current)
+    assert_nothing_raised { check!(recipient: "failed@example.com") }
+
+    5.times { |i| record(recipient: "capped@example.com", created_at: (i + 1).hours.ago) }
+    assert_raises(MailDelivery::CapExceeded) { check!(recipient: "capped@example.com") }
+
+    200.times { |i| record(recipient: "ip#{i}@example.com", sender: "s#{i % 30}@example.com", request_ip: "203.0.113.9") }
+    assert_raises(MailDelivery::CapExceeded) { check!(recipient: "another@example.com", request_ip: "203.0.113.9") }
+  end
+
+  test "notices are capped at five per event and address for life, failed rows excluded, with a ten-minute cooldown" do
+    4.times { |i| record(kind: :event_updated, recipient: "told@example.com", created_at: (i + 2).hours.ago) }
+    record(kind: :event_updated, recipient: "told@example.com", created_at: 1.hour.ago, failed_at: 50.minutes.ago)
+    assert_nothing_raised { notice_check!(recipient: "told@example.com") }
+
+    record(kind: :event_updated, recipient: "told@example.com", created_at: 3.days.ago)
+    error = assert_raises(MailDelivery::CapExceeded) { notice_check!(recipient: "told@example.com") }
+    assert_equal "This address has received the maximum of 5 notices for this event.", error.message
+
+    record(kind: :event_updated, recipient: "fresh@example.com", created_at: 9.minutes.ago)
+    error = assert_raises(MailDelivery::CapExceeded) { notice_check!(recipient: "fresh@example.com") }
+    assert_equal "This address was notified less than 10 minutes ago.", error.message
+    MailDelivery.event_updated.where(canonical_recipient_email: "fresh@example.com").update_all(created_at: 11.minutes.ago)
+    assert_nothing_raised { notice_check!(recipient: "fresh@example.com") }
+
+    5.times { |i| record(kind: :event_updated, recipient: "elsewhere@example.com", event: events(:other_event), created_at: (i + 1).hours.ago) }
+    # Another event's notices do not count against this pair.
+    assert_nothing_raised { notice_check!(recipient: "elsewhere@example.com") }
+  end
+
+  test "notices and invitations share the daily keys while the invitation's per-event count ignores notices" do
+    7.times { |i| record(recipient: "shared@example.com", sender: "o#{i}@example.com", event: events(:other_event), created_at: (i + 1).hours.ago) }
+    3.times { |i| record(kind: :event_updated, recipient: "shared@example.com", sender: "n#{i}@example.com", event: events(:other_event), created_at: (i + 1).hours.ago) }
+    assert_raises(MailDelivery::CapExceeded) { check!(recipient: "shared@example.com") }
+    assert_raises(MailDelivery::CapExceeded) { notice_check!(recipient: "shared@example.com") }
+
+    3.times { |i| record(kind: :event_updated, recipient: "pair@example.com", created_at: (i + 1).days.ago) }
+    4.times { |i| record(recipient: "pair@example.com", created_at: (i + 1).days.ago) }
+    assert_nothing_raised { check!(recipient: "pair@example.com") }
+    record(recipient: "pair@example.com", created_at: 2.days.ago)
+    assert_raises(MailDelivery::CapExceeded) { check!(recipient: "pair@example.com") }
+
+    starter = participants(:other_organizer)
+    20.times { |i| record(kind: :event_updated, recipient: "g#{i}@example.com", sender: starter.email, event: events(:other_event)) }
+    [ :check_invitation!, :check_update_notice! ].each do |check|
+      assert_raises(MailDelivery::CapExceeded, check.to_s) do
+        MailDelivery::Caps.public_send(check, event: events(:other_event), organizer: starter, recipient_email: "new@example.com", request_ip: nil)
+      end
+    end
+
+    200.times { |i| record(kind: :event_updated, recipient: "ip#{i}@example.com", sender: "s#{i % 30}@example.com", request_ip: "203.0.113.9") }
+    assert_raises(MailDelivery::CapExceeded) { check!(recipient: "another@example.com", request_ip: "203.0.113.9") }
+    assert_raises(MailDelivery::CapExceeded) { notice_check!(recipient: "another@example.com", request_ip: "203.0.113.9") }
+    assert_nothing_raised { notice_check!(recipient: "another@example.com", request_ip: "203.0.113.10") }
+  end
+
+  test "a cancelled finalized event still earns the organizer the full allowance" do
+    events(:finalized).cancel!
+
+    assert MailDelivery::Caps.organizer_has_finalized?(participants(:finalized_organizer))
+    assert_not MailDelivery::Caps.organizer_has_finalized?(participants(:other_organizer))
+  end
+
+  test "organizer link mails are limited to one per address per hour" do
+    assert MailDelivery::Caps.organizer_link_allowed?("owner@example.com")
+    record(kind: :organizer_link, recipient: "Owner+x@example.com", sender: nil)
+    assert_not MailDelivery::Caps.organizer_link_allowed?("owner@example.com")
+  end
+
+  test "event creation caps count opened events per address and unopened per IP" do
+    5.times do |i|
+      event = Event.create!(name: "E#{i}", description: "d", slot_minutes: 60, time_zone: "UTC")
+      event.participants.create!(role: :organizer, email: "busy+#{i}@example.com", name: "B", link_opened_at: Time.current, responded_at: Time.current)
+    end
+    assert_raises(MailDelivery::CapExceeded) do
+      MailDelivery::Caps.check_event_creation!(organizer_email: "busy@example.com", request_ip: "198.51.100.1")
+    end
+
+    3.times do |i|
+      event = Event.create!(name: "U#{i}", description: "d", slot_minutes: 60, time_zone: "UTC")
+      organizer = event.participants.create!(role: :organizer, email: "victim@example.com", name: "V", responded_at: Time.current)
+      MailDelivery.create!(event: event, participant: organizer, kind: :organizer_link, recipient_email: organizer.email, request_ip: "198.51.100.2")
+    end
+    assert_raises(MailDelivery::CapExceeded) do
+      MailDelivery::Caps.check_event_creation!(organizer_email: "victim@example.com", request_ip: "198.51.100.2")
+    end
+    assert_nothing_raised do
+      MailDelivery::Caps.check_event_creation!(organizer_email: "victim@example.com", request_ip: "198.51.100.77")
+    end
+    assert_nothing_raised do
+      MailDelivery::Caps.check_event_creation!(organizer_email: "someone-else@example.com", request_ip: "198.51.100.2")
+    end
+  end
+end

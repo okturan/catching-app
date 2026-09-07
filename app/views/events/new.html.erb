@@ -1,45 +1,124 @@
-<div class="banner-events mb-1" style="height: 285px; background-image:url(https://res.cloudinary.com/dvpavvw1u/image/upload/v1633029501/blob-scene-haikei_2_fkcf9o.png);">
-  <h1>WE HAVE SO MUCH CATCHING.APP TO DO!</h1>
+<div class="page-head">
+  <h1>Offer the times you can do.</h1>
+  <p class="lede mb-0">Paint your free hours on the grid, in your own zone. Your friends see them in theirs.</p>
 </div>
 
-<div class="event-new-grid">
-<div>
-    <%= simple_form_for(@event) do |f| %>
-      <%= f.error_notification %>
-      <input name="time_slots[time_slot_array]" id="time_slot_array" type="hidden">
-      <div class="form-events" style="background-image:url(https://res.cloudinary.com/dvpavvw1u/image/upload/v1633004095/meetingform2_puuthd.png);">
-        <%= f.input :name, placeholder: "A Fabulous Meeting!" %>
-        <%= f.input :description, as: :text, placeholder: "Do whatever!" %>
-        <%= f.input :invited_user_ids,
-          as: :select,
-          collection: @users,
-          label: "Invite members",
-          label_method: :full_name,
-          value_method: :id,
-          input_html: { class: "form-select", multiple: true } %>
+<%# The form element is the two-column grid, so the grid panel and its controls
+    sit inside the form and can be ordered against the submit. Exactly three
+    children, in document order: the meeting, the grid, who you are. The submit
+    is the last thing in the last child, so on a phone the visitor meets the
+    grid — the only genuinely required input — before the button. %>
+<%= simple_form_for(@event, html: { class: "event-new-grid" }) do |f| %>
+  <input name="time_slots[time_slot_array]" id="time_slot_array" type="hidden" value="<%= params.dig(:time_slots, :time_slot_array) %>">
 
-        <div class="mb-3">
-          <label class="form-label" for="timezone-picker-new">I am in:</label>
-          <select class="form-select" id="timezone-picker-new"></select>
-        </div>
+  <%# One summary for the whole form, first child, full width, every item a
+      link to the control that raised it. It replaces both red boxes: the
+      rescue no longer appends the exception on top of the record's own
+      errors, so nothing is printed twice. error_summary.js focuses it. %>
+  <% error_links = planning_error_links(@event, @organizer_errors) %>
+  <% if error_links.any? %>
+    <div class="error-summary" role="alert" tabindex="-1" id="error-summary" data-autofocus>
+      <h2>There is a problem</h2>
+      <ul>
+        <% error_links.each do |message, target| %>
+          <li><%= target ? link_to(message, "##{target}") : message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
 
-        <div class="mb-3">
-          <label class="form-label" for="event-begin">Start date:</label>
-          <input class="form-control" type="date" name="start" id="event-begin" value="" />
-        </div>
-        <div class="mb-4">
-          <label class="form-label" for="event-end">End date:</label>
-          <input class="form-control" type="date" name="end" id="event-end" value="" />
-        </div>
-        <div class="text-danger" id="range-tooltip" role="status">
-        </div>
+  <section class="form-events" aria-labelledby="meeting-heading">
+    <h2 id="meeting-heading">The meeting</h2>
 
-        <%= f.submit "Catch.App with your Friends!", class: "btn-meeting mb-0" %>
+    <%# Required is the rule and carries no mark; "(optional)" is spelled inside
+        the label, so a screen reader announces it with the field's name. The
+        mark is dropped per input rather than globally, because Devise's four
+        views read the same config and keep theirs. Suppressing it with
+        required: false would also drop the native attribute: SimpleForm's html5
+        component overwrites input_html[:required] from required_field?. %>
+    <% plain_label = ->(label, _required, _explicit) { label } %>
+    <%= f.input :name,
+      label_text: plain_label,
+      hint: "Your friends see this in the invitation.",
+      hint_tag: :p, hint_html: { id: "event_name_help" },
+      full_error_html: { id: "event_name_error" },
+      input_html: { maxlength: 120,
+        aria: planning_field_aria(@event, :name, "event_name_help", "event_name_error", required: true) } %>
+    <%= f.input :description, as: :text, label: "Description (optional)",
+      placeholder: "Do whatever!",
+      hint: "Anything your friends should know. You can add this later.",
+      hint_tag: :p, hint_html: { id: "event_description_help" },
+      full_error_html: { id: "event_description_error" },
+      input_html: { rows: 3, maxlength: 2000,
+        aria: planning_field_aria(@event, :description, "event_description_help", "event_description_error") } %>
+    <%= f.input :place, label: "Place (optional)", placeholder: "Ege's place, Kadıköy — or 'Zoom'",
+      hint: "Where you'll meet, or the app you'll use.",
+      hint_tag: :p, hint_html: { id: "event_place_help" },
+      full_error_html: { id: "event_place_error" },
+      input_html: { maxlength: 200,
+        aria: planning_field_aria(@event, :place, "event_place_help", "event_place_error") } %>
+    <%= f.input :place_url, as: :url, label: "Link (optional)", placeholder: "Link to join or a map link",
+      hint: "A joining link or a map link. It must start with http:// or https://.",
+      hint_tag: :p, hint_html: { id: "event_place_url_help" },
+      full_error_html: { id: "event_place_url_error" },
+      input_html: { maxlength: 2000,
+        aria: planning_field_aria(@event, :place_url, "event_place_url_help", "event_place_url_error") } %>
+
+    <% duration_error = @event.errors[:duration_minutes].to_sentence.presence %>
+    <div class="mb-3">
+      <label class="form-label" for="event_duration_minutes">Planned length (optional)</label>
+      <%= select_tag "event[duration_minutes]", duration_select_options(@event.slot_minutes, @event.duration_minutes),
+        id: "event_duration_minutes", include_blank: "Not set",
+        class: class_names("form-select", "is-invalid": duration_error.present?),
+        aria: { invalid: (true if duration_error),
+          describedby: [ "event_duration_minutes_help", "duration-note",
+            ("event_duration_minutes_error" if duration_error) ].compact.join(" ") } %>
+      <% if duration_error %>
+        <div class="invalid-feedback d-block" id="event_duration_minutes_error"><%= duration_error %></div>
+      <% end %>
+      <p class="form-text" id="event_duration_minutes_help">How long the meeting itself runs. Lengths that are not a whole number of your slot length are greyed out.</p>
+      <%# Written by syncDurationOptions when a step change drops the chosen length. %>
+      <p class="form-text" id="duration-note" role="status"></p>
+    </div>
+  </section>
+
+  <%= render "events/definer_grid", event: @event, frozen: false, begin_min: nil,
+        heading: "When could you do it?", hint: :paint %>
+
+  <section class="form-events" aria-labelledby="organizer-heading">
+    <h2 id="organizer-heading">Where do we send your link?</h2>
+    <% if user_signed_in? %>
+      <p class="form-note">Planning as <%= @organizer[:name] %> (<%= @organizer[:email] %>).</p>
+    <% else %>
+      <% name_error = @organizer_errors[:name] %>
+      <% email_error = @organizer_errors[:email] %>
+      <div class="mb-3">
+        <label class="form-label" for="organizer_name">Your name</label>
+        <%= text_field_tag "organizer[name]", @organizer[:name], id: "organizer_name",
+          class: class_names("form-control", "is-invalid": name_error.present?),
+          maxlength: 100, autocomplete: "name", required: true,
+          aria: { required: true, invalid: (true if name_error),
+            describedby: [ "organizer_name_help", ("organizer_name_error" if name_error) ].compact.join(" ") } %>
+        <% if name_error %>
+          <div class="invalid-feedback d-block" id="organizer_name_error"><%= name_error %></div>
+        <% end %>
+        <p class="form-text" id="organizer_name_help">Your friends see this as the organizer.</p>
+      </div>
+      <div class="mb-3">
+        <label class="form-label" for="organizer_email">Your email</label>
+        <%= email_field_tag "organizer[email]", @organizer[:email], id: "organizer_email",
+          class: class_names("form-control", "is-invalid": email_error.present?),
+          autocomplete: "email", required: true,
+          aria: { required: true, invalid: (true if email_error),
+            describedby: [ "organizer_email_help", ("organizer_email_error" if email_error) ].compact.join(" ") } %>
+        <% if email_error %>
+          <div class="invalid-feedback d-block" id="organizer_email_error"><%= email_error %></div>
+        <% end %>
+        <p class="form-text" id="organizer_email_help">We send your organizer link here — it is the only way back into this event.</p>
       </div>
     <% end %>
-  </div>
 
-  <div class="time-grid-define-wrapper">
-    <div id="time-grid-define"></div>
-  </div>
-</div>
+    <p class="form-note">We email your organizer link to that address. Nothing reaches your friends until you open that link and press Send. Keep the email — that link is how you get back to this event.</p>
+    <%= f.submit "Send me my organizer link", class: "btn-meeting mb-0" %>
+  </section>
+<% end %>

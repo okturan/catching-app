@@ -1,0 +1,22 @@
+<p><strong><%= mail_safe(@event.name) %></strong> is set.</p>
+<p><%= @recipient_window %></p>
+<% if @recipient_window != @event_window %><p>In the event's zone: <%= @event_window %></p><% end %>
+<% if @place %><p>Where: <%= @place %></p><% end %>
+<% if @duration %><p>How long: <%= @duration %></p><% end %>
+<% if @plan.any? %>
+<p>Plan:</p>
+<ol>
+<% @plan.each do |line| %>
+  <li><%= line %></li>
+<% end %>
+</ol>
+<% end %>
+<% if @link %>
+<p>Open your link for the details:</p>
+<p><%= link_to @link, @link %></p>
+<% else %>
+<p>Open your organizer link for the details.</p>
+<% end %>
+<p>The attached calendar file adds it to your calendar with a reminder, one tap from the mail.</p>
+<p>You will hear from us again only if the organizer changes the plan, reopens the time or cancels.</p>
+<% if @link %><p>To stop hearing about this event, open your link and choose Leave this event.</p><% end %>

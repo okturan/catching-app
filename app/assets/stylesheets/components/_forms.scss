@@ -1,24 +1,153 @@
+// Devise and other single-column forms sit on one white face.
 .form-inputs {
-  flex: content;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 20px;
-  margin: auto;
-  border-radius: 3px;
-  box-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-  width: 400px;
+  @extend .face;
+  width: min(440px, 100%);
+  margin: clamp(1.5rem, 4vw, 3rem) auto 1rem;
+  padding: clamp(1.25rem, 3vw, 2rem);
+
+  // Devise forms put the submit in a sibling block; it joins the same face.
+  &:has(+ .form-actions) {
+    margin-bottom: 0;
+    border-bottom: 0;
+    border-radius: 6px 6px 0 0;
+    padding-bottom: 0.5rem;
+    box-shadow: none;
+  }
+
   h2 {
-    font-size: 20px;
-    font-weight: bold;
-    margin-bottom: 20px;
-    width: 400px;
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
   }
 }
+
 .form-actions {
-  width: 400px;
-  margin: auto;
+  width: min(440px, 100%);
+  margin: 0 auto 1rem;
+  background: $face;
+  border: 1px solid $hairline;
+  border-top: 0;
+  border-radius: 0 0 6px 6px;
+  padding: 0 clamp(1.25rem, 3vw, 2rem) clamp(1.25rem, 3vw, 2rem);
+  box-shadow: none;
+}
+
+.form-actions .btn-primary,
+#organizer-link-recovery .btn-primary,
+#event-details .btn-primary {
+  @extend .plate;
+  border: 0;
+  width: auto;
+  padding: 0.85em 1.6em;
+  font-size: 0.85rem;
+  &:hover { color: $enamel-text; }
+}
+
+#organizer-link-recovery,
+#event-details {
+  h1 {
+    width: min(440px, 100%);
+    margin: 0 auto;
+    font-size: 1.6rem;
+    font-weight: 800;
+  }
+  .form-inputs { margin-top: 1rem; }
+}
+
+// The details face holds the facts, the details form and, after it, the
+// plan editor as siblings: one face, never a form inside a form.
+#event-details {
+  .details-facts { color: $ink-soft; font-weight: 600; margin: 0 0 1rem; }
+  .details-facts time { font-weight: 500; font-size: 0.9rem; color: $ink; }
+  > p { width: min(440px, 100%); margin: 0 auto; padding: 0 0.25rem; }
+
+  .plan-editor {
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid $hairline;
+    display: grid;
+    gap: 1rem;
+    h2 { font-size: 1.2rem; font-weight: 800; margin: 0; }
+  }
+  .plan-note, .plan-empty { margin: 0; color: $ink-soft; }
+  .plan-note { font-weight: 600; }
+  .plan-items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 1rem;
+  }
+  .plan-item {
+    display: grid;
+    gap: 0.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid $hairline;
+  }
+  .plan-item-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.75rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+    time { font-size: 0.85rem; font-weight: 500; white-space: nowrap; }
+  }
+  .plan-item-form {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.4fr) auto;
+    gap: 0.5rem;
+    align-items: center;
+    .plan-field-name { grid-column: 1 / -1; }
+  }
+  .plan-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    form { margin: 0; }
+  }
+  .plan-add-form {
+    display: grid;
+    gap: 0.75rem;
+    .form-label { margin-bottom: 0.25rem; }
+    .btn-primary { justify-self: start; }
+  }
+  .plan-add-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+    gap: 0.75rem;
+  }
 }
 
 .back-link {
   text-decoration: underline;
+}
+
+main > h2,
+main > p,
+main > .form-inputs + a,
+main > .form-inputs + p,
+main > form + a,
+main > form + p {
+  width: min(440px, 100%);
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+  padding: 0 0.25rem;
+}
+
+main > h2 {
+  margin-top: clamp(1.5rem, 4vw, 3rem);
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+
+.form-links {
+  width: min(440px, 100%);
+  margin: 0 auto 2rem;
+  padding: 0 0.25rem;
+  display: grid;
+  gap: 0.35rem;
+  br { display: none; }
+  a { font-weight: 600; }
 }

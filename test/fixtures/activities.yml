@@ -3,3 +3,4 @@ planning_activity:
   name: Board games
   description: Play a cooperative game
   duration: 90
+  position: 0

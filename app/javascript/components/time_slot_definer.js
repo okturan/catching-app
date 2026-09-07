@@ -1,151 +1,291 @@
 import { DateTime } from "luxon";
 
 import {
-  browserTimeZone,
+  parseSerializedCounts,
+  parseSerializedDateTimes,
   populateTimeZoneSelect,
   slotISO,
 } from "./time_zones";
+import { allowedDurations } from "../lib/durations";
+import { removalWarning } from "../lib/definer";
+import { localDateRangeIsAllowed, localDayColumns } from "../lib/time_grid";
+import { renderDefinerTable } from "../lib/grid_table";
 import {
-  localDateRangeIsAllowed,
-  localDayColumns,
-  localHourLabels,
-  timeGridDimensions,
-} from "../lib/time_grid";
+  attachPainting,
+  paintModeControl,
+  remapZone,
+  rescale,
+  seedTabindex,
+  summary,
+} from "../lib/paint";
+
+const SELECTABLE = ".slot.selectable[data-date]";
+
+// The planned length must be a whole number of slots: lengths that stop
+// fitting the step are disabled, and a selection that stopped fitting falls
+// back to "Not set" (the blank option). The reset used to be silent; the
+// status line says which length went and why.
+const syncDurationOptions = (select, stepMinutes, note) => {
+  if (!select) return;
+  const options = [...select.options].filter((option) => option.value !== "");
+  const { allowed } = allowedDurations(stepMinutes, options.map((option) => option.value));
+  const fits = new Set(allowed);
+  options.forEach((option) => {
+    option.disabled = !fits.has(option.value);
+  });
+  const chosen = select.options[select.selectedIndex];
+  if (chosen && chosen.disabled) {
+    select.value = "";
+    // The server's error on this field described the length that just went;
+    // clear its marks so the page does not argue with itself.
+    select.classList.remove("is-invalid");
+    select.removeAttribute("aria-invalid");
+    document.querySelector("#event_duration_minutes_error")?.remove();
+    if (note) {
+      note.textContent =
+        `Planned length cleared: ${chosen.textContent} is not a whole number of ${stepMinutes}-minute slots.`;
+    }
+  } else if (note) {
+    note.textContent = "";
+  }
+};
+
+const hiddenValue = (selector) => {
+  const input = document.querySelector(selector);
+  return input ? input.value : "";
+};
+
+// Instants guests hold, keyed like the cells: UTC ISO -> count.
+const readCounts = (selector) =>
+  new Map(
+    Object.entries(parseSerializedCounts(hiddenValue(selector)))
+      .map(([iso, count]) => [DateTime.fromISO(iso, { setZone: true }), count])
+      .filter(([instant]) => instant.isValid)
+      .map(([instant, count]) => [slotISO(instant), Number(count) || 0]),
+  );
 
 const initTimeSlotDefiner = () => {
-  const timeGrid = document.querySelector("#time-grid-define");
-  if (!timeGrid) return;
+  const grid = document.querySelector("#time-grid-define");
+  if (!grid) return;
+
+  if (grid.__definerAbort) grid.__definerAbort.abort();
+  const controller = new AbortController();
+  grid.__definerAbort = controller;
+  const { signal } = controller;
 
   const rangeTooltip = document.querySelector("#range-tooltip");
   const timeZonePicker = document.querySelector("#timezone-picker-new");
   const beginDateInput = document.querySelector("#event-begin");
   const endDateInput = document.querySelector("#event-end");
   const timeSlotInput = document.querySelector("#time_slot_array");
+  const stepSelect = document.querySelector("#event_slot_minutes");
+  const durationSelect = document.querySelector("#event_duration_minutes");
+  const durationNote = document.querySelector("#duration-note");
+  const summaryElement = document.querySelector("#selection-summary");
+  const scrollContainer = grid.closest(".time-grid-scroll");
+  const modeControl = paintModeControl(document.querySelector("#paint-mode"), {
+    onChange: (mode) => grid.classList.toggle("mode-paint", mode === "paint"),
+  });
 
-  let selectedTimeZone = browserTimeZone;
+  // Offer page extras: the past cut-off, the current offer and the picks
+  // guests hold on it. Absent on the planning page.
+  const notBefore = grid.dataset.notBefore ? DateTime.fromISO(grid.dataset.notBefore) : null;
+  const isPast = (instant) => Boolean(notBefore && instant.toMillis() < notBefore.toMillis());
+  const currentOfferInput = document.querySelector("#current-offer");
+  const currentOffer = currentOfferInput
+    ? parseSerializedDateTimes(currentOfferInput.value).map(slotISO)
+    : null;
+  const counts = readCounts("#guest-picked-counts");
+  const offerForm = timeSlotInput.form;
+
+  let slotMinutes = Number(
+    (stepSelect && stepSelect.value) || grid.dataset.slotMinutes || 60,
+  );
+  let selectedTimeZone = populateTimeZoneSelect(
+    timeZonePicker,
+    timeZonePicker.dataset.selected || grid.dataset.timeZone,
+  );
+  const selection = new Set(
+    parseSerializedDateTimes(timeSlotInput.value).map(slotISO),
+  );
   let rangeStart;
   let rangeEnd;
+  let note = "";
+
+  // On the offer page the summary also names the picks a removal would
+  // drop, and the form asks before submitting such a removal.
+  const syncRemovalWarning = () => {
+    if (!currentOffer) return "";
+    const { warning, confirm } = removalWarning(currentOffer, selection, counts);
+    if (offerForm) {
+      if (confirm) offerForm.dataset.turboConfirm = confirm;
+      else delete offerForm.dataset.turboConfirm;
+    }
+    return warning;
+  };
+
+  const setSummary = () => {
+    if (!summaryElement) return;
+    const warning = syncRemovalWarning();
+    let text = summary(selection, { role: "guest", zone: selectedTimeZone });
+    if (note) text = `${text}. ${note}`;
+    if (warning) text = `${text}. ${warning}`;
+    summaryElement.textContent = text;
+  };
+
+  const serialize = () => {
+    timeSlotInput.value = [...selection].sort().join(",");
+    setSummary();
+  };
 
   const updateDateRange = () => {
-    rangeStart = DateTime.fromISO(beginDateInput.value, {
-      zone: selectedTimeZone,
-    }).startOf("day");
-    rangeEnd = DateTime.fromISO(endDateInput.value, {
-      zone: selectedTimeZone,
-    }).startOf("day");
-
-    const validRange = localDateRangeIsAllowed(rangeStart, rangeEnd);
-
-    rangeTooltip.textContent = validRange
-      ? ""
-      : "Choose a range from 1 to 31 days.";
-
-    return validRange;
+    rangeStart = DateTime.fromISO(beginDateInput.value, { zone: selectedTimeZone }).startOf("day");
+    rangeEnd = DateTime.fromISO(endDateInput.value, { zone: selectedTimeZone }).startOf("day");
+    const valid = localDateRangeIsAllowed(rangeStart, rangeEnd);
+    rangeTooltip.textContent = valid ? "" : "Choose a range from 1 to 31 days.";
+    return valid;
   };
 
-  const makeRows = (rows, columns) => {
-    timeGrid.style.setProperty("--grid-rows", rows);
-    timeGrid.style.setProperty("--grid-cols", columns);
+  const dropOutsideRange = () => {
+    const startMillis = rangeStart.toMillis();
+    const endMillis = rangeEnd.plus({ days: 1 }).startOf("day").toMillis();
+    let dropped = 0;
+    [...selection].forEach((iso) => {
+      const millis = DateTime.fromISO(iso).toMillis();
+      if (millis < startMillis || millis >= endMillis) {
+        selection.delete(iso);
+        dropped += 1;
+      }
+    });
+    return dropped;
   };
 
-  const fillHours = (column, columnIndex) => {
-    const labels = localHourLabels(column.hours);
-
-    column.hours.forEach((hour, hourIndex) => {
-      const cell = document.createElement("div");
-      cell.textContent = labels[hourIndex];
-      cell.style.gridColumn = columnIndex + 1;
-      cell.style.gridRow = hourIndex + 2;
-      cell.className = "grid-item hour";
-      cell.dataset.date = slotISO(hour);
-      timeGrid.appendChild(cell);
+  // A zone remap can move a selected instant behind the cut-off; past cells
+  // take no paint, so the selection lets it go.
+  const dropPast = () => {
+    if (!notBefore) return;
+    [...selection].forEach((iso) => {
+      if (isPast(DateTime.fromISO(iso))) selection.delete(iso);
     });
   };
 
-  const fillDays = (columns) => {
-    columns.forEach((column, columnIndex) => {
-      const header = document.createElement("div");
-      header.textContent = column.day.toFormat("MMM d ccc ZZZZ");
-      header.style.gridColumn = columnIndex + 1;
-      header.className = "grid-item header";
-      timeGrid.appendChild(header);
-      fillHours(column, columnIndex);
+  const draw = () => {
+    grid.replaceChildren();
+    if (!updateDateRange()) {
+      serialize();
+      return;
+    }
+    const dropped = dropOutsideRange();
+    if (dropped > 0) note = `${dropped} outside the dates dropped`;
+    dropPast();
+    renderDefinerTable(grid, localDayColumns(rangeStart, rangeEnd, slotMinutes), {
+      selection,
+      slotMinutes,
+      toISO: slotISO,
+      isPast,
+      counts,
     });
+    seedTabindex(grid, SELECTABLE);
+    serialize();
   };
 
-  const drawTimeGrid = () => {
-    timeGrid.replaceChildren();
-    timeSlotInput.value = "";
-
-    if (!updateDateRange()) return;
-
-    const columns = localDayColumns(rangeStart, rangeEnd);
-    const dimensions = timeGridDimensions(columns);
-    fillDays(columns);
-    makeRows(dimensions.rows, dimensions.columns);
-  };
-
-  const addSlots = (event) => {
-    if (event.target.classList.contains("hour")) {
-      event.target.classList.add("active");
+  const seedDateRange = () => {
+    if (selection.size > 0 && !(beginDateInput.value && endDateInput.value)) {
+      const instants = [...selection]
+        .map((iso) => DateTime.fromISO(iso).setZone(selectedTimeZone))
+        .sort((a, b) => a.toMillis() - b.toMillis());
+      beginDateInput.value = instants[0].toISODate();
+      endDateInput.value = instants[instants.length - 1].toISODate();
+      // An offer that starts inside the grace window begins before today;
+      // the range must still be submittable.
+      if (beginDateInput.min && beginDateInput.value < beginDateInput.min) {
+        beginDateInput.min = beginDateInput.value;
+      }
+      return;
+    }
+    if (!beginDateInput.value || !endDateInput.value) {
+      const today = DateTime.now().setZone(selectedTimeZone).startOf("day");
+      beginDateInput.value = today.toISODate();
+      endDateInput.value = today.plus({ days: 2 }).toISODate();
     }
   };
 
-  const removeSlots = (event) => {
-    if (event.target.classList.contains("hour")) {
-      event.target.classList.remove("active");
-    }
-  };
+  timeZonePicker.addEventListener(
+    "change",
+    () => {
+      const previous = selectedTimeZone;
+      selectedTimeZone = timeZonePicker.value;
+      const remapped = remapZone(selection, previous, selectedTimeZone);
+      selection.clear();
+      remapped.forEach((iso) => selection.add(iso));
+      note = selection.size > 0 ? `Moved to ${selectedTimeZone} wall clock` : "";
+      draw();
+    },
+    { signal },
+  );
 
-  const highlightCell = (event) => {
-    if (!event.target.classList.contains("hour")) return;
-
-    const handler = event.target.classList.contains("active")
-      ? removeSlots
-      : addSlots;
-
-    timeGrid.querySelectorAll(".hour").forEach((cell) => {
-      cell.addEventListener("mouseover", handler);
-    });
-  };
-
-  const toggleActive = (event) => {
-    if (event.target.classList.contains("hour")) {
-      event.target.classList.toggle("active");
-    }
-  };
-
-  const storeActiveCells = () => {
-    const slots = [...timeGrid.querySelectorAll(".hour.active")].map(
-      (cell) => cell.dataset.date,
+  if (stepSelect) {
+    stepSelect.addEventListener(
+      "change",
+      () => {
+        const next = Number(stepSelect.value);
+        const rescaled = rescale(selection, slotMinutes, next, selectedTimeZone);
+        slotMinutes = next;
+        grid.dataset.slotMinutes = String(next);
+        selection.clear();
+        rescaled.forEach((iso) => selection.add(iso));
+        syncDurationOptions(durationSelect, next, durationNote);
+        note = "";
+        draw();
+      },
+      { signal },
     );
-    timeSlotInput.value = slots.join(",");
-  };
+  }
 
-  const resetListeners = () => {
-    timeGrid.querySelectorAll(".hour").forEach((cell) => {
-      cell.removeEventListener("mouseover", addSlots);
-      cell.removeEventListener("mouseover", removeSlots);
-    });
-    storeActiveCells();
-  };
-
-  timeZonePicker.addEventListener("change", () => {
-    selectedTimeZone = timeZonePicker.value;
-    drawTimeGrid();
+  [beginDateInput, endDateInput].forEach((input) => {
+    input.addEventListener(
+      "change",
+      () => {
+        note = "";
+        draw();
+      },
+      { signal },
+    );
   });
-  beginDateInput.addEventListener("change", drawTimeGrid);
-  endDateInput.addEventListener("change", drawTimeGrid);
-  timeGrid.addEventListener("mousedown", highlightCell);
-  timeGrid.addEventListener("mousedown", toggleActive);
-  timeGrid.addEventListener("mouseup", resetListeners);
 
-  selectedTimeZone = populateTimeZoneSelect(timeZonePicker);
-  rangeStart = DateTime.now().setZone(selectedTimeZone).startOf("day");
-  rangeEnd = rangeStart.plus({ days: 2 });
-  beginDateInput.value = rangeStart.toISODate();
-  endDateInput.value = rangeEnd.toISODate();
-  drawTimeGrid();
+  // The one error native validation cannot raise. The button is never
+  // disabled: a dead primary action with no explanation is worse than a
+  // blocked one that says why and puts the visitor on the grid.
+  if (timeSlotInput.form) {
+    timeSlotInput.form.addEventListener(
+      "submit",
+      (event) => {
+        serialize();
+        if (selection.size > 0) return;
+
+        event.preventDefault();
+        if (summaryElement) summaryElement.textContent = "Paint at least one time before sending";
+        grid.scrollIntoView({ block: "center", behavior: "instant" });
+        grid.querySelector('.slot[tabindex="0"]')?.focus();
+      },
+      { signal },
+    );
+  }
+
+  attachPainting(grid, {
+    selectable: SELECTABLE,
+    selection,
+    getMode: () => modeControl.get(),
+    onStroke: () => {
+      note = "";
+      serialize();
+    },
+    scrollContainer,
+  });
+
+  syncDurationOptions(durationSelect, slotMinutes, null);
+  seedDateRange();
+  draw();
 };
 
 export { initTimeSlotDefiner };

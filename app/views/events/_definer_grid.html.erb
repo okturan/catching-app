@@ -1,0 +1,31 @@
+<%# The definer panel, shared by events/new and offer/edit: heading, the paint
+    instruction, the controls strip, the grid and its action bar. The controls
+    live here so the grid and the settings that redraw it stay together and
+    the grid comes before the submit at every width.
+    heading: the panel's h2; hint: :paint draws the painting instruction;
+    frozen: and begin_min: pass through to the controls.
+    data-not-before carries the parser's past cut-off so cells before it
+    render past and unselectable on both pages. %>
+<div class="time-grid-panel time-grid-define-wrapper">
+  <h2><%= heading %></h2>
+  <% if hint == :paint %>
+    <p class="form-text" id="grid-paint-hint">Drag across the grid to paint the hours you could do. Drag again to clear. You need at least one.<span class="touch-only"> On a phone, switch to Paint to draw on the grid. Scroll moves the page.</span></p>
+  <% end %>
+  <div class="grid-controls">
+    <%= render "events/grid_controls", event: event, frozen: frozen, begin_min: begin_min %>
+  </div>
+  <div class="time-grid-scroll">
+    <table id="time-grid-define" class="time-grid" role="grid" aria-label="Offered times"
+      tabindex="-1" aria-describedby="grid-paint-hint"
+      data-slot-minutes="<%= event.slot_minutes %>"
+      data-time-zone="<%= event.time_zone.presence || params.dig(:event, :time_zone) %>"
+      data-not-before="<%= TimeSlotParser::PAST_GRACE.ago.utc.iso8601 %>"></table>
+  </div>
+  <div class="grid-action-bar">
+    <span id="selection-summary" aria-live="polite">No times selected</span>
+    <fieldset id="paint-mode" class="paint-mode" role="radiogroup" aria-label="Touch mode">
+      <label><input type="radio" name="paint-mode" value="scroll" checked><span>Scroll</span></label>
+      <label><input type="radio" name="paint-mode" value="paint"><span>Paint</span></label>
+    </fieldset>
+  </div>
+</div>

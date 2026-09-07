@@ -1,0 +1,49 @@
+<% content_for :head do %>
+  <meta name="robots" content="noindex">
+  <meta name="turbo-cache-control" content="no-cache">
+<% end %>
+<% content_for :canonical_url, root_url %>
+<% content_for :meta_title, "Change the times · #{@event.name} · Catching App" %>
+
+<div class="page-head">
+  <h1>Change the times</h1>
+  <p class="lede mb-0">Paint the times you can offer now. Guests keep every pick that stays; picks at removed times are dropped.</p>
+</div>
+
+<%# The form element is the two-column grid, so the grid panel and its controls
+    sit inside the form and can be ordered against the submit. %>
+<%= form_with model: @event, url: scoped_path(:offer), method: :patch, id: "offer-form", class: "event-new-grid" do |form| %>
+  <input name="time_slots[time_slot_array]" id="time_slot_array" type="hidden" value="<%= @hydrated %>">
+  <input id="current-offer" type="hidden" value="<%= @current_offer.to_json %>">
+  <input id="guest-picked-counts" type="hidden" value="<%= @guest_picked_counts.to_json %>">
+  <%# Two faces around the panel, the same three children events/new has, so
+      the same layout rule puts the grid before the submit on a phone. What is
+      being changed and what went wrong come first; what the button will do
+      comes after the grid it acts on. The alert lives inside the face, not
+      beside it: a direct child of the grid would take a row of its own. %>
+  <div class="form-events">
+    <% messages = @event.errors.full_messages %>
+    <% if messages.any? %>
+      <div class="alert alert-danger position-static" role="alert"><%= messages.to_sentence %></div>
+    <% end %>
+    <p class="offer-event-name"><%= @event.name %></p>
+    <% if @past_count.positive? %>
+      <p class="offer-note mb-0"><%= @past_count == 1 ? "1 past time stays as it is" : "#{@past_count} past times stay as they are" %></p>
+    <% end %>
+  </div>
+
+  <%= render "events/definer_grid", event: @event, frozen: grid_frozen?, begin_min: @begin_min,
+        heading: "The times you offer", hint: :paint %>
+
+  <div class="form-events">
+    <% if notice_offered? %>
+      <div class="form-check mb-4">
+        <%= hidden_field_tag "notice[send]", "0", id: nil %>
+        <%= check_box_tag "notice[send]", "1", params.dig(:notice, :send) != "0", id: "notice_send", class: "form-check-input" %>
+        <%= label_tag "notice_send", "Email the guests who already replied", class: "form-check-label" %>
+      </div>
+    <% end %>
+    <%= form.submit "Save the new times", class: "btn-meeting mb-0" %>
+    <p class="mt-3 mb-0"><%= link_to "Back to the event", scoped_path, class: "quiet-link" %></p>
+  </div>
+<% end %>

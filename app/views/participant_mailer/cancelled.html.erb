@@ -1,0 +1,9 @@
+<p><%= mail_safe(@organizer&.name) %> cancelled <strong><%= mail_safe(@event.name) %></strong>.</p>
+<% if @recipient_window %>
+<p>It was set for <%= @recipient_window %>.</p>
+<% if @recipient_window != @event_window %><p>In the event's zone: <%= @event_window %></p><% end %>
+<% end %>
+<p>Nothing else will be sent about this event.</p>
+<% if @recipient_window %>
+<p>If you added it to your calendar, the attached file removes it.</p>
+<% end %>

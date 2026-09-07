@@ -1,0 +1,532 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-05T00:00:00Z",
+  "title": "Design System: Catching App",
+  "extensions": {
+    "colorMeta": {
+      "enamel": {
+        "role": "primary",
+        "displayName": "Enamel",
+        "canonical": "#24405e",
+        "tonalRamp": [
+          "#0b1420",
+          "#142536",
+          "#1a2f47",
+          "#24405e",
+          "#4a637f",
+          "#8796a6",
+          "#c8cfd7",
+          "#eef1f4"
+        ]
+      },
+      "enamel-deep": {
+        "role": "primary",
+        "displayName": "Enamel Deep",
+        "canonical": "#1a2f47",
+        "tonalRamp": [
+          "#0b1420",
+          "#142536",
+          "#1a2f47",
+          "#24405e",
+          "#4a637f",
+          "#8796a6",
+          "#c8cfd7",
+          "#eef1f4"
+        ]
+      },
+      "enamel-half": {
+        "role": "primary",
+        "displayName": "Enamel Half (55% over face)",
+        "canonical": "#8796a6",
+        "tonalRamp": [
+          "#0b1420",
+          "#142536",
+          "#1a2f47",
+          "#24405e",
+          "#4a637f",
+          "#8796a6",
+          "#c8cfd7",
+          "#eef1f4"
+        ]
+      },
+      "enamel-wash": {
+        "role": "primary",
+        "displayName": "Enamel Wash (25% over face)",
+        "canonical": "#c8cfd7",
+        "tonalRamp": [
+          "#0b1420",
+          "#142536",
+          "#1a2f47",
+          "#24405e",
+          "#4a637f",
+          "#8796a6",
+          "#c8cfd7",
+          "#eef1f4"
+        ]
+      },
+      "enamel-text": {
+        "role": "primary",
+        "displayName": "Engraved White",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#141414",
+          "#4a4744",
+          "#7a7672",
+          "#a9a49d",
+          "#d4cfc6",
+          "#e6e1d6",
+          "#f2efe9",
+          "#ffffff"
+        ]
+      },
+      "signal": {
+        "role": "secondary",
+        "displayName": "Signal Red",
+        "canonical": "#d7262a",
+        "tonalRamp": [
+          "#3a0a0b",
+          "#6c1214",
+          "#9c1a1d",
+          "#d7262a",
+          "#e25457",
+          "#ec8385",
+          "#f5b3b4",
+          "#fce3e3"
+        ]
+      },
+      "awake": {
+        "role": "secondary",
+        "displayName": "Awake Yellow",
+        "canonical": "#ffc65a",
+        "tonalRamp": [
+          "#4a3407",
+          "#8a610f",
+          "#e0a52b",
+          "#ffc65a",
+          "#ffd482",
+          "#ffe5b5",
+          "#fff1d6",
+          "#fff9ee"
+        ]
+      },
+      "awake-deep": {
+        "role": "secondary",
+        "displayName": "Awake Deep",
+        "canonical": "#e0a52b",
+        "tonalRamp": [
+          "#4a3407",
+          "#8a610f",
+          "#e0a52b",
+          "#ffc65a",
+          "#ffd482",
+          "#ffe5b5",
+          "#fff1d6",
+          "#fff9ee"
+        ]
+      },
+      "awake-wash": {
+        "role": "secondary",
+        "displayName": "Awake Wash (45% over face)",
+        "canonical": "#ffe5b5",
+        "tonalRamp": [
+          "#4a3407",
+          "#8a610f",
+          "#e0a52b",
+          "#ffc65a",
+          "#ffd482",
+          "#ffe5b5",
+          "#fff1d6",
+          "#fff9ee"
+        ]
+      },
+      "success": {
+        "role": "tertiary",
+        "displayName": "Success Green (Bootstrap only)",
+        "canonical": "#1a7f4b",
+        "tonalRamp": [
+          "#062814",
+          "#0f4d2c",
+          "#1a7f4b",
+          "#2a9a60",
+          "#57b585",
+          "#8fd0ad",
+          "#c4e7d4",
+          "#e8f6ee"
+        ]
+      },
+      "wall": {
+        "role": "neutral",
+        "displayName": "Painted Wall",
+        "canonical": "#f2efe9",
+        "tonalRamp": [
+          "#141414",
+          "#4a4744",
+          "#7a7672",
+          "#a9a49d",
+          "#d4cfc6",
+          "#e6e1d6",
+          "#f2efe9",
+          "#ffffff"
+        ]
+      },
+      "wall-deep": {
+        "role": "neutral",
+        "displayName": "Wall Deep",
+        "canonical": "#e6e1d6",
+        "tonalRamp": [
+          "#141414",
+          "#4a4744",
+          "#7a7672",
+          "#a9a49d",
+          "#d4cfc6",
+          "#e6e1d6",
+          "#f2efe9",
+          "#ffffff"
+        ]
+      },
+      "face": {
+        "role": "neutral",
+        "displayName": "White Glass",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#141414",
+          "#4a4744",
+          "#7a7672",
+          "#a9a49d",
+          "#d4cfc6",
+          "#e6e1d6",
+          "#f2efe9",
+          "#ffffff"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#141414",
+        "tonalRamp": [
+          "#141414",
+          "#4a4744",
+          "#7a7672",
+          "#a9a49d",
+          "#d4cfc6",
+          "#e6e1d6",
+          "#f2efe9",
+          "#ffffff"
+        ]
+      },
+      "ink-soft": {
+        "role": "neutral",
+        "displayName": "Ink Soft",
+        "canonical": "#4a4744",
+        "tonalRamp": [
+          "#141414",
+          "#4a4744",
+          "#7a7672",
+          "#a9a49d",
+          "#d4cfc6",
+          "#e6e1d6",
+          "#f2efe9",
+          "#ffffff"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline (14% ink)",
+        "canonical": "rgba(20, 20, 20, 0.14)",
+        "tonalRamp": [
+          "rgba(20,20,20,0.45)",
+          "rgba(20,20,20,0.35)",
+          "rgba(20,20,20,0.28)",
+          "rgba(20,20,20,0.22)",
+          "rgba(20,20,20,0.18)",
+          "rgba(20,20,20,0.14)",
+          "rgba(20,20,20,0.12)",
+          "rgba(20,20,20,0.08)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "The tagline headline on the landing page only."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section headings, page heads, the dashboard title, the closing question."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Station headings, event names, card and form headings. Always 800."
+      },
+      "lede": {
+        "displayName": "Lede",
+        "purpose": "The one sentence of offer under a heading, ink-soft, max 62ch."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Paragraphs and form text; labels at 600."
+      },
+      "label": {
+        "displayName": "Plate Caps",
+        "purpose": "Engraved uppercase text on enamel and ink plates and grid day headers."
+      },
+      "time": {
+        "displayName": "Dial Time",
+        "purpose": "Clock plate readings and confirmed windows, Martian Mono tabular."
+      },
+      "time-small": {
+        "displayName": "Grid Numerals",
+        "purpose": "Row labels in availability grids."
+      }
+    },
+    "shadows": [
+      {
+        "name": "plate",
+        "value": "inset 0 1px 0 rgba(255,255,255,0.28), inset 0 -1px 0 rgba(0,0,0,0.35), 0 2px 4px rgba(20,20,20,0.25)",
+        "purpose": "Every enamel or ink plate and grid day header at rest."
+      },
+      {
+        "name": "plate-lifted",
+        "value": "inset 0 1px 0 rgba(255,255,255,0.28), inset 0 -1px 0 rgba(0,0,0,0.35), 0 6px 12px -4px rgba(20,20,20,0.4)",
+        "purpose": "Plate buttons on hover and focus, with translateY(-1px)."
+      },
+      {
+        "name": "face",
+        "value": "0 1px 2px rgba(20,20,20,0.06), 0 6px 18px -8px rgba(20,20,20,0.25)",
+        "purpose": "Every white glass panel at rest."
+      },
+      {
+        "name": "face-lifted",
+        "value": "0 1px 2px rgba(20,20,20,0.06), 0 12px 24px -12px rgba(20,20,20,0.35)",
+        "purpose": "Clickable event faces on hover, with translateY(-2px)."
+      },
+      {
+        "name": "hung-clock",
+        "value": "drop-shadow(0 6px 8px rgba(20,20,20,0.16))",
+        "purpose": "CSS filter on the SVG wall clock so it hangs on the wall; the hands then repaint every animation frame for a continuous second-hand sweep."
+      },
+      {
+        "name": "recessed-track",
+        "value": "inset 0 1px 3px rgba(20,20,20,0.12)",
+        "purpose": "The time ruler track."
+      },
+      {
+        "name": "sticky-bar",
+        "value": "0 -6px 16px -10px rgba(20,20,20,0.35)",
+        "purpose": "The grid action bar when stuck to the viewport bottom on coarse pointers."
+      },
+      {
+        "name": "input-focus",
+        "value": "0 0 0 3px rgba(36,64,94,0.2)",
+        "purpose": "Form control focus glow, paired with an enamel border."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-spring",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "The one easing: clock sweep and hover lifts."
+      },
+      {
+        "name": "duration-lift",
+        "value": "0.18s",
+        "purpose": "Plate and face hover lift and shadow change."
+      },
+      {
+        "name": "duration-sweep",
+        "value": "1.4s",
+        "purpose": "Clock hands sweep from noon to now on load; removed under prefers-reduced-motion."
+      },
+      {
+        "name": "duration-toggle",
+        "value": "0.25s",
+        "purpose": "Toggle track and knob."
+      },
+      {
+        "name": "pulse-paint",
+        "value": "0.3s ease-in scale(1) to scale(1.1) to scale(1)",
+        "purpose": "A grid cell the viewer just painted."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "stations-stack",
+        "value": "480px"
+      },
+      {
+        "name": "card-stack",
+        "value": "520px"
+      },
+      {
+        "name": "nav-collapse",
+        "value": "767.98px"
+      },
+      {
+        "name": "claim-stack",
+        "value": "800px"
+      },
+      {
+        "name": "clock-rail-and-work-stack",
+        "value": "900px"
+      },
+      {
+        "name": "touch",
+        "value": "(any-pointer: coarse)"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Plate Button",
+      "kind": "button",
+      "refersTo": "plate-button",
+      "description": "The primary action: an enamel plate, engraved caps and a pressed bevel.",
+      "html": "<a href=\"#\" class=\"ds-plate-button\">Plan a meeting</a>",
+      "css": ".ds-plate-button { display: inline-flex; align-items: center; gap: 0.6em; position: relative; background: var(--enamel, #24405e); color: #fff; padding: 0.7em 1.4em; border-radius: 3px; border: 0; font-family: 'Schibsted Grotesk', 'Helvetica Neue', Arial, sans-serif; font-weight: 700; font-size: 0.95rem; letter-spacing: 0.12em; text-transform: uppercase; text-decoration: none; white-space: nowrap; box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), inset 0 -1px 0 rgba(0,0,0,0.35), 0 2px 4px rgba(20,20,20,0.25); transition: transform 0.18s cubic-bezier(0.16,1,0.3,1), box-shadow 0.18s; cursor: pointer; }  .ds-plate-button:hover, .ds-plate-button:focus-visible { color: #fff; transform: translateY(-1px); box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), inset 0 -1px 0 rgba(0,0,0,0.35), 0 6px 12px -4px rgba(20,20,20,0.4); } .ds-plate-button:focus-visible { outline: 3px solid var(--enamel, #24405e); outline-offset: 2px; } .ds-plate-button:active { transform: translateY(0); }"
+    },
+    {
+      "name": "Plate",
+      "kind": "chip",
+      "refersTo": "plate",
+      "description": "A plate stating a fact: a finalized state, a count, the footer brand; ink variant for the visitor's clock and the footer.",
+      "html": "<span class=\"ds-plate\">Set in stone</span> <span class=\"ds-plate ds-plate-ink\">Catching.app · 2026</span>",
+      "css": ".ds-plate { display: inline-flex; align-items: center; position: relative; background: var(--enamel, #24405e); color: #fff; padding: 0.45em 1em; border-radius: 3px; font-family: 'Schibsted Grotesk', 'Helvetica Neue', Arial, sans-serif; font-weight: 700; font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase; white-space: nowrap; box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), inset 0 -1px 0 rgba(0,0,0,0.35), 0 2px 4px rgba(20,20,20,0.25); }  .ds-plate-ink { background: var(--ink, #141414); }"
+    },
+    {
+      "name": "Clock Plate",
+      "kind": "custom",
+      "refersTo": "plate",
+      "description": "The plate under a wall clock: city in caps, local time in mono, UTC offset small.",
+      "html": "<div class=\"ds-clock-plate\"><span class=\"ds-clock-city\">Berlin</span><span class=\"ds-clock-time\">10:50</span><span class=\"ds-clock-offset\">UTC+2</span></div>",
+      "css": ".ds-clock-plate { display: inline-flex; flex-direction: column; align-items: center; gap: 0.2em; position: relative; background: var(--enamel, #24405e); color: #fff; padding: 0.55em 1.2em; border-radius: 3px; line-height: 1.15; font-family: 'Schibsted Grotesk', 'Helvetica Neue', Arial, sans-serif; font-weight: 700; text-transform: uppercase; box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), inset 0 -1px 0 rgba(0,0,0,0.35), 0 2px 4px rgba(20,20,20,0.25); }  .ds-clock-city { font-size: 0.72rem; letter-spacing: 0.12em; } .ds-clock-time { font-family: var(--time-font, 'Martian Mono', ui-monospace, Menlo, monospace); font-variant-numeric: tabular-nums; font-size: 1.05rem; letter-spacing: 0.04em; text-transform: none; } .ds-clock-offset { font-size: 0.65rem; letter-spacing: 0.1em; opacity: 0.75; }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Secondary and destructive actions on a white face background.",
+      "html": "<button class=\"ds-btn-outline\">None of these times work</button> <button class=\"ds-btn-outline ds-btn-outline-danger\">Leave this event</button>",
+      "css": ".ds-btn-outline { background: #fff; color: var(--enamel, #24405e); border: 1px solid var(--enamel, #24405e); border-radius: 4px; padding: 0.65rem 1.25rem; font-family: 'Schibsted Grotesk', 'Helvetica Neue', Arial, sans-serif; font-weight: 700; font-size: 1rem; cursor: pointer; } .ds-btn-outline:hover { background: var(--enamel, #24405e); color: #fff; } .ds-btn-outline:focus-visible { outline: 3px solid var(--enamel, #24405e); outline-offset: 2px; } .ds-btn-outline-danger { color: var(--signal, #d7262a); border-color: var(--signal, #d7262a); } .ds-btn-outline-danger:hover { background: var(--signal, #d7262a); color: #fff; }"
+    },
+    {
+      "name": "Quiet Link",
+      "kind": "button",
+      "refersTo": "quiet-link",
+      "description": "A soft underlined text link for secondary paths such as lost-link recovery.",
+      "html": "<a href=\"#\" class=\"ds-quiet-link\">Lost your organizer link?</a>",
+      "css": ".ds-quiet-link { color: #4a4744; font-family: 'Schibsted Grotesk', 'Helvetica Neue', Arial, sans-serif; text-decoration: underline; text-underline-offset: 0.2em; text-decoration-color: rgba(20,20,20,0.35); } .ds-quiet-link:hover { color: var(--ink, #141414); text-decoration-color: var(--ink, #141414); } .ds-quiet-link:focus-visible { outline: 3px solid var(--enamel, #24405e); outline-offset: 2px; border-radius: 3px; }"
+    },
+    {
+      "name": "Face",
+      "kind": "card",
+      "refersTo": "face",
+      "description": "White glass panel holding a form, an event, or a grid, sitting proud of the wall.",
+      "html": "<a href=\"#\" class=\"ds-face\"><h3 class=\"ds-face-title\">Movie night</h3><span class=\"ds-face-time\">Sat 20:00</span><p class=\"ds-face-state\"><span class=\"ds-face-plate\">Planning</span> 3 replied</p></a>",
+      "css": ".ds-face { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 0.5rem 1.5rem; align-items: start; background: #fff; color: var(--ink, #141414); border: 1px solid rgba(20,20,20,0.14); border-radius: 6px; padding: 1.25rem 1.5rem; text-decoration: none; font-family: 'Schibsted Grotesk', 'Helvetica Neue', Arial, sans-serif; box-shadow: 0 1px 2px rgba(20,20,20,0.06), 0 6px 18px -8px rgba(20,20,20,0.25); transition: transform 0.18s cubic-bezier(0.16,1,0.3,1), box-shadow 0.18s; } .ds-face:hover { transform: translateY(-2px); box-shadow: 0 1px 2px rgba(20,20,20,0.06), 0 12px 24px -12px rgba(20,20,20,0.35); } .ds-face:focus-visible { outline: 3px solid var(--enamel, #24405e); outline-offset: 2px; } .ds-face-title { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; margin: 0; } .ds-face-time { font-family: var(--time-font, 'Martian Mono', ui-monospace, Menlo, monospace); font-variant-numeric: tabular-nums; font-size: 0.9rem; white-space: nowrap; justify-self: end; } .ds-face-state { grid-column: 1 / -1; margin: 0; font-size: 0.85rem; color: #4a4744; } .ds-face-plate { display: inline-block; background: var(--ink, #141414); color: #fff; padding: 0.3em 0.8em; border-radius: 3px; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin-right: 0.4em; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "A form field on white glass with an enamel focus glow.",
+      "html": "<label class=\"ds-label\" for=\"ds-name\">Your name</label><input class=\"ds-input\" id=\"ds-name\" type=\"text\" placeholder=\"A fabulous meeting!\">",
+      "css": ".ds-label { display: block; font-family: 'Schibsted Grotesk', 'Helvetica Neue', Arial, sans-serif; font-weight: 600; font-size: 1rem; color: var(--ink, #141414); margin-bottom: 0.5rem; } .ds-input { display: block; width: 100%; background: #fff; color: var(--ink, #141414); border: 1px solid rgba(20,20,20,0.28); border-radius: 4px; padding: 0.375rem 0.75rem; font-family: 'Schibsted Grotesk', 'Helvetica Neue', Arial, sans-serif; font-size: 1rem; line-height: 1.5; } .ds-input::placeholder { color: #4a4744; } .ds-input:focus { outline: 0; border-color: var(--enamel, #24405e); box-shadow: 0 0 0 3px rgba(36,64,94,0.2); }"
+    },
+    {
+      "name": "Toggle",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "The one pill in the world: a 52 by 30 switch that fills enamel when on.",
+      "html": "<label class=\"ds-switch-row\"><span class=\"ds-switch\"><input type=\"checkbox\" checked><span class=\"ds-slider\"></span></span><span class=\"ds-switch-label\">Hide times not offered</span></label>",
+      "css": ".ds-switch-row { display: inline-flex; align-items: center; gap: 0.5rem; cursor: pointer; font-family: 'Schibsted Grotesk', 'Helvetica Neue', Arial, sans-serif; } .ds-switch { position: relative; display: inline-block; width: 52px; height: 30px; flex: none; } .ds-switch input { opacity: 0; width: 0; height: 0; } .ds-slider { position: absolute; inset: 0; cursor: pointer; background: rgba(20,20,20,0.25); border-radius: 30px; transition: 0.25s; } .ds-slider::before { content: ''; position: absolute; height: 22px; width: 22px; left: 4px; bottom: 4px; background: #fff; border-radius: 50%; box-shadow: 0 1px 2px rgba(20,20,20,0.3); transition: 0.25s; } .ds-switch input:checked + .ds-slider { background: var(--enamel, #24405e); } .ds-switch input:checked + .ds-slider::before { transform: translateX(22px); } .ds-switch input:focus-visible + .ds-slider { outline: 3px solid var(--enamel, #24405e); outline-offset: 2px; } .ds-switch-label { font-size: 0.85rem; font-weight: 600; color: #4a4744; }"
+    },
+    {
+      "name": "Wall Nav",
+      "kind": "nav",
+      "refersTo": "nav-link",
+      "description": "Wall-coloured header with an ink wordmark, ink links underlined on hover, and one small plate for the primary action.",
+      "html": "<header class=\"ds-nav\"><a href=\"#\" class=\"ds-nav-brand\">Catching.app</a><ul class=\"ds-nav-links\"><li><a href=\"#\" class=\"ds-nav-link\">Log in</a></li><li><a href=\"#\" class=\"ds-nav-link\">Sign up</a></li></ul><a href=\"#\" class=\"ds-nav-cta\">Plan a meeting</a></header>",
+      "css": ".ds-nav { display: flex; align-items: center; gap: 1.25rem; padding: 0.9rem 1.5rem; background: var(--wall, #f2efe9); border-bottom: 1px solid rgba(20,20,20,0.14); font-family: 'Schibsted Grotesk', 'Helvetica Neue', Arial, sans-serif; } .ds-nav-brand { color: var(--ink, #141414); font-weight: 800; font-size: 1.15rem; letter-spacing: -0.02em; text-decoration: none; } .ds-nav-brand:hover { color: var(--enamel, #24405e); } .ds-nav-cta { display: inline-flex; align-items: center; position: relative; margin-left: auto; background: var(--enamel, #24405e); color: #fff; padding: 0.45em 1em; border-radius: 3px; font-weight: 700; font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase; text-decoration: none; white-space: nowrap; box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), inset 0 -1px 0 rgba(0,0,0,0.35), 0 2px 4px rgba(20,20,20,0.25); transition: transform 0.18s cubic-bezier(0.16,1,0.3,1), box-shadow 0.18s; }  .ds-nav-cta:hover, .ds-nav-cta:focus-visible { color: #fff; transform: translateY(-1px); box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), inset 0 -1px 0 rgba(0,0,0,0.35), 0 6px 12px -4px rgba(20,20,20,0.4); } .ds-nav-links { display: flex; align-items: center; gap: 1.25rem; list-style: none; margin: 0; padding: 0; } .ds-nav-link { color: var(--ink, #141414); font-weight: 600; padding: 0.4rem 0; text-decoration: none; border-bottom: 2px solid transparent; } .ds-nav-link:hover { border-bottom-color: var(--ink, #141414); } .ds-nav-link:focus-visible, .ds-nav-brand:focus-visible, .ds-nav-cta:focus-visible { outline: 3px solid var(--enamel, #24405e); outline-offset: 2px; }"
+    },
+    {
+      "name": "Availability Grid",
+      "kind": "custom",
+      "refersTo": "grid-cell-offered",
+      "description": "Enamel day headers, mono row labels, and 3px tiles: offered white, painted enamel, consensus yellow.",
+      "html": "<table class=\"ds-grid\"><thead><tr><th class=\"ds-grid-corner\"></th><th class=\"ds-grid-day\">Fri<small>12 Sep</small></th><th class=\"ds-grid-day\">Sat<small>13 Sep</small></th></tr></thead><tbody><tr><th class=\"ds-grid-row\">19:00</th><td class=\"ds-slot ds-slot-offered\">2</td><td class=\"ds-slot ds-slot-inactive\"></td></tr><tr><th class=\"ds-grid-row\">20:00</th><td class=\"ds-slot ds-slot-active\">You</td><td class=\"ds-slot ds-slot-consensus\">3</td></tr><tr><th class=\"ds-grid-row\">21:00</th><td class=\"ds-slot ds-slot-consensus ds-slot-active\">3</td><td class=\"ds-slot ds-slot-offered\">1</td></tr></tbody></table>",
+      "css": ".ds-grid { border-collapse: separate; border-spacing: 4px; font-family: 'Schibsted Grotesk', 'Helvetica Neue', Arial, sans-serif; user-select: none; } .ds-grid-day { background: var(--enamel, #24405e); color: #fff; padding: 0.55em 0.9em; border-radius: 3px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; text-align: center; white-space: nowrap; box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), inset 0 -1px 0 rgba(0,0,0,0.35), 0 2px 4px rgba(20,20,20,0.25); } .ds-grid-day small { display: block; font-weight: 500; font-size: 10px; letter-spacing: 0.06em; opacity: 0.8; } .ds-grid-corner { background: transparent; } .ds-grid-row { font-family: var(--time-font, 'Martian Mono', ui-monospace, Menlo, monospace); font-variant-numeric: tabular-nums; font-size: 12px; font-weight: 500; text-align: right; padding: 0 0.6em; background: #fff; color: #4a4744; white-space: nowrap; } .ds-slot { min-width: 120px; height: 34px; font-size: 13px; text-align: center; vertical-align: middle; cursor: pointer; border: 1px solid rgba(20,20,20,0.22); border-radius: 3px; background: #fff; color: var(--ink, #141414); } .ds-slot-offered { border-color: rgba(20,20,20,0.45); } .ds-slot-inactive { background: var(--wall, #f2efe9); color: rgba(20,20,20,0.35); border-color: rgba(20,20,20,0.08); cursor: default; } .ds-slot-consensus { background: #ffe5b5; border-color: #e0a52b; } .ds-slot-active { background: var(--enamel, #24405e); border-color: #1a2f47; color: #fff; } .ds-slot-consensus.ds-slot-active { background: var(--awake, #ffc65a); border-color: var(--ink, #141414); color: var(--ink, #141414); } .ds-slot:focus-visible { outline: 3px solid var(--signal, #d7262a); outline-offset: 2px; }"
+    },
+    {
+      "name": "Wall Clock",
+      "kind": "custom",
+      "refersTo": "face",
+      "description": "The signature: a white SVG dial with black hands and a red second hand, hung above its plate.",
+      "html": "<svg class=\"ds-clock\" viewBox=\"0 0 100 100\" width=\"160\" height=\"160\" aria-hidden=\"true\"><circle class=\"ds-clock-face\" cx=\"50\" cy=\"50\" r=\"48\"/><circle class=\"ds-clock-ring\" cx=\"50\" cy=\"50\" r=\"44\"/><line class=\"ds-clock-tick ds-clock-tick-major\" x1=\"50\" y1=\"10\" x2=\"50\" y2=\"4\"/><line class=\"ds-clock-tick ds-clock-tick-major\" x1=\"90\" y1=\"50\" x2=\"96\" y2=\"50\"/><line class=\"ds-clock-tick ds-clock-tick-major\" x1=\"50\" y1=\"90\" x2=\"50\" y2=\"96\"/><line class=\"ds-clock-tick ds-clock-tick-major\" x1=\"10\" y1=\"50\" x2=\"4\" y2=\"50\"/><line class=\"ds-clock-hand ds-clock-hour\" x1=\"50\" y1=\"50\" x2=\"50\" y2=\"26\" style=\"transform: rotate(325deg)\"/><line class=\"ds-clock-hand ds-clock-minute\" x1=\"50\" y1=\"50\" x2=\"50\" y2=\"16\" style=\"transform: rotate(300deg)\"/><line class=\"ds-clock-hand ds-clock-second\" x1=\"50\" y1=\"58\" x2=\"50\" y2=\"12\" style=\"transform: rotate(40deg)\"/><circle class=\"ds-clock-pin\" cx=\"50\" cy=\"50\" r=\"2.2\"/></svg>",
+      "css": ".ds-clock { display: block; aspect-ratio: 1; filter: drop-shadow(0 6px 8px rgba(20,20,20,0.16)); } .ds-clock-face { fill: #fff; stroke: var(--ink, #141414); stroke-width: 1.5; } .ds-clock-ring { fill: none; stroke: rgba(20,20,20,0.12); stroke-width: 6; } .ds-clock-tick { stroke: var(--ink, #141414); stroke-width: 1.5; stroke-linecap: round; } .ds-clock-tick-major { stroke-width: 3; } .ds-clock-hand { stroke: var(--ink, #141414); stroke-linecap: round; transform-origin: 50px 50px; transform-box: view-box; transition: transform 1.4s cubic-bezier(0.16,1,0.3,1); } .ds-clock-hour { stroke-width: 4.5; } .ds-clock-minute { stroke-width: 3; } .ds-clock-second { stroke: var(--signal, #d7262a); stroke-width: 1.4; } .ds-clock-pin { fill: var(--signal, #d7262a); stroke: #fff; stroke-width: 1; } @media (prefers-reduced-motion: reduce) { .ds-clock-hand { transition: none; } }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Newsroom Clock Wall",
+    "overview": "**Creative North Star: \"The Newsroom Clock Wall\"**\n\nEvery surface is a wall in a newsroom: a warm painted plaster ground, a row of white glass wall clocks with black hands and one red second hand, and enamel-blue plates hung underneath naming the city. The landing page is that wall literally, with five synchronized clocks as the offer and the proof. The app surfaces (planning form, participation page, dashboard, Devise forms) are instruments hung on the same wall: white glass faces holding forms and grids, enamel plates as day headers and primary actions, and every time set in the mono face as if read off a dial.\n\nThe world is flat and physical rather than digital. Depth comes from real materials (a plate has an inset highlight and shade because enamel does; a face casts a soft shadow because glass sits proud of plaster; a clock hangs and throws a shadow down the wall), never from glass blur, gradients of any kind, or decorative shadows. Colour is disciplined: one blue for anything that can be pressed or that labels, one red for the second hand and the ruler thumb, one yellow for the hours when everyone is awake. Copy is playful and the layout is calm. The tagline \"We have some catching app to do!\" is the headline, set at display scale.\n\nConfirmed rejections: the headline-plus-app-screenshot scheduler page, the 2021 carousel videos, every externally hosted image, glass blur, gradient surfaces, and invented testimonials or numbers.",
+    "keyCharacteristics": [
+      "Warm painted wall as ground, white glass faces as the only raised surface.",
+      "Enamel-blue plates with white engraved caps, flat colour with one hairline bevel, for labels and primary actions.",
+      "Two typefaces with strict jobs: Schibsted Grotesk for words, Martian Mono for every time.",
+      "Red is reserved for the second hand, the ruler thumb, and destructive state; yellow marks consensus and awake hours.",
+      "One authored motion: clock hands sweep from noon to now on load, disabled under reduced motion.",
+      "Grids are painted, not ticked: white offered cells, enamel painted cells, yellow consensus."
+    ],
+    "rules": [
+      {
+        "name": "The One Blue Rule",
+        "body": "Enamel is the only chromatic colour a component may be made of. Red and yellow are marks, not materials: red is the moving hand and the thumb, yellow is a painted band or a cell. A red or yellow button does not exist in this world.",
+        "section": "colors"
+      },
+      {
+        "name": "The Wash Rule",
+        "body": "Tints are precomputed hex washes over white glass (enamel-wash, enamel-half, awake-wash), never runtime alpha over the wall. Alpha is used only for ink: hairlines, ring strokes, tick marks, and shadows.",
+        "section": "colors"
+      },
+      {
+        "name": "The Dial Rule",
+        "body": "Every time, offset, or clock reading is set in Martian Mono with tabular numerals. This includes `time` elements, grid row labels, ruler output, and the time on an event card. Words never appear in the mono face except a UTC offset abbreviation.",
+        "section": "typography"
+      },
+      {
+        "name": "The Heavy Heading Rule",
+        "body": "Headings are 800 with negative tracking and balanced wrap. There are no kickers, eyebrows, or overlines above a heading. A plate may sit inline after a heading only to state a fact about it (a \"Set in stone\" state, a count of events), never before it as a label.",
+        "section": "typography"
+      },
+      {
+        "name": "The Hung-On Rule",
+        "body": "Depth exists only where a physical object would have it: plates, faces, and clocks. Text, wall bands, and the footer are flat. A shadow never appears on something that is not a plate, a face, or a clock.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Lift Rule",
+        "body": "Interactive objects rise on hover (1px for plates, 2px for faces) over 0.18s with the `cubic-bezier(0.16, 1, 0.3, 1)` ease, and settle back on press. Nothing else moves on hover.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do set every time, offset, and clock reading in Martian Mono with tabular numerals; words stay in Schibsted Grotesk.",
+      "Do make every primary action and every stated fact (a city and time, \"Set in stone\", a count) an enamel plate with white uppercase caps (700, 0.12em) and 3px corners; use the ink plate for the visitor's clock and the footer.",
+      "Do hold content in white faces (hairline border, 6px corners, face shadow) on the wall, and keep the wall itself flat.",
+      "Do paint consensus in awake yellow and its wash, and paint the viewer's own selection in enamel.",
+      "Do use hairline (14% ink) as the only divider, at 1px, and reserve dashed 2px lines for day boundaries inside a grid.",
+      "Do lift interactive plates and faces by 1 or 2px over 0.18s with `cubic-bezier(0.16, 1, 0.3, 1)`, and respect `prefers-reduced-motion` for the clock sweep.",
+      "Do keep headings at 800 with negative tracking and balanced wrap, and keep ledes to 62ch in ink-soft.",
+      "Do self-host every font and image; the only shipping raster is the og:image."
+    ],
+    "donts": [
+      "Don't fill any surface with a gradient or apply backdrop blur. The one permitted gradient is technique, not look: the hard-stop painted awake band on the ruler.",
+      "Don't make a red or yellow button, panel, or plate. Red is the second hand, the ruler thumb, a focus outline on a grid cell, and Bootstrap danger. Yellow is a painted band or cell.",
+      "Don't add kickers, eyebrows, or overlines above headings, and don't put a plate above a heading as a step or section label; a plate may follow a heading inline only to state a fact about it.",
+      "Don't load imagery, fonts, scripts, or video from a third-party host. Cloudinary is gone and stays gone.",
+      "Don't invent testimonials, usage numbers, logos, or customer names; the landing page's proof is the live clocks and a labelled, made-up sample grid.",
+      "Don't use a heading weight below 800 or a body face other than Schibsted Grotesk; the world has two typefaces and no third.",
+      "Don't round corners past 6px on anything but the toggle pill.",
+      "Don't hide a clock on small screens; the clock row scrolls and snaps so the same five cities appear at every width."
+    ]
+  }
+}

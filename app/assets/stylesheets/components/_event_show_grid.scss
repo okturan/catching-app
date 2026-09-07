@@ -1,36 +1,168 @@
 .event-show-grid {
-  display: flex;
-  justify-content: center;
-  flex-direction: row;
-  flex-flow: wrap;
-  padding: 1% 5%;
-}
+  display: grid;
+  grid-template-columns: minmax(300px, 400px) minmax(0, 1fr);
+  gap: clamp(1rem, 3vw, 2.5rem);
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: clamp(1rem, 3vw, 2rem) clamp(1rem, 4vw, 2.5rem) 3rem;
+  align-items: start;
 
-.event-new-grid {
-  display: flex;
-  justify-content: center;
-  flex-direction: row;
-  flex-flow: wrap;
-  padding: 5%;
-}
-
-#event-show-select {
-  width: 65%;
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
 }
 
 .event-show-card {
-  align-self: flex-start;
-  justify-content: space-evenly;
-  align-items: center;
-  display: flex;
-  flex-direction: column;
-  margin-right: 3vw;
-  margin-top: 16px;
+  display: grid;
+  gap: 1rem;
+  align-content: start;
 }
 
 .event-show-card-top {
   display: flex;
-  justify-content: space-evenly;
+  justify-content: space-between;
   align-items: center;
-  margin-top: 6px;
+  gap: 1rem;
+}
+
+#event-show-select {
+  flex: 1 1 auto;
+  small { display: block; margin-top: 0.25rem; }
+}
+
+.event-panel {
+  @extend .face;
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  display: grid;
+  gap: 0.75rem;
+
+  .plate { justify-self: start; }
+  h1 {
+    font-size: clamp(1.5rem, 2.6vw, 2rem);
+    font-weight: 800;
+    margin: 0;
+    .plate { font-size: 0.65rem; vertical-align: middle; margin-left: 0.4rem; }
+  }
+  .event-description { color: $ink-soft; margin: 0; }
+  .event-when {
+    font-family: $time-font;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    display: grid;
+    gap: 0.15rem;
+  }
+  .event-when.is-pending { color: $ink-soft; font-family: $body-font; font-weight: 600; }
+  // The cancelled line: words in the body face, the instants in the mono face.
+  .event-when.is-cancelled { font-family: $body-font; font-weight: 600; }
+  // The organizer's hairline note after a reopen: how many are left and
+  // when the set time was withdrawn, the instant in the mono face.
+  .event-reopened {
+    display: grid;
+    gap: 0.15rem;
+    margin: 0;
+    padding-top: 0.6rem;
+    border-top: 1px solid $hairline;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: $ink-soft;
+    span:first-child { color: $ink; }
+    time { font-size: 0.85rem; color: $ink; }
+  }
+  // Where and how long: labels in the form-label style, values in body type.
+  .event-facts {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: 0.35rem 1rem;
+    margin: 0;
+    font-size: 0.95rem;
+    dt { font-weight: 600; margin: 0; }
+    dd { margin: 0; overflow-wrap: anywhere; }
+  }
+  // The plan: an ordered list read top to bottom, a derived start in the
+  // mono face once the time is set, the note as a muted second line.
+  .event-plan {
+    margin: 0;
+    padding-left: 1.25rem;
+    li { margin: 0 0 0.3rem; }
+    li:last-child { margin-bottom: 0; }
+    time { display: block; font-size: 0.85rem; }
+    .event-plan-note { display: block; color: $ink-soft; font-size: 0.9rem; }
+  }
+  // Plate buttons under the card: Add to calendar once set, Edit details
+  // for the organizer, Plan a new event once cancelled.
+  .event-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  // The organizer's reminder that a change has not reached the guests: one
+  // sentence in the body face and the plate that sends the notice.
+  .event-untold {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: $ink-soft;
+    .event-untold-form { margin: 0; }
+  }
+  .event-people {
+    border-top: 1px solid $hairline;
+    padding-top: 0.75rem;
+    font-size: 0.9rem;
+    color: $ink-soft;
+    ul { list-style: none; padding: 0; margin: 0.25rem 0 0; display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; }
+    strong { color: $ink; }
+  }
+}
+
+// Reopen the time (while set) and Cancel this event, side by side under the
+// guests: the two writes that change what the event is, kept apart from
+// the everyday controls.
+.event-organizer-ends {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin-top: 1rem;
+  form { margin: 0; }
+}
+
+.organizer-panel {
+  @extend .face;
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  display: grid;
+  gap: 1rem;
+
+  h5 {
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin: 0;
+  }
+  .table { margin: 0; font-size: 0.9rem; }
+  .table td, .table th { border-color: $hairline; }
+}
+
+.switch-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  .switch-label { font-size: 0.85rem; font-weight: 600; color: $ink-soft; white-space: nowrap; }
+}
+
+.guest-panel .guest-hint {
+  margin: 0;
+  color: $ink-soft;
+  font-size: 0.9rem;
+}
+
+.organizer-panel .text-warning {
+  color: $ink !important;
+  background: $awake-wash;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  margin: 0;
 }
