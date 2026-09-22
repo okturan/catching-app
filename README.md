@@ -21,7 +21,7 @@ The complete historical set is in [`docs/screenshots/legacy`](docs/screenshots/l
 - Ruby 4.0.5 (the Gemfile accepts `~> 4.0.5`) and Rails 8.1.3.1
 - PostgreSQL 18
 - Node.js 24.18.0 LTS and npm 11.16.0
-- Propshaft, esbuild, Dart Sass, Turbo, Bootstrap 5, and Luxon
+- Propshaft, esbuild, Dart Sass, Turbo, Stimulus, Bootstrap 5, and Luxon
 - Rails' built-in authentication for optional accounts; capability links for everyone else
 - Minitest, RuboCop Rails Omakase, Brakeman, and bundler-audit
 

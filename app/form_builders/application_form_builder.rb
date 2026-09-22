@@ -32,12 +32,12 @@ class ApplicationFormBuilder < ActionView::Helpers::FormBuilder
   end
 
   # One summary for the whole form, every item a link to the control it is
-  # about; error_summary.js moves focus to it. Links default to the object's
-  # own errors, each pointing at its field.
+  # about; its Stimulus controller moves focus to it. Links default to the
+  # object's own errors, each pointing at its field.
   def error_summary(links = @object.errors.map { [ it.full_message, field_id(it.attribute) ] })
     return if links.empty?
 
-    @template.tag.div(class: "error-summary", role: "alert", tabindex: -1, id: "error-summary", data: { autofocus: "" }) do
+    @template.tag.div(class: "error-summary", role: "alert", tabindex: -1, id: "error-summary", data: { controller: "error-summary" }) do
       @template.tag.h2("There is a problem") +
         @template.tag.ul { @template.safe_join(links.map { |message, target| @template.tag.li(@template.link_to(message, "##{target}")) }) }
     end

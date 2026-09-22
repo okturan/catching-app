@@ -1,7 +1,7 @@
 <div class="organizer-panel guest-panel">
   <% if event.open? %>
     <%= form_with url: scoped_path, method: :patch, id: "availability-form" do |form| %>
-      <input name="time_slots[time_slot_array]" id="new-time-slot-array" type="hidden">
+      <input name="time_slots[time_slot_array]" id="new-time-slot-array" type="hidden" data-availability-target="slots">
       <input name="participant[time_zone]" type="hidden">
       <div class="mb-2">
         <%= form.label :name, "Your name", for: "participant_name", class: "form-label" %>

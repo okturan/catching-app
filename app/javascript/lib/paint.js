@@ -111,8 +111,8 @@ const TAP_TOLERANCE = 10;
 // - in scroll mode only a pointerdown/pointerup pair on the same cell toggles
 // - a stroke ends exactly once on the first of pointerup, pointercancel or
 //   lostpointercapture for the active pointer
-// - listeners are registered through an AbortController stored on the
-//   element so re-running on every turbo:load is idempotent
+// - every listener is registered with the caller's AbortSignal, so the
+//   controller that attached them takes them all away on disconnect
 const attachPainting = (
   grid,
   {
@@ -121,13 +121,9 @@ const attachPainting = (
     getMode = () => "paint",
     onStroke = () => {},
     scrollContainer = null,
+    signal,
   },
 ) => {
-  if (grid.__paintAbort) grid.__paintAbort.abort();
-  const controller = new AbortController();
-  grid.__paintAbort = controller;
-  const { signal } = controller;
-
   let active = null;
   let tap = null;
 
@@ -319,7 +315,7 @@ const seedTabindex = (grid, selectable) => {
 // Paint/Scroll control for coarse pointers. Remembers the choice.
 const paintModeControl = (
   element,
-  { storageKey = "catching-app.paint-mode", onChange = () => {} } = {},
+  { storageKey = "catching-app.paint-mode", onChange = () => {}, signal } = {},
 ) => {
   let mode = "scroll";
   try {
@@ -347,7 +343,7 @@ const paintModeControl = (
         // Ignore storage failures.
       }
       sync();
-    });
+    }, { signal });
   });
   sync();
 

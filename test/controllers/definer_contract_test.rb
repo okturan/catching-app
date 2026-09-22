@@ -1,10 +1,11 @@
 require "test_helper"
 
-# The definer JavaScript finds its controls by id. Both pages that render it
-# (planning a new event, changing the times of an existing one) share the
-# partials, so a rename on one page cannot silently break the other.
+# The definer is a Stimulus controller on the form that finds its parts by
+# target. Both pages that render it (planning a new event, changing the
+# times of an existing one) share the partials, so a rename on one page
+# cannot silently break the other.
 class DefinerContractTest < ActionDispatch::IntegrationTest
-  IDS = %w[time-grid-define timezone-picker-new event_slot_minutes time_slot_array event-begin event-end range-tooltip selection-summary paint-mode].freeze
+  TARGETS = %w[grid slots zone step begin end rangeNote summary paintMode].freeze
 
   test "events/new keeps the definer contract" do
     get new_event_path
@@ -12,8 +13,10 @@ class DefinerContractTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_definer_contract
     assert_select "form select#event_slot_minutes option[selected][value='30']"
-    assert_select "#current-offer", count: 0
-    assert_select "#guest-picked-counts", count: 0
+    assert_select "[data-definer-offer-value]", count: 0
+    assert_select "[data-definer-picked-counts-value]", count: 0
+    assert_select "select#event_duration_minutes[data-definer-target=duration]"
+    assert_select "#duration-note[data-definer-target=durationNote]"
     assert_select "#event-begin[min]", count: 0
     assert_select "#grid-frozen-note", count: 0
   end
@@ -24,15 +27,21 @@ class DefinerContractTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_definer_contract
     assert_select "form#offer-form #time_slot_array"
-    assert_select "form#offer-form #current-offer"
-    assert_select "form#offer-form #guest-picked-counts"
+    assert_select "form#offer-form[data-definer-offer-value]"
+    assert_select "form#offer-form[data-definer-picked-counts-value]"
     assert_select "#event-begin[min]"
   end
 
   private
 
   def assert_definer_contract
-    IDS.each { |id| assert_select "##{id}", { count: 1 }, "##{id} is missing or duplicated" }
+    assert_select "form[data-controller=definer][data-action='definer#submit']" do
+      TARGETS.each { |target| assert_select "[data-definer-target=#{target}]", { count: 1 }, "the #{target} target is missing or duplicated" }
+    end
+    assert_select "select#event_slot_minutes[data-action='definer#restep']"
+    assert_select "select#timezone-picker-new[data-action='definer#rezone']"
+    assert_select "input#event-begin[data-action='change->definer#redraw']"
+    assert_select "input#event-end[data-action='change->definer#redraw']"
     assert_select "table#time-grid-define[role=grid][data-slot-minutes][data-time-zone][data-not-before]"
     assert_select "form select#event_slot_minutes[name='event[slot_minutes]']"
     assert_select "form select#timezone-picker-new[name='event[time_zone]'][data-selected]"

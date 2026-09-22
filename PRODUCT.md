@@ -33,7 +33,7 @@ Catching App finds a time that works for everyone. The organizer offers a range 
 - Guests: view, paint availability, decline ("none of these times work"), leave; optional display name; optional claim into an account; once the time is set, a calendar file with a reminder from the page and from the mail.
 - Organizer: send and resend invitations, invite more, remove a guest, show a link to copy, edit the details and the plan, change the offered times, tell the guests about changes, finalize, reopen the set time (twice at most), cancel; lost-link recovery by email.
 - Accounts (Rails' built-in authentication): dashboard of participations; password reset by mail; no member directory; email is not verified.
-- Constraints: Rails 8.1 on PostgreSQL, Propshaft, esbuild, Dart Sass, Turbo; CSP forbids inline scripts; slot length and zone are frozen after the first guest reply; every mail is capped by a delivery ledger (change notices: five per guest and event, ten minutes apart); cancellation is final and nothing is sent after it.
+- Constraints: Rails 8.1 on PostgreSQL, Propshaft, esbuild, Dart Sass, Turbo and Stimulus; CSP forbids inline scripts; slot length and zone are frozen after the first guest reply; every mail is capped by a delivery ledger (change notices: five per guest and event, ten minutes apart); cancellation is final and nothing is sent after it.
 - Undecided: a friends graph, mail reminders before the set time, polls. Registered as follow-up changes under `openspec/changes/` (`friends-graph`, `reminders`, `guest-polls`).
 
 ## Brand Commitments

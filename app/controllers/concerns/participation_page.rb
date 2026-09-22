@@ -15,6 +15,7 @@ module ParticipationPage
     @my_slots = @participant.available_start_times.map(&:iso8601)
     @revision_notice = revision_notice
     @consensus_slots = @event.mutually_available_start_times.map(&:iso8601)
+    @set_window = [ @event.start_time, @event.end_time ].map(&:iso8601) if @event.finalized?
     others = @event.participants.counting.where.not(id: @participant.id).select(:id)
     @availability_counts = @event.time_slots.where(participant_id: others).group(:start_time).count.transform_keys(&:iso8601)
 

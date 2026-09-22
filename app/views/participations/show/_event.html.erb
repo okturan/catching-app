@@ -12,7 +12,7 @@
 <% elsif event.finalized? %>
   <div class="event-when">
     <span><%= event_window(event) %></span>
-    <span id="final-window-local"></span>
+    <span id="final-window-local" data-availability-target="localWindow"></span>
   </div>
 <% else %>
   <div class="event-when is-pending">Time to be confirmed by <%= event.organizer.display_name %></div>

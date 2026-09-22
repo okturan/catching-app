@@ -1,0 +1,220 @@
+import { Controller } from "@hotwired/stimulus";
+import { DateTime } from "luxon";
+
+import { removalWarning } from "../lib/definer";
+import { allowedDurations } from "../lib/durations";
+import { renderDefinerTable } from "../lib/grid_table";
+import { attachPainting, paintModeControl, remapZone, rescale, seedTabindex, summary } from "../lib/paint";
+import { localDateRangeIsAllowed, localDayColumns } from "../lib/time_grid";
+import { countsByInstant, parseSlotList, populateTimeZoneSelect, slotISO, toDateTimes } from "../lib/zones";
+
+const SELECTABLE = ".slot.selectable[data-date]";
+
+// The offer grid of the planning form and of Change the times. The organizer
+// paints the instants they can do on a grid of days, in a zone and at a step
+// they choose; the selection lives in the form's slots field. On Change the
+// times the offer value holds the current offer and picked-counts the picks
+// guests hold on it, so the summary can name what a removal would drop.
+export default class extends Controller {
+  static targets = ["grid", "slots", "zone", "step", "begin", "end", "rangeNote", "duration", "durationNote", "summary", "paintMode"];
+  static values = { offer: Array, pickedCounts: Object };
+
+  connect() {
+    this.abort = new AbortController();
+    const { signal } = this.abort;
+    const { dataset } = this.gridTarget;
+
+    this.notBefore = dataset.notBefore ? DateTime.fromISO(dataset.notBefore) : null;
+    this.currentOffer = this.hasOfferValue ? toDateTimes(this.offerValue).map(slotISO) : null;
+    this.counts = countsByInstant(this.pickedCountsValue);
+    this.slotMinutes = Number((this.hasStepTarget && this.stepTarget.value) || dataset.slotMinutes || 60);
+    this.zone = populateTimeZoneSelect(this.zoneTarget, this.zoneTarget.dataset.selected || dataset.timeZone);
+    this.selection = new Set(parseSlotList(this.slotsTarget.value).map(slotISO));
+    this.note = "";
+
+    this.mode = paintModeControl(this.paintModeTarget, {
+      onChange: (mode) => this.gridTarget.classList.toggle("mode-paint", mode === "paint"),
+      signal,
+    });
+    attachPainting(this.gridTarget, {
+      selectable: SELECTABLE,
+      selection: this.selection,
+      getMode: () => this.mode.get(),
+      onStroke: () => {
+        this.note = "";
+        this.serialize();
+      },
+      scrollContainer: this.gridTarget.closest(".time-grid-scroll"),
+      signal,
+    });
+
+    this.syncDurationOptions({ quietly: true });
+    this.seedDateRange();
+    this.draw();
+  }
+
+  disconnect() {
+    this.abort.abort();
+  }
+
+  // A new zone keeps each painted wall-clock time.
+  rezone() {
+    const previous = this.zone;
+    this.zone = this.zoneTarget.value;
+    this.replaceSelection(remapZone(this.selection, previous, this.zone));
+    this.draw(`Moved to ${this.zone} wall clock`);
+  }
+
+  // A new step rescales the painted runs onto the new grid.
+  restep() {
+    const next = Number(this.stepTarget.value);
+    this.replaceSelection(rescale(this.selection, this.slotMinutes, next, this.zone));
+    this.slotMinutes = next;
+    this.gridTarget.dataset.slotMinutes = String(next);
+    this.syncDurationOptions();
+    this.draw();
+  }
+
+  redraw() {
+    this.draw();
+  }
+
+  // The one error native validation cannot raise. The button is never
+  // disabled: a dead primary action with no explanation is worse than a
+  // blocked one that says why and puts the visitor on the grid.
+  submit(event) {
+    this.serialize();
+    if (this.selection.size > 0) return;
+
+    event.preventDefault();
+    this.summaryTarget.textContent = "Paint at least one time before sending";
+    this.gridTarget.scrollIntoView({ block: "center", behavior: "instant" });
+    this.gridTarget.querySelector('.slot[tabindex="0"]')?.focus();
+  }
+
+  // Redraws the grid. `reason` says what the visitor just did to the
+  // selection, and shows only if something is still selected once the dates
+  // and the cut-off have pruned it.
+  draw(reason = "") {
+    this.gridTarget.replaceChildren();
+    this.note = "";
+    if (!this.updateDateRange()) {
+      this.serialize();
+      return;
+    }
+    const dropped = this.dropOutsideRange();
+    this.dropPast();
+    this.note = [this.selection.size > 0 && reason, dropped > 0 && `${dropped} outside the dates dropped`].filter(Boolean).join(". ");
+    renderDefinerTable(this.gridTarget, localDayColumns(this.rangeStart, this.rangeEnd, this.slotMinutes), {
+      selection: this.selection,
+      slotMinutes: this.slotMinutes,
+      toISO: slotISO,
+      isPast: (instant) => this.isPast(instant),
+      counts: this.counts,
+    });
+    seedTabindex(this.gridTarget, SELECTABLE);
+    this.serialize();
+  }
+
+  serialize() {
+    this.slotsTarget.value = [...this.selection].sort().join(",");
+    const warning = this.removalWarning();
+    this.summaryTarget.textContent = [summary(this.selection, { role: "guest", zone: this.zone }), this.note, warning]
+      .filter(Boolean).join(". ");
+  }
+
+  // On Change the times the summary also names the picks a removal would
+  // drop, and the form asks before submitting such a removal.
+  removalWarning() {
+    if (!this.currentOffer) return "";
+    const { warning, confirm } = removalWarning(this.currentOffer, this.selection, this.counts);
+    if (confirm) this.element.dataset.turboConfirm = confirm;
+    else delete this.element.dataset.turboConfirm;
+    return warning;
+  }
+
+  updateDateRange() {
+    this.rangeStart = DateTime.fromISO(this.beginTarget.value, { zone: this.zone }).startOf("day");
+    this.rangeEnd = DateTime.fromISO(this.endTarget.value, { zone: this.zone }).startOf("day");
+    const valid = localDateRangeIsAllowed(this.rangeStart, this.rangeEnd);
+    this.rangeNoteTarget.textContent = valid ? "" : "Choose a range from 1 to 31 days.";
+    return valid;
+  }
+
+  dropOutsideRange() {
+    const startMillis = this.rangeStart.toMillis();
+    const endMillis = this.rangeEnd.plus({ days: 1 }).startOf("day").toMillis();
+    const outside = [...this.selection].filter((iso) => {
+      const millis = DateTime.fromISO(iso).toMillis();
+      return millis < startMillis || millis >= endMillis;
+    });
+    outside.forEach((iso) => this.selection.delete(iso));
+    return outside.length;
+  }
+
+  // A zone remap can move a selected instant behind the cut-off; past cells
+  // take no paint, so the selection lets it go.
+  dropPast() {
+    [...this.selection].forEach((iso) => {
+      if (this.isPast(DateTime.fromISO(iso))) this.selection.delete(iso);
+    });
+  }
+
+  isPast(instant) {
+    return Boolean(this.notBefore && instant.toMillis() < this.notBefore.toMillis());
+  }
+
+  replaceSelection(instants) {
+    this.selection.clear();
+    instants.forEach((iso) => this.selection.add(iso));
+  }
+
+  // The grid opens on the painted days, or on today and the two after it.
+  seedDateRange() {
+    if (this.beginTarget.value && this.endTarget.value) return;
+
+    if (this.selection.size > 0) {
+      const instants = [...this.selection]
+        .map((iso) => DateTime.fromISO(iso).setZone(this.zone))
+        .sort((a, b) => a.toMillis() - b.toMillis());
+      this.beginTarget.value = instants[0].toISODate();
+      this.endTarget.value = instants[instants.length - 1].toISODate();
+      // An offer that starts inside the grace window begins before today;
+      // the range must still be submittable.
+      if (this.beginTarget.min && this.beginTarget.value < this.beginTarget.min) {
+        this.beginTarget.min = this.beginTarget.value;
+      }
+    } else {
+      const today = DateTime.now().setZone(this.zone).startOf("day");
+      this.beginTarget.value = today.toISODate();
+      this.endTarget.value = today.plus({ days: 2 }).toISODate();
+    }
+  }
+
+  // The planned length must be a whole number of slots: lengths that stop
+  // fitting the step are disabled, and a chosen one that stopped fitting
+  // falls back to "Not set" while the status line says which length went.
+  syncDurationOptions({ quietly = false } = {}) {
+    if (!this.hasDurationTarget) return;
+    const select = this.durationTarget;
+    const options = [...select.options].filter((option) => option.value !== "");
+    const fits = new Set(allowedDurations(this.slotMinutes, options.map((option) => option.value)).allowed);
+    options.forEach((option) => {
+      option.disabled = !fits.has(option.value);
+    });
+
+    const chosen = select.options[select.selectedIndex];
+    const note = quietly || !this.hasDurationNoteTarget ? null : this.durationNoteTarget;
+    if (chosen && chosen.disabled) {
+      select.value = "";
+      // The server's error on this field described the length that just went;
+      // clear its marks so the page does not argue with itself.
+      select.classList.remove("is-invalid");
+      select.removeAttribute("aria-invalid");
+      this.element.querySelector("#event_duration_minutes_error")?.remove();
+      if (note) note.textContent = `Planned length cleared: ${chosen.textContent} is not a whole number of ${this.slotMinutes}-minute slots.`;
+    } else if (note) {
+      note.textContent = "";
+    }
+  }
+}

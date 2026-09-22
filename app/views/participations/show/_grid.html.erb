@@ -1,6 +1,6 @@
 <div class="time-grid-panel time-grid-show-wrapper">
   <div class="time-grid-scroll">
-    <table id="time-grid-show" class="time-grid" role="grid" aria-label="Availability"
+    <table id="time-grid-show" class="time-grid" role="grid" aria-label="Availability" data-availability-target="grid"
       data-role="<%= role %>"
       data-slot-minutes="<%= event.slot_minutes %>"
       data-event-time-zone="<%= event.time_zone %>"
@@ -29,8 +29,8 @@
       <p class="grid-notice" role="status"><%= pluralize(counts[:stale] + counts[:voided], "guest has", plural: "guests have") %> not answered the current times</p>
     <% end %>
     <% guest_dead_end = participant.guest? && event.open? && every_offer_past %>
-    <span id="selection-summary" aria-live="polite"><%= guest_dead_end ? "All the offered times have passed." : "No times selected" %></span>
-    <fieldset id="paint-mode" class="paint-mode" role="radiogroup" aria-label="Touch mode">
+    <span id="selection-summary" aria-live="polite" data-availability-target="summary"><%= guest_dead_end ? "All the offered times have passed." : "No times selected" %></span>
+    <fieldset id="paint-mode" class="paint-mode" role="radiogroup" aria-label="Touch mode" data-availability-target="paintMode">
       <label><input type="radio" name="paint-mode" value="scroll" checked><span>Scroll</span></label>
       <label><input type="radio" name="paint-mode" value="paint"><span>Paint</span></label>
     </fieldset>

@@ -69,7 +69,7 @@
 }
 
 // The 422 summary: a white face with a signal-red edge and one link per error.
-// Red marks it, it never fills it. Focused on render by error_summary.js.
+// Red marks it, it never fills it. Its Stimulus controller focuses it on render.
 .error-summary {
   @extend .face;
   padding: clamp(1.25rem, 3vw, 1.75rem);

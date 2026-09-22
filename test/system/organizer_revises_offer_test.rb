@@ -44,7 +44,7 @@ class OrganizerRevisesOfferTest < ApplicationSystemTestCase
 
     visit participation_path(raw_token(:planning_guest))
     assert_selector ".grid-action-bar .grid-notice[role=status]", text: "None of the times you picked are offered any more. Pick again."
-    assert_equal "[]", hidden_value("#my-time-slots")
+    assert_equal "[]", find("[data-controller=availability]")["data-availability-mine-value"]
     assert_selector "#time-grid-show .slot.selectable", count: 2
     assert_no_selector "#time-grid-show .slot.active"
     assert_selector "button[form='availability-form']", visible: true

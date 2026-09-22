@@ -12,10 +12,9 @@
 
 <%# The form element is the two-column grid, so the grid panel and its controls
     sit inside the form and can be ordered against the submit. %>
-<%= form_with model: @event, url: scoped_path(:offer), method: :patch, id: "offer-form", class: "event-new-grid" do |form| %>
-  <input name="time_slots[time_slot_array]" id="time_slot_array" type="hidden" value="<%= @hydrated %>">
-  <input id="current-offer" type="hidden" value="<%= @current_offer.to_json %>">
-  <input id="guest-picked-counts" type="hidden" value="<%= @guest_picked_counts.to_json %>">
+<%= form_with model: @event, url: scoped_path(:offer), method: :patch, id: "offer-form", class: "event-new-grid",
+      data: { controller: "definer", action: "definer#submit", definer_offer_value: @current_offer, definer_picked_counts_value: @guest_picked_counts } do |form| %>
+  <input name="time_slots[time_slot_array]" id="time_slot_array" type="hidden" value="<%= @hydrated %>" data-definer-target="slots">
   <%# Two faces around the panel, the same three children events/new has, so
       the same layout rule puts the grid before the submit on a phone. What is
       being changed and what went wrong come first; what the button will do

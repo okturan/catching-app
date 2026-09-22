@@ -1,7 +1,5 @@
+import { Controller } from "@hotwired/stimulus";
 import { DateTime } from "luxon";
-
-// The landing page's clock wall: five synchronized clocks, the visitor's zone
-// first, driven by one shared instant that the ruler can move.
 
 const CITIES = [
   ["Europe/Istanbul", "Istanbul"],
@@ -82,61 +80,93 @@ const pickCities = (visitorZone) => {
   return [visitor, ...others];
 };
 
-const initClockWall = () => {
-  const root = document.querySelector("#clock-wall");
-  if (!root) return;
-  if (root.__abort) root.__abort.abort();
-  const controller = new AbortController();
-  root.__abort = controller;
-  const { signal } = controller;
+const paintHands = (entry, local) => {
+  const seconds = local.second + local.millisecond / 1000;
+  const minutes = local.minute + seconds / 60;
+  const hours = (local.hour % 12) + minutes / 60;
+  entry.hands.hour.style.transform = `rotate(${hours * 30}deg)`;
+  entry.hands.minute.style.transform = `rotate(${minutes * 6}deg)`;
+  entry.hands.second.style.transform = `rotate(${seconds * 6}deg)`;
+};
 
-  const visitorZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-  const cards = pickCities(visitorZone).map(([zone, city], index) => buildCard(zone, city, index === 0));
-  root.replaceChildren(...cards.map((entry) => entry.card));
+// "now", "+3h", "−1h 30m": how far the ruler moved the shared moment.
+const shiftLabel = (offsetMinutes) => {
+  if (offsetMinutes === 0) return "now";
+  const sign = offsetMinutes > 0 ? "+" : "−";
+  const hours = Math.floor(Math.abs(offsetMinutes) / 60);
+  const minutes = Math.abs(offsetMinutes) % 60;
+  return `${sign}${hours}h${minutes ? ` ${minutes}m` : ""}`;
+};
 
-  const ruler = document.querySelector("#shared-moment");
-  const awake = document.querySelector(".time-ruler-awake");
-  const label = document.querySelector("#shared-moment-label");
-  const summary = document.querySelector("#awake-summary");
-  let offsetMinutes = 0;
+// The landing page's clock wall: five synchronized clocks, the visitor's zone
+// first, driven by one shared instant that the ruler moves.
+export default class extends Controller {
+  static targets = ["clocks", "ruler", "awake", "label", "summary"];
 
-  const paintHands = (entry, local) => {
-    const seconds = local.second + local.millisecond / 1000;
-    const minutes = local.minute + seconds / 60;
-    const hours = (local.hour % 12) + minutes / 60;
-    entry.hands.hour.style.transform = `rotate(${hours * 30}deg)`;
-    entry.hands.minute.style.transform = `rotate(${minutes * 6}deg)`;
-    entry.hands.second.style.transform = `rotate(${seconds * 6}deg)`;
-  };
+  connect() {
+    const visitorZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+    this.cards = pickCities(visitorZone).map(([zone, city], index) => buildCard(zone, city, index === 0));
+    this.clocksTarget.replaceChildren(...this.cards.map((entry) => entry.card));
+    this.offsetMinutes = 0;
 
-  const render = () => {
-    const instant = DateTime.now().plus({ minutes: offsetMinutes });
-    cards.forEach((entry) => {
+    // One authored motion: hands start at noon and sweep to now.
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      this.render();
+    } else {
+      this.cards.forEach((entry) => {
+        Object.values(entry.hands).forEach((hand) => { hand.style.transform = "rotate(0deg)"; });
+        entry.card.querySelector(".clock").setAttribute("data-sweep", "");
+      });
+      requestAnimationFrame(() => requestAnimationFrame(() => this.render()));
+      this.sweepEnd = setTimeout(() => {
+        this.cards.forEach((entry) => entry.card.querySelector(".clock").removeAttribute("data-sweep"));
+      }, 1600);
+    }
+    this.paintAwake();
+
+    // A newsroom clock sweeps: render every frame (five small SVGs).
+    const tick = () => {
+      this.render();
+      this.frame = requestAnimationFrame(tick);
+    };
+    this.frame = requestAnimationFrame(tick);
+  }
+
+  disconnect() {
+    cancelAnimationFrame(this.frame);
+    clearTimeout(this.sweepEnd);
+  }
+
+  move() {
+    this.offsetMinutes = Number(this.rulerTarget.value);
+    this.render();
+  }
+
+  render() {
+    const instant = DateTime.now().plus({ minutes: this.offsetMinutes });
+    this.cards.forEach((entry) => {
       const local = instant.setZone(entry.zone);
       paintHands(entry, local);
       entry.time.textContent = local.toFormat("HH:mm");
       entry.offset.textContent = offsetLabel(local);
       entry.card.title = `${entry.city}: ${local.toFormat("cccc HH:mm")}`;
     });
-    if (label) {
-      label.textContent = offsetMinutes === 0 ? "now" : `${offsetMinutes > 0 ? "+" : "−"}${Math.floor(Math.abs(offsetMinutes) / 60)}h${Math.abs(offsetMinutes) % 60 ? ` ${Math.abs(offsetMinutes) % 60}m` : ""}`;
-    }
-  };
+    this.labelTarget.textContent = shiftLabel(this.offsetMinutes);
+  }
 
   // The awake band: every quarter hour of the ruler where all five cities
   // sit between 08:00 and 23:00 local time.
-  const paintAwake = () => {
-    if (!awake || !ruler) return;
-    const min = Number(ruler.min);
-    const max = Number(ruler.max);
-    const step = Number(ruler.step) || 15;
+  paintAwake() {
+    const min = Number(this.rulerTarget.min);
+    const max = Number(this.rulerTarget.max);
+    const step = Number(this.rulerTarget.step) || 15;
     const now = DateTime.now();
     const stops = [];
     let awakeMinutes = 0;
     for (let offset = min; offset < max; offset += step) {
       const instant = now.plus({ minutes: offset });
-      const everyone = cards.every((entry) => {
-        const hour = instant.setZone(entry.zone).hour;
+      const everyone = this.cards.every((entry) => {
+        const { hour } = instant.setZone(entry.zone);
         return hour >= AWAKE_FROM && hour < AWAKE_TO;
       });
       if (everyone) awakeMinutes += step;
@@ -144,45 +174,11 @@ const initClockWall = () => {
       const to = ((offset + step - min) / (max - min)) * 100;
       stops.push(`${everyone ? "var(--awake)" : "transparent"} ${from.toFixed(2)}% ${to.toFixed(2)}%`);
     }
-    awake.style.backgroundImage = `linear-gradient(to right, ${stops.join(", ")})`;
-    if (summary) {
-      const hours = Math.round(awakeMinutes / 60);
-      summary.textContent = hours === 0
-        ? "No hour in the 24 around now finds all five awake. That is why you paint a range."
-        : `Yellow: ${hours} hour${hours === 1 ? "" : "s"} in the 24 around now when all five are awake.`;
-    }
-  };
+    this.awakeTarget.style.backgroundImage = `linear-gradient(to right, ${stops.join(", ")})`;
 
-  if (ruler) {
-    ruler.addEventListener("input", () => {
-      offsetMinutes = Number(ruler.value);
-      render();
-    }, { signal });
+    const hours = Math.round(awakeMinutes / 60);
+    this.summaryTarget.textContent = hours === 0
+      ? "No hour in the 24 around now finds all five awake. That is why you paint a range."
+      : `Yellow: ${hours} hour${hours === 1 ? "" : "s"} in the 24 around now when all five are awake.`;
   }
-
-  // One authored motion: hands start at noon and sweep to now.
-  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (!reduced) {
-    cards.forEach((entry) => {
-      Object.values(entry.hands).forEach((hand) => { hand.style.transform = "rotate(0deg)"; });
-      entry.card.querySelector(".clock").setAttribute("data-sweep", "");
-    });
-    requestAnimationFrame(() => requestAnimationFrame(render));
-    setTimeout(() => {
-      cards.forEach((entry) => entry.card.querySelector(".clock").removeAttribute("data-sweep"));
-    }, 1600);
-  } else {
-    render();
-  }
-  paintAwake();
-
-  // A newsroom clock sweeps: render every frame (five small SVGs).
-  const tick = () => {
-    if (signal.aborted) return;
-    render();
-    requestAnimationFrame(tick);
-  };
-  requestAnimationFrame(tick);
-};
-
-export { initClockWall };
+}

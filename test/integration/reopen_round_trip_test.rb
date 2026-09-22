@@ -55,7 +55,7 @@ class ReopenRoundTripTest < ActionDispatch::IntegrationTest
     assert_response :not_found
     get participation_path(@guest_token)
     assert_select ".grid-notice", text: /The set time was withdrawn on/
-    assert_select "#my-time-slots[value=?]", [ @ten ].to_json
+    assert_select "[data-availability-mine-value=?]", [ @ten ].to_json
 
     patch participation_offer_path(@organizer_token), params: { time_slots: { time_slot_array: [ @ten, @eleven, @twelve ].join(",") }, notice: { send: "0" } }
     assert_equal "Times updated: 1 added, 0 removed.", flash[:notice]

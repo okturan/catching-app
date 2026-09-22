@@ -14,9 +14,9 @@ class ParticipationsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select 'table#time-grid-show[role=grid][data-role=guest][data-slot-minutes="60"][data-event-time-zone="UTC"]'
-    assert_select "#received-time-slots[value=?]", [ "2030-01-15T10:00:00Z", "2030-01-15T11:00:00Z" ].to_json
-    assert_select "#my-time-slots[value=?]", [ "2030-01-15T10:00:00Z" ].to_json
-    assert_select "#availability-counts"
+    assert_select "[data-availability-offered-value=?]", [ "2030-01-15T10:00:00Z", "2030-01-15T11:00:00Z" ].to_json
+    assert_select "[data-availability-mine-value=?]", [ "2030-01-15T10:00:00Z" ].to_json
+    assert_select "[data-availability-counts-value]"
     assert_select "form#availability-form[action=?]", participation_path(@guest_token)
     assert_select "button[form=availability-form]", "Save"
     assert_select "a[href=?]", participation_claim_path(@guest_token), count: 0, text: "Keep this event in your account"
@@ -235,7 +235,7 @@ class ParticipationsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "table#time-grid-show[data-role=guest]:not([data-finalized])"
     assert_select "#availability-form"
-    assert_select "#my-time-slots[value=?]", [ "2030-01-15T10:00:00Z" ].to_json
+    assert_select "[data-availability-mine-value=?]", [ "2030-01-15T10:00:00Z" ].to_json
     assert_select "button[form=availability-form]", "Save"
     assert_select ".grid-action-bar .grid-notice[role=status]", count: 1 do
       assert_select "time.time[data-zoned-instant][data-zoned-format='date-time'][datetime=?]", "2025-01-10T19:00:00Z", text: "Fri 10 Jan 2025 20:00 (Europe/Berlin)"
@@ -302,7 +302,7 @@ class ParticipationsControllerTest < ActionDispatch::IntegrationTest
     end
     notice = css_select(".grid-notice").first.text.squish
     assert_equal "The organizer changed the offered times on Thu 10 Jan 2030 20:00 (Europe/Berlin): 4 added, 1 removed. Check your picks and save again.", notice
-    assert_select "#my-time-slots[value=?]", [ "2030-01-15T10:00:00Z" ].to_json
+    assert_select "[data-availability-mine-value=?]", [ "2030-01-15T10:00:00Z" ].to_json
     assert_select "button[form=availability-form]", "Save"
 
     @guest.update_columns(responded_at: Time.utc(2030, 1, 11, 9))
@@ -324,7 +324,7 @@ class ParticipationsControllerTest < ActionDispatch::IntegrationTest
     get participation_path(@guest_token)
     assert_response :success
     assert_select ".grid-action-bar .grid-notice[role=status]", text: "None of the times you picked are offered any more. Pick again."
-    assert_select "#my-time-slots[value=?]", [].to_json
+    assert_select "[data-availability-mine-value=?]", [].to_json
     assert_select "button[form=availability-form]", "Save"
 
     assert_no_difference "MailDelivery.count" do

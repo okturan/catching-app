@@ -90,7 +90,7 @@ module Participations
       get participation_path(@organizer_token)
       assert_response :success
       assert_select "table#time-grid-show[data-role=organizer]:not([data-finalized])"
-      assert_select "#consensus-time-slots[value=?]", [ "2030-01-15T10:00:00Z" ].to_json
+      assert_select "[data-availability-consensus-value=?]", [ "2030-01-15T10:00:00Z" ].to_json
       assert_select "#finalize-form"
       assert_select "button[form=finalize-form]", text: "Set in stone"
       assert_select "a.plate-button-sm[href=?]", edit_participation_offer_path(@organizer_token), text: "Change the times"
@@ -103,7 +103,7 @@ module Participations
       assert_select "a", text: "Add to calendar", count: 0
       assert_select "button", text: "Reopen the time", count: 0
       assert_select "form[action=?]", participation_cancellation_path(@organizer_token)
-      assert_select "#final-window", count: 0
+      assert_select "[data-availability-set-window-value]", count: 0
 
       get participation_calendar_path(@organizer_token)
       assert_response :not_found
@@ -130,7 +130,7 @@ module Participations
       assert_response :success
       assert_select "table#time-grid-show[data-role=guest]"
       assert_select "#availability-form"
-      assert_select "#my-time-slots[value=?]", [ "2030-01-15T10:00:00Z" ].to_json
+      assert_select "[data-availability-mine-value=?]", [ "2030-01-15T10:00:00Z" ].to_json
       assert_select ".grid-action-bar .grid-notice[role=status]", text: /\AThe set time was withdrawn on .* Check your picks and save\.\z/m do
         assert_select "time.time[data-zoned-instant][datetime=?]", @event.reopened_at.utc.iso8601
       end

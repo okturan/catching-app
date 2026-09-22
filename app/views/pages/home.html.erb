@@ -1,18 +1,19 @@
-<section class="wall-hero" aria-labelledby="hero-title">
-  <div id="clock-wall" class="clock-row" aria-label="The same moment in five cities" role="group"></div>
+<section class="wall-hero" aria-labelledby="hero-title" data-controller="clock-wall">
+  <div id="clock-wall" class="clock-row" aria-label="The same moment in five cities" role="group" data-clock-wall-target="clocks"></div>
 
   <div class="time-ruler" id="time-ruler">
     <p class="time-ruler-hint"><strong>Drag the red line</strong> to move every clock to the same shared moment.</p>
     <div class="time-ruler-track">
-      <div class="time-ruler-awake" aria-hidden="true"></div>
+      <div class="time-ruler-awake" aria-hidden="true" data-clock-wall-target="awake"></div>
       <div class="time-ruler-ticks" aria-hidden="true"><%= ("<span></span>" * 25).html_safe %></div>
       <label class="visually-hidden" for="shared-moment">Shared moment, hours from now</label>
-      <input type="range" id="shared-moment" min="-720" max="720" step="15" value="0">
+      <input type="range" id="shared-moment" min="-720" max="720" step="15" value="0"
+        data-clock-wall-target="ruler" data-action="clock-wall#move">
     </div>
     <div class="time-ruler-scale" aria-hidden="true"><span>−12h</span><span>−6h</span><span>now</span><span>+6h</span><span>+12h</span></div>
     <div class="time-ruler-legend">
-      <span><span class="swatch" aria-hidden="true"></span><span id="awake-summary">Yellow marks when everyone is awake.</span></span>
-      <output for="shared-moment" id="shared-moment-label" class="time">now</output>
+      <span><span class="swatch" aria-hidden="true"></span><span id="awake-summary" data-clock-wall-target="summary">Yellow marks when everyone is awake.</span></span>
+      <output for="shared-moment" id="shared-moment-label" class="time" data-clock-wall-target="label">now</output>
     </div>
   </div>
 

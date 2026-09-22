@@ -5,15 +5,10 @@
 <% content_for :canonical_url, root_url %>
 <% content_for :meta_title, "#{@event.name} · Catching App" %>
 
-<input id="received-time-slots" type="hidden" value="<%= @offered_slots.to_json %>">
-<input id="my-time-slots" type="hidden" value="<%= @my_slots.to_json %>">
-<input id="availability-counts" type="hidden" value="<%= @availability_counts.to_json %>">
-<input id="consensus-time-slots" type="hidden" value="<%= @consensus_slots.to_json %>">
-<% if @event.finalized? %>
-  <input id="final-window" type="hidden" value="<%= [@event.start_time.iso8601, @event.end_time.iso8601].to_json %>">
-<% end %>
-
-<div class="event-show-grid">
+<%= tag.div class: "event-show-grid", data: {
+      controller: "availability", action: "submit->availability#remember pageshow@window->availability#reloadIfPersisted",
+      availability_offered_value: @offered_slots, availability_mine_value: @my_slots, availability_counts_value: @availability_counts,
+      availability_consensus_value: @consensus_slots, availability_set_window_value: @set_window } do %>
   <div class="event-show-card">
     <%= render "participations/show/display", event: @event, participant: @participant %>
 
@@ -33,7 +28,7 @@
       <%= render "participations/show/answer", event: @event, participant: @participant %>
     <% elsif @event.open? %>
       <%= form_with url: scoped_path(:finalization), method: :post, id: "finalize-form" do %>
-        <input id="final-time-slot-array" name="time_slots[time_slot_array]" type="hidden" value="">
+        <input id="final-time-slot-array" name="time_slots[time_slot_array]" type="hidden" value="" data-availability-target="slots">
       <% end %>
     <% end %>
 
@@ -50,4 +45,4 @@
 
   <%= render "participations/show/grid", event: @event, participant: @participant, role: @role, counts: @counts,
         revision_notice: @revision_notice, every_offer_past: @every_offer_past %>
-</div>
+<% end %>

@@ -74,8 +74,8 @@ module Participations
       assert_select "form#offer-form[action=?][method=post]", participation_offer_path(@organizer_token) do
         assert_select "input[name='_method'][value=patch]"
         assert_select "input#time_slot_array[name='time_slots[time_slot_array]'][type=hidden][value=?]", "#{@ten},#{@eleven}"
-        assert_select "input#current-offer[type=hidden][value=?]", [ @ten, @eleven ].to_json
-        assert_select "input#guest-picked-counts[type=hidden][value=?]", { @ten => 1 }.to_json
+        assert_select "form#offer-form[data-definer-offer-value=?]", [ @ten, @eleven ].to_json
+        assert_select "form#offer-form[data-definer-picked-counts-value=?]", { @ten => 1 }.to_json
         assert_select "select#event_slot_minutes[name='event[slot_minutes]'][disabled][aria-describedby=grid-frozen-note]" do
           assert_select "option[value='60'][selected]", "60 minutes"
         end
@@ -118,9 +118,9 @@ module Participations
 
       assert_response :success
       assert_select "input#time_slot_array[value=?]", "#{@ten},#{@eleven}"
-      assert_select "input#current-offer[value=?]", [ @ten, @eleven ].to_json
+      assert_select "form#offer-form[data-definer-offer-value=?]", [ @ten, @eleven ].to_json
       assert_select ".offer-note", text: "1 past time stays as it is"
-      counts = JSON.parse(css_select("#guest-picked-counts").first["value"])
+      counts = JSON.parse(css_select("form#offer-form").first["data-definer-picked-counts-value"])
       assert_equal 1, counts[@ten]
       assert_nil counts[@eleven], "declined and unreplied guests hold nothing that counts"
       assert_equal 1, counts[past.iso8601], "a past pick still shows on its cell"

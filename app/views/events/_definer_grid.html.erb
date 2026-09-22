@@ -16,14 +16,14 @@
   </div>
   <div class="time-grid-scroll">
     <table id="time-grid-define" class="time-grid" role="grid" aria-label="Offered times"
-      tabindex="-1" aria-describedby="grid-paint-hint"
+      tabindex="-1" aria-describedby="grid-paint-hint" data-definer-target="grid"
       data-slot-minutes="<%= event.slot_minutes %>"
       data-time-zone="<%= event.time_zone.presence || params.dig(:event, :time_zone) %>"
       data-not-before="<%= TimeSlot::PAST_GRACE.ago.utc.iso8601 %>"></table>
   </div>
   <div class="grid-action-bar">
-    <span id="selection-summary" aria-live="polite">No times selected</span>
-    <fieldset id="paint-mode" class="paint-mode" role="radiogroup" aria-label="Touch mode">
+    <span id="selection-summary" aria-live="polite" data-definer-target="summary">No times selected</span>
+    <fieldset id="paint-mode" class="paint-mode" role="radiogroup" aria-label="Touch mode" data-definer-target="paintMode">
       <label><input type="radio" name="paint-mode" value="scroll" checked><span>Scroll</span></label>
       <label><input type="radio" name="paint-mode" value="paint"><span>Paint</span></label>
     </fieldset>
