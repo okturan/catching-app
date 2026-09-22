@@ -10,8 +10,7 @@
       <% if event.duration_minutes %>data-duration-minutes="<%= event.duration_minutes %>"<% end %>></table>
   </div>
   <div class="grid-action-bar">
-    <%# When nothing offered is still in the future, "save again" would be a lie. %>
-    <% case (every_offer_past ? nil : revision_notice) %>
+    <% case notice %>
     <% when :stale %>
       <p class="grid-notice" role="status">The organizer changed the offered times on
         <%= zoned_time(event.offer_revised_at, event.time_zone, format: :date_time) %>:
@@ -23,29 +22,28 @@
     <% when :reopened %>
       <p class="grid-notice" role="status">The set time was withdrawn on
         <%= zoned_time(event.reopened_at, event.time_zone, format: :date_time) %>. Check your picks and save.</p>
-    <% end %>
-    <% organizing = participant.organizer? && event.open? %>
-    <% if organizing && !every_offer_past && (counts[:stale] + counts[:voided]).positive? %>
+    <% when :unanswered %>
       <p class="grid-notice" role="status"><%= pluralize(counts[:stale] + counts[:voided], "guest has", plural: "guests have") %> not answered the current times</p>
     <% end %>
-    <% guest_dead_end = participant.guest? && event.open? && every_offer_past %>
-    <span id="selection-summary" aria-live="polite" data-availability-target="summary"><%= guest_dead_end ? "All the offered times have passed." : "No times selected" %></span>
+    <% dead_end = action == :save && every_offer_past %>
+    <span id="selection-summary" aria-live="polite" data-availability-target="summary"><%= dead_end ? "All the offered times have passed." : "No times selected" %></span>
     <fieldset id="paint-mode" class="paint-mode" role="radiogroup" aria-label="Touch mode" data-availability-target="paintMode">
       <label><input type="radio" name="paint-mode" value="scroll" checked><span>Scroll</span></label>
       <label><input type="radio" name="paint-mode" value="paint"><span>Paint</span></label>
     </fieldset>
-    <% if participant.guest? && event.open? %>
-      <button type="submit" form="availability-form" class="btn-meeting px-5"<%= " hidden" if guest_dead_end %>>Save</button>
-    <% elsif organizing && every_offer_past %>
+    <% case action %>
+    <% when :save %>
+      <button type="submit" form="availability-form" class="btn-meeting px-5"<%= " hidden" if dead_end %>>Save</button>
+    <% when :change_the_times %>
       <span class="grid-every-past">
         <span>Every offered time has passed.</span>
         <%= link_to "Change the times", edit_participant_offer_path(participant), class: "plate-button-sm" %>
       </span>
-    <% elsif organizing && counts[:replied].positive? %>
+    <% when :set_in_stone %>
       <button type="submit" form="finalize-form" class="btn-meeting px-5">Set in stone</button>
-    <% elsif organizing && counts[:voided].positive? %>
+    <% when :awaiting_answers %>
       <span class="text-muted">No one has answered the current times yet.</span>
-    <% elsif organizing %>
+    <% when :awaiting_replies %>
       <span class="text-muted">No replies yet. Invitations sent to <%= pluralize(counts[:invited], "person", plural: "people") %>.</span>
     <% end %>
   </div>

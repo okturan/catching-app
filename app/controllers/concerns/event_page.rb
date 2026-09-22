@@ -9,10 +9,11 @@ module EventPage
     @guests = @event.guests.order(:created_at)
     @role = viewer_role
     @plan = @event.plan_timeline
-    @revision_notice = revision_notice
     @every_offer_past = @event.every_offer_past?
     load_grid
     load_guest_table if @participant.organizer?
+    @grid_notice = grid_notice
+    @grid_action = grid_action
   end
 
   # What the grid's controller reads: the offer, the viewer's own picks, how
@@ -43,6 +44,28 @@ module EventPage
     # The Tell the guests reminder: a revision no mail batch has reached,
     # someone with a link to tell, and an event that is still on.
     @untold_changes = @event.revision > @event.notified_revision && !@event.cancelled? && @counts[:invited].positive?
+  end
+
+  # The line above the grid that says what changed under the viewer. When
+  # every offered time has passed, "save again" would be a lie, so none.
+  def grid_notice
+    return if @every_offer_past
+
+    if @participant.organizer?
+      :unanswered if @event.open? && (@counts[:stale] + @counts[:voided]).positive?
+    else
+      revision_notice
+    end
+  end
+
+  # What the end of the grid's action bar offers the viewer while planning.
+  def grid_action
+    return unless @event.open?
+    return :save if @participant.guest?
+    return :change_the_times if @every_offer_past
+    return :set_in_stone if @counts[:replied].positive?
+
+    @counts[:voided].positive? ? :awaiting_answers : :awaiting_replies
   end
 
   # What a guest who already replied must hear, while the event is open:

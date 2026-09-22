@@ -825,4 +825,15 @@ class EventTest < ActiveSupport::TestCase
     ActiveSupport::Notifications.subscribed(callback, "sql.active_record") { yield }
     queries
   end
+
+  test "an event is set in stone once finalized, until it is cancelled" do
+    assert_not events(:planning).set_in_stone?
+
+    finalized = events(:finalized)
+    assert finalized.set_in_stone?
+
+    finalized.cancel!
+    assert_not finalized.set_in_stone?
+    assert finalized.finalized?
+  end
 end

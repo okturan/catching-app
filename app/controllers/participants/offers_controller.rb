@@ -32,7 +32,7 @@ module Participants
 
     # A set time is changed by reopening it, never by repainting the offer.
     def refuse_finalized
-      if @event.finalized? && !@event.cancelled?
+      if @event.set_in_stone?
         redirect_to @participant, alert: "Reopen the time before changing the offer", status: :see_other
       end
     end

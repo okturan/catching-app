@@ -52,6 +52,11 @@ class Event < ApplicationRecord
     !finalized? && !cancelled?
   end
 
+  # The time is set and the event is still on.
+  def set_in_stone?
+    finalized? && !cancelled?
+  end
+
   # Cancelled wins over finalized: a cancelled event has one message.
   def ensure_open!
     ensure_not_cancelled!
