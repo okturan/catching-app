@@ -19,8 +19,8 @@ module ParticipationPage
     @availability_counts = @event.time_slots.where(participant_id: others).group(:start_time).count.transform_keys(&:iso8601)
 
     if @participant.organizer?
-      @deliveries = @event.mail_deliveries.where(kind: %w[invitation]).order(:created_at)
-        .group_by(&:participant_id)
+      @deliveries = @event.mail_deliveries.invitation.order(:created_at).group_by(&:participant_id)
+      @slot_counts = @event.time_slots.group(:participant_id).count
       active_guests = @event.guests.active
       @counts = {
         invited: active_guests.linked.count,

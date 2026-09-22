@@ -169,15 +169,19 @@ const initTimeSlotDefiner = () => {
     });
   };
 
-  const draw = () => {
+  // Redraws the grid. `reason` says what the visitor just did to the
+  // selection, and shows only if something is still selected once the dates
+  // and the cut-off have pruned it.
+  const draw = (reason = "") => {
     grid.replaceChildren();
+    note = "";
     if (!updateDateRange()) {
       serialize();
       return;
     }
     const dropped = dropOutsideRange();
-    if (dropped > 0) note = `${dropped} outside the dates dropped`;
     dropPast();
+    note = [selection.size > 0 && reason, dropped > 0 && `${dropped} outside the dates dropped`].filter(Boolean).join(". ");
     renderDefinerTable(grid, localDayColumns(rangeStart, rangeEnd, slotMinutes), {
       selection,
       slotMinutes,
@@ -218,8 +222,7 @@ const initTimeSlotDefiner = () => {
       const remapped = remapZone(selection, previous, selectedTimeZone);
       selection.clear();
       remapped.forEach((iso) => selection.add(iso));
-      note = selection.size > 0 ? `Moved to ${selectedTimeZone} wall clock` : "";
-      draw();
+      draw(`Moved to ${selectedTimeZone} wall clock`);
     },
     { signal },
   );
@@ -235,7 +238,6 @@ const initTimeSlotDefiner = () => {
         selection.clear();
         rescaled.forEach((iso) => selection.add(iso));
         syncDurationOptions(durationSelect, next, durationNote);
-        note = "";
         draw();
       },
       { signal },
@@ -243,14 +245,7 @@ const initTimeSlotDefiner = () => {
   }
 
   [beginDateInput, endDateInput].forEach((input) => {
-    input.addEventListener(
-      "change",
-      () => {
-        note = "";
-        draw();
-      },
-      { signal },
-    );
+    input.addEventListener("change", () => draw(), { signal });
   });
 
   // The one error native validation cannot raise. The button is never

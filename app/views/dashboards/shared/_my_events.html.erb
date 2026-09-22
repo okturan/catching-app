@@ -30,7 +30,7 @@
             <span class="event-face-state">
               <% if event.cancelled? %>cancelled ·<% end %>
               <% if participation.organizer? %>
-                <%= pluralize(event.guests.active.count, "guest") %>
+                <%= pluralize(@guest_counts[event.id].to_i, "guest") %>
               <% else %>
                 by <%= event.organizer.display_name %> ·
                 <% if participation.declined_at.present? %>

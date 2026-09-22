@@ -1,0 +1,14 @@
+<div class="event-show-card-top">
+  <div class="mb-3 rounded" id="event-show-select">
+    <label class="visually-hidden" for="timezone-picker-show">Display time zone</label>
+    <select class="form-select" id="timezone-picker-show" data-selected="<%= participant.time_zone %>"></select>
+    <small class="text-muted">Shown in your zone · planned in <%= event.time_zone %></small>
+  </div>
+  <label class="switch-row">
+    <span class="switch">
+      <input type="checkbox" id="hide-disabled-cells">
+      <span class="slider round"></span>
+    </span>
+    <span class="switch-label">Hide times not offered</span>
+  </label>
+</div>

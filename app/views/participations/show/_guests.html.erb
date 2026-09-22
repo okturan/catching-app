@@ -1,0 +1,45 @@
+<section class="mt-4 organizer-panel" aria-labelledby="participants-heading">
+  <h5 id="participants-heading">Guests</h5>
+  <% if event.cancelled? %>
+  <% elsif !organizer.link_opened_at? %>
+    <p class="text-warning">
+      Open the organizer link we emailed to <%= organizer.email %> to send invitations.
+    </p>
+    <%= button_to "Send the link again", organizer_links_path, method: :post, class: "btn btn-outline-secondary btn-sm",
+      params: { "organizer_link[email]" => organizer.email } %>
+  <% elsif !event.finalized? %>
+    <%= form_with url: scoped_path(:invitations), method: :post, class: "mb-3" do |form| %>
+      <%= form.label :emails, "Invite more people (one address per line or comma-separated)", for: "invitations_emails", class: "form-label" %>
+      <%= form.text_area :emails, id: "invitations_emails", name: "invitations[emails]", class: "form-control", rows: 3 %>
+      <%= form.submit(counts[:unsent].positive? ? "Send #{pluralize(counts[:unsent], 'invitation')}" : "Send invitations", class: "btn btn-primary mt-2") %>
+    <% end %>
+  <% end %>
+
+  <table class="table table-sm align-middle" id="participant-table">
+    <thead>
+      <tr><th scope="col">Guest</th><th scope="col">State</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr>
+    </thead>
+    <tbody>
+      <% guests.each do |guest| %>
+        <tr>
+          <td>
+            <%= guest.email %>
+            <% if guest.name.present? %><br><small><%= guest.name %></small><% end %>
+          </td>
+          <td><%= guest_state_label(guest, deliveries, slot_count: slot_counts[guest.id].to_i) %></td>
+          <td class="text-nowrap">
+            <% if !guest.left? && event.open? && organizer.link_opened_at? %>
+              <%= button_to "Resend", scoped_path(:participant_resend, guest), method: :post, class: "btn btn-link btn-sm p-0 me-2" %>
+              <%= button_to "Show link to copy", scoped_path(:participant_link_reveal, guest), method: :post, class: "btn btn-link btn-sm p-0 me-2",
+                form: { data: { turbo_confirm: "Anyone with this link can answer as this guest. Show it?" } } %>
+            <% end %>
+            <% if !guest.left? && event.open? %>
+              <%= button_to "Remove", scoped_path(:participant, guest), method: :delete, class: "btn btn-link btn-sm p-0 text-danger",
+                form: { data: { turbo_confirm: "Remove #{guest.email} from this event?" } } %>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</section>

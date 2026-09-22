@@ -1,0 +1,8 @@
+<div class="event-organizer-ends">
+  <% if event.finalized? && event.reopen_count < Event::REOPEN_LIMIT %>
+    <%= button_to "Reopen the time", scoped_path(:reopening), method: :post, class: "btn btn-outline-secondary",
+      form: { data: { turbo_confirm: "Withdraw #{event_window(event)}? Everyone with a link is told once and can paint again." } } %>
+  <% end %>
+  <%= button_to "Cancel this event", scoped_path(:cancellation), method: :post, class: "btn btn-outline-danger",
+    form: { data: { turbo_confirm: "Cancel #{event.name} for everyone? Everyone with a link gets one last email. This cannot be undone." } } %>
+</div>

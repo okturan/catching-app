@@ -1,0 +1,17 @@
+<div class="event-people">
+  <% if participant.organizer? %>
+    <strong><%= counts[:invited] %></strong> invited,
+    <strong><%= counts[:replied] %></strong> replied,
+    <strong><%= counts[:declined] %></strong> cannot make it,
+    <strong><%= counts[:unsent] %></strong> not yet invited<% if counts[:stale].positive? %>,
+    <strong><%= counts[:stale] %></strong> replied before the last change<% end %><% if counts[:voided].positive? %>,
+    <strong><%= counts[:voided] %></strong> <%= counts[:voided] == 1 ? "needs" : "need" %> a new reply<% end %>
+  <% else %>
+    Organized by <strong><%= event.organizer.display_name %></strong>. Also invited:
+    <ul>
+      <% guests.active.each do |guest| %>
+        <li><%= guest.display_name %></li>
+      <% end %>
+    </ul>
+  <% end %>
+</div>
