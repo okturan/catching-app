@@ -306,28 +306,28 @@ module Participations
       yesterday = 2.days.ago.utc.beginning_of_hour.iso8601
       patch participation_offer_path(@organizer_token), params: { time_slots: { time_slot_array: yesterday } }
       assert_response :unprocessable_entity
-      assert_select ".alert-danger", text: "Select time slots from today onward"
+      assert_select "#error-summary a[href='#time-grid-define']", text: "Select time slots from today onward"
       assert_select "input#time_slot_array[value=?]", yesterday
       assert_select "form#offer-form"
       assert_select "table#time-grid-define[data-not-before]"
 
       patch participation_offer_path(@organizer_token), params: { time_slots: { time_slot_array: "#{@ten},2030-01-15T10:30:00Z" } }
       assert_response :unprocessable_entity
-      assert_select ".alert-danger", text: "Select time slots on the event's 60-minute grid"
+      assert_select "#error-summary a[href='#time-grid-define']", text: "Select time slots on the event's 60-minute grid"
       assert_select "input#time_slot_array[value=?]", "#{@ten},2030-01-15T10:30:00Z"
 
       patch participation_offer_path(@organizer_token), params: { time_slots: { time_slot_array: "" } }
       assert_response :unprocessable_entity
-      assert_select ".alert-danger", text: "Select at least one time slot"
+      assert_select "#error-summary a[href='#time-grid-define']", text: "Select at least one time slot"
 
       patch participation_offer_path(@organizer_token), params: { time_slots: { time_slot_array: "nonsense" } }
       assert_response :unprocessable_entity
-      assert_select ".alert-danger", text: "Time slots must use ISO 8601 timestamps"
+      assert_select "#error-summary a[href='#time-grid-define']", text: "Time slots must use ISO 8601 timestamps"
 
       event, token = fresh_event
       patch participation_offer_path(token), params: { event: { time_zone: "Mars/Olympus" }, time_slots: { time_slot_array: "2031-05-01T09:00:00Z" } }
       assert_response :unprocessable_entity
-      assert_select ".alert-danger", text: /is not a known time zone/
+      assert_select "#error-summary a[href='#timezone-picker-new']", text: "Time zone is not a known time zone"
       assert_equal "Europe/Berlin", event.reload.time_zone
 
       assert_equal before, offer

@@ -3,17 +3,18 @@ module EventsHelper
   DURATION_TAIL = [ 300, 360, 480, 720, 1440 ].freeze
   PLAN_DURATIONS = [ 15, 30, 45, 60, 90, 120, 150, 180, 240 ].freeze
 
-  # The planning form's summary, in the page's order: the grid's refusals
-  # (base errors, since every refusal this form meets is about the painted
-  # selection), then the fields, then the organizer's "Your name" and "Your
-  # email". The zone is listed too and must stay listed: its picker is drawn
-  # by hand without an inline error, so the summary is the only place its
-  # message is ever said.
-  def planning_error_links(event, organizer)
+  # The summary of a form with the definer, in the page's order: the grid's
+  # refusals (base errors, since every refusal these forms meet is about the
+  # painted selection), then the fields, then on the planning form the
+  # organizer's "Your name" and "Your email". The zone is listed too and must
+  # stay listed: its picker is drawn by hand without an inline error, so the
+  # summary is the only place its message is ever said.
+  def definer_error_links(event, organizer: nil)
     grid, fields = event.errors.partition { it.attribute == :base }
-    grid.map { [ it.message, "time-grid-define" ] } +
-      fields.map { [ it.full_message, it.attribute == :time_zone ? "timezone-picker-new" : "event_#{it.attribute}" ] } +
-      organizer.errors.map { [ "Your #{it.attribute} #{it.message}", "organizer_#{it.attribute}" ] }
+    links = grid.map { [ it.message, "time-grid-define" ] } +
+      fields.map { [ it.full_message, it.attribute == :time_zone ? "timezone-picker-new" : "event_#{it.attribute}" ] }
+    links += organizer.errors.map { [ "Your #{it.attribute} #{it.message}", "organizer_#{it.attribute}" ] } if organizer
+    links
   end
 
   # Every quarter hour up to four hours, then a few long stretches.

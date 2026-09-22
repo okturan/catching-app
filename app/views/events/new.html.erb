@@ -14,7 +14,7 @@
 
   <%# One summary for the whole form, first child, full width: the grid's
       refusals, then the fields, then the organizer's two. %>
-  <%= form.error_summary(planning_error_links(@event, @organizer)) %>
+  <%= form.error_summary(definer_error_links(@event, organizer: @organizer)) %>
 
   <section class="form-events" aria-labelledby="meeting-heading">
     <h2 id="meeting-heading">The meeting</h2>
