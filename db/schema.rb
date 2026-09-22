@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_22_000002) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_22_000003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -56,11 +56,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_000002) do
     t.string "recipient_email", null: false
     t.string "request_ip"
     t.string "sender_email"
-    t.index ["canonical_recipient_email", "created_at"], name: "idx_on_canonical_recipient_email_created_at_1846ffef76"
-    t.index ["event_id", "canonical_recipient_email"], name: "idx_on_event_id_canonical_recipient_email_79ed6ea4e6"
-    t.index ["event_id"], name: "index_mail_deliveries_on_event_id"
+    t.index ["canonical_recipient_email", "created_at"], name: "index_mail_deliveries_on_recipient_and_created_at"
+    t.index ["event_id", "canonical_recipient_email"], name: "index_mail_deliveries_on_event_and_recipient"
     t.index ["participant_id", "created_at"], name: "index_mail_deliveries_on_participant_id_and_created_at"
-    t.index ["participant_id"], name: "index_mail_deliveries_on_participant_id"
     t.index ["request_ip", "created_at"], name: "index_mail_deliveries_on_request_ip_and_created_at"
     t.index ["sender_email", "created_at"], name: "index_mail_deliveries_on_sender_email_and_created_at"
     t.check_constraint "kind::text = ANY (ARRAY['organizer_link'::character varying, 'invitation'::character varying, 'response_confirmation'::character varying, 'finalized'::character varying, 'link_shown'::character varying, 'event_updated'::character varying, 'cancelled'::character varying, 'reopened'::character varying]::text[])", name: "mail_deliveries_kind_allowed"
@@ -84,14 +82,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_000002) do
     t.datetime "updated_at", null: false
     t.bigint "user_id"
     t.index ["event_id", "email"], name: "index_participants_on_event_id_and_email", unique: true
-    t.index ["event_id"], name: "index_participants_on_event_id"
     t.index ["event_id"], name: "index_participants_one_organizer_per_event", unique: true, where: "((role)::text = 'organizer'::text)"
     t.index ["id", "event_id"], name: "index_participants_on_id_and_event_id", unique: true
     t.index ["pending_token_digest"], name: "index_participants_on_pending_token_digest", unique: true
     t.index ["role", "email", "created_at"], name: "index_participants_on_role_and_email_and_created_at"
     t.index ["token_digest"], name: "index_participants_on_token_digest", unique: true
     t.index ["user_id", "event_id"], name: "index_participants_on_user_id_and_event_id", unique: true, where: "(user_id IS NOT NULL)"
-    t.index ["user_id"], name: "index_participants_on_user_id"
     t.check_constraint "declined_at IS NULL OR responded_at IS NOT NULL", name: "participants_declined_implies_responded"
     t.check_constraint "email::text = btrim(email::text) AND email::text !~ '[ABCDEFGHIJKLMNOPQRSTUVWXYZ]'::text AND POSITION(('@'::text) IN (email)) > 1", name: "participants_email_normalized"
     t.check_constraint "left_at IS NULL OR token_digest IS NULL AND pending_token_digest IS NULL AND declined_at IS NOT NULL AND user_id IS NULL AND role::text = 'guest'::text", name: "participants_left_is_revoked"

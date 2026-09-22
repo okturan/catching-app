@@ -24,12 +24,12 @@ class Event < ApplicationRecord
   # is a new revision of what guests see.
   DETAIL_ATTRIBUTES = %w[name description place place_url duration_minutes].freeze
 
-  has_many :participants, dependent: :destroy, inverse_of: :event
-  has_one :organizer, -> { organizer }, class_name: "Participant", inverse_of: :event
-  has_many :guests, -> { guest }, class_name: "Participant", inverse_of: :event
-  has_many :plan_items, -> { order(:position, :id) }, dependent: :destroy, inverse_of: :event
-  has_many :time_slots, dependent: :delete_all, inverse_of: :event
-  has_many :mail_deliveries, dependent: :delete_all, inverse_of: :event
+  has_many :participants
+  has_one :organizer, -> { organizer }, class_name: "Participant"
+  has_many :guests, -> { guest }, class_name: "Participant"
+  has_many :plan_items, -> { order(:position, :id) }, dependent: :delete_all
+  has_many :time_slots, dependent: :delete_all
+  has_many :mail_deliveries
 
   normalizes :name, with: ->(name) { name.squish }
   # apply_to_nil, so an omitted description still reaches the NOT NULL column

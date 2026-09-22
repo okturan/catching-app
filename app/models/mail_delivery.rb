@@ -7,8 +7,8 @@ class MailDelivery < ApplicationRecord
 
   class CapExceeded < Refusal; end
 
-  belongs_to :event, inverse_of: :mail_deliveries
-  belongs_to :participant, optional: true, inverse_of: :mail_deliveries
+  belongs_to :event
+  belongs_to :participant, optional: true
 
   enum :kind, KINDS.index_by(&:itself), validate: true
 

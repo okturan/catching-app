@@ -5,11 +5,11 @@ class Participant < ApplicationRecord
   # Result of resolving a raw capability token.
   TokenResolution = Data.define(:participant, :via_pending, :canonical_token)
 
-  belongs_to :event, inverse_of: :participants
-  belongs_to :user, optional: true, inverse_of: :participants
+  belongs_to :event
+  belongs_to :user, optional: true
 
-  has_many :time_slots, dependent: :delete_all, inverse_of: :participant
-  has_many :mail_deliveries, dependent: :nullify, inverse_of: :participant
+  has_many :time_slots, dependent: :delete_all
+  has_many :mail_deliveries
 
   enum :role, { organizer: "organizer", guest: "guest" }, validate: true
 

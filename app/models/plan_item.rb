@@ -3,7 +3,7 @@
 class PlanItem < ApplicationRecord
   MAX_PER_EVENT = 20
 
-  belongs_to :event, inverse_of: :plan_items
+  belongs_to :event
 
   normalizes :name, with: ->(name) { name.squish }
   normalizes :description, with: ->(description) { description.strip.presence }
