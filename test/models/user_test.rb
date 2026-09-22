@@ -39,7 +39,7 @@ class UserTest < ActiveSupport::TestCase
     assert_includes user.errors[:password], "is too short (minimum is 15 characters)"
   end
 
-  test "lets go of its participations on deletion" do
+  test "lets go of its participants on deletion" do
     owner = users(:owner)
 
     owner.destroy!

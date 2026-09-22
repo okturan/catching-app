@@ -2,7 +2,7 @@ require "application_system_test_case"
 
 class OrganizerCancelsTest < ApplicationSystemTestCase
   test "the organizer calls it off and every page turns read-only" do
-    visit participation_path(raw_token(:planning_organizer))
+    visit participant_path(raw_token(:planning_organizer))
     assert_selector "#time-grid-show[data-role=organizer]"
 
     accept_confirm "Cancel Planning session for everyone? Everyone with a link gets one last email. This cannot be undone." do
@@ -20,7 +20,7 @@ class OrganizerCancelsTest < ApplicationSystemTestCase
     assert_link "Plan a new event"
     assert events(:planning).reload.cancelled?
 
-    visit participation_path(raw_token(:planning_guest))
+    visit participant_path(raw_token(:planning_guest))
     assert_selector "h1 .plate.plate-ink", text: /cancelled/i
     assert_selector "#time-grid-show[data-role=viewer][data-cancelled]"
     assert_no_selector "#availability-form"

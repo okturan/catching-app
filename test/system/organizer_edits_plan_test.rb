@@ -4,7 +4,7 @@ class OrganizerEditsPlanTest < ApplicationSystemTestCase
   test "the organizer builds and reorders the plan and a guest reads it in order" do
     events(:planning).plan_items.delete_all
 
-    visit participation_path(raw_token(:planning_organizer))
+    visit participant_path(raw_token(:planning_organizer))
     click_link "Edit details"
     assert_text "Nothing planned yet"
 
@@ -45,7 +45,7 @@ class OrganizerEditsPlanTest < ApplicationSystemTestCase
     assert_selector ".plan-item", count: 2
     assert_text "Plan updated."
 
-    visit participation_path(raw_token(:planning_guest))
+    visit participant_path(raw_token(:planning_guest))
     assert_equal [ "The movie · 2 h", "Pizza and salad · 30 min" ], all("dl.event-facts ol.event-plan li .event-plan-item").map(&:text)
     assert_selector "dl.event-facts .event-plan-note", text: "Dune, part one"
     assert_no_selector "dl.event-facts time[data-zoned-instant]"

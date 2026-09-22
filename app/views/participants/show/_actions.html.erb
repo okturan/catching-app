@@ -1,0 +1,21 @@
+<% if (event.finalized? && !event.cancelled?) || participant.organizer? %>
+  <div class="event-actions">
+    <% if event.finalized? && !event.cancelled? %>
+      <%= link_to "Add to calendar", participant_calendar_path(participant), class: "plate-button-sm", data: { turbo: false } %>
+    <% end %>
+    <% if participant.organizer? && event.cancelled? %>
+      <%= link_to "Plan a new event", new_event_path, class: "plate-button-sm" %>
+    <% elsif participant.organizer? %>
+      <%= link_to "Edit details", edit_participant_details_path(participant), class: "plate-button-sm" %>
+      <% if event.open? %>
+        <%= link_to "Change the times", edit_participant_offer_path(participant), class: "plate-button-sm" %>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>
+<% if untold_changes %>
+  <div class="event-untold" role="status">
+    <span>Guests have not been told about your latest changes.</span>
+    <%= button_to "Tell the guests", participant_notice_path(participant), method: :post, class: "plate-button-sm", form: { class: "event-untold-form" } %>
+  </div>
+<% end %>

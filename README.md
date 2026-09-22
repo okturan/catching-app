@@ -91,7 +91,7 @@ The container prepares the database before starting, listens through Thruster on
 
 ## How scheduling works
 
-An organizer plans an event with an email address, a name, a slot length (15, 30 or 60 minutes), a time zone and a painted set of offered times. The organizer receives a link by email; opening it proves the address, and only then can invitations be sent. Each guest receives their own link, paints availability on the organizer's grid (mouse, finger or keyboard), can say that none of the times work, or can leave the event. The organizer finalizes one continuous window that every responder shares. Accounts are optional: they remember participations on a dashboard, and a guest can keep an event in an account from their link.
+An organizer plans an event with an email address, a name, a slot length (15, 30 or 60 minutes), a time zone and a painted set of offered times. The organizer receives a link by email; opening it proves the address, and only then can invitations be sent. Each guest receives their own link, paints availability on the organizer's grid (mouse, finger or keyboard), can say that none of the times work, or can leave the event. The organizer finalizes one continuous window that every responder shares. Accounts are optional: they remember the events they take part in on a dashboard, and a guest can keep an event in an account from their link.
 
 ## Security model
 

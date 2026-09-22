@@ -22,7 +22,7 @@ class DefinerContractTest < ActionDispatch::IntegrationTest
   end
 
   test "offer/edit keeps the definer contract" do
-    get edit_participation_offer_path(raw_token(:planning_organizer))
+    get edit_participant_offer_path(raw_token(:planning_organizer))
 
     assert_response :success
     assert_definer_contract

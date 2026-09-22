@@ -62,8 +62,8 @@ class Event::AnnouncementsTest < ActiveSupport::TestCase
     assert_not_includes pending_body, raw_token(:planning_pending), "never the live token"
     assert_not_includes pending_body, stale
     claimed_body = mails["invitee@example.com"].text_part.body.to_s
-    assert_includes claimed_body, "http://example.com/participations/#{@guest.id}"
-    assert_not_includes claimed_body, "/p/"
+    assert_includes claimed_body, "http://example.com/p/#{@guest.id}"
+    assert_no_match %r{/p/[A-Za-z0-9]{32}}, claimed_body
     mails.each_value do |mail|
       assert_includes mail.text_part.body.to_s, "Tue 15 Jan 2030 10:00–11:00 (UTC)"
       assert_includes mail.attachments.first.body.decoded, "STATUS:CANCELLED"
@@ -133,8 +133,8 @@ class Event::AnnouncementsTest < ActiveSupport::TestCase
     pending_body = mails["pending@example.com"].text_part.body.to_s
     assert_match %r{http://example.com/p/[A-Za-z0-9]{32}}, pending_body
     assert_not_includes pending_body, raw_token(:planning_pending), "never the live token"
-    assert_includes mails["invitee@example.com"].text_part.body.to_s, "http://example.com/participations/#{@guest.id}"
-    assert_not_includes mails["invitee@example.com"].text_part.body.to_s, "/p/"
+    assert_includes mails["invitee@example.com"].text_part.body.to_s, "http://example.com/p/#{@guest.id}"
+    assert_no_match %r{/p/[A-Za-z0-9]{32}}, mails["invitee@example.com"].text_part.body.to_s
     organizer_body = mails["owner@example.com"].text_part.body.to_s
     assert_not_includes organizer_body, "://"
     assert_includes organizer_body, "Open your organizer link"
@@ -202,8 +202,8 @@ class Event::AnnouncementsTest < ActiveSupport::TestCase
     assert_includes pending_body, "Olivia Owner changed the details of Planning session."
     assert_includes pending_body, "Where: Zoom"
     claimed_body = mails["invitee@example.com"].text_part.body.to_s
-    assert_includes claimed_body, "http://example.com/participations/#{@guest.id}"
-    assert_not_includes claimed_body, "/p/"
+    assert_includes claimed_body, "http://example.com/p/#{@guest.id}"
+    assert_no_match %r{/p/[A-Za-z0-9]{32}}, claimed_body
     assert MailDelivery.event_updated.all? { |row| row.reload.delivered_at.present? }
   end
 

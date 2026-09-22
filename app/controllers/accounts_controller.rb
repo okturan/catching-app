@@ -15,7 +15,7 @@ class AccountsController < ApplicationController
     end
   end
 
-  # The events stay: their participations only forget the account.
+  # The events stay: their participants only forget the account.
   def destroy
     Current.user.destroy!
     cookies.delete(:session_id)

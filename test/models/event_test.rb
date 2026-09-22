@@ -303,8 +303,8 @@ class EventTest < ActiveSupport::TestCase
     assert_not @event.open?
     assert_not @event.finalized?
     assert_equal before, counts.call
-    assert_equal @guest, Participant.resolve_token(raw_token(:planning_guest)).participant
-    assert_equal @organizer, Participant.resolve_token(raw_token(:planning_organizer)).participant
+    assert_equal @guest, Participant.find_by_link_token(raw_token(:planning_guest))
+    assert_equal @organizer, Participant.find_by_link_token(raw_token(:planning_organizer))
     assert_equal users(:invitee).id, @guest.reload.user_id
 
     error = assert_raises(Event::Closed) { @event.cancel! }

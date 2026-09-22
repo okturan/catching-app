@@ -9,7 +9,7 @@ class OrganizerFinalizesTest < ApplicationSystemTestCase
   end
 
   test "the organizer picks consensus cells and sets the time in stone" do
-    visit participation_path(raw_token(:planning_organizer))
+    visit participant_path(raw_token(:planning_organizer))
 
     assert_selector "#time-grid-show[data-role=organizer] .slot.selectable", count: 2
     assert_selector "#time-grid-show .slot.consensus", count: 2

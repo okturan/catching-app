@@ -5,7 +5,7 @@
     <h2 class="section-title" id="organizing-heading">Organizing <span class="plate"><%= @organizing.size %></span></h2>
     <% if @organizing.any? %>
       <div class="event-list">
-        <%= render partial: "dashboards/participation", collection: @organizing, locals: { guest_counts: @guest_counts } %>
+        <%= render partial: "dashboards/participant", collection: @organizing, locals: { guest_counts: @guest_counts } %>
       </div>
     <% else %>
       <div class="empty">
@@ -19,7 +19,7 @@
     <h2 class="section-title" id="invited-heading">Invited <span class="plate"><%= @invited.size %></span></h2>
     <% if @invited.any? %>
       <div class="event-list">
-        <%= render partial: "dashboards/participation", collection: @invited, locals: { guest_counts: @guest_counts } %>
+        <%= render partial: "dashboards/participant", collection: @invited, locals: { guest_counts: @guest_counts } %>
       </div>
     <% else %>
       <div class="empty">

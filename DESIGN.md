@@ -168,7 +168,7 @@ components:
 
 **Creative North Star: "The Newsroom Clock Wall"**
 
-Every surface is a wall in a newsroom: a warm painted plaster ground, a row of white glass wall clocks with black hands and one red second hand, and enamel-blue plates hung underneath naming the city. The landing page is that wall literally, with five synchronized clocks as the offer and the proof. The app surfaces (planning form, participation page, dashboard, Devise forms) are instruments hung on the same wall: white glass faces holding forms and grids, enamel plates as day headers and primary actions, and every time set in the mono face as if read off a dial.
+Every surface is a wall in a newsroom: a warm painted plaster ground, a row of white glass wall clocks with black hands and one red second hand, and enamel-blue plates hung underneath naming the city. The landing page is that wall literally, with five synchronized clocks as the offer and the proof. The app surfaces (planning form, event page, dashboard, account forms) are instruments hung on the same wall: white glass faces holding forms and grids, enamel plates as day headers and primary actions, and every time set in the mono face as if read off a dial.
 
 The world is flat and physical rather than digital. Depth comes from real materials (a plate has an inset highlight and shade because enamel does; a face casts a soft shadow because glass sits proud of plaster; a clock hangs and throws a shadow down the wall), never from glass blur, gradients of any kind, or decorative shadows. Colour is disciplined: one blue for anything that can be pressed or that labels, one red for the second hand and the ruler thumb, one yellow for the hours when everyone is awake. Copy is playful and the layout is calm. The tagline "We have some catching app to do!" is the headline, set at display scale.
 
@@ -239,11 +239,11 @@ A painted wall, white glass, black ink, deep enamel, one red, one yellow.
 
 The page is a vertical wall. `html` and `body` are wall-coloured; `body` is a flex column so the footer sits at the bottom of short pages.
 
-**Containers.** Landing sections and the nav and footer inner rail run to 1280px; landing content (clock row, ruler, claim, stations) narrows to 1120px; generic `wall-section` blocks to 1200px; the dashboard to 1000px; app work surfaces with a grid (plan, participation) widen to 1400px; single-column forms are `min(440px, 100%)`. Horizontal gutter is always `clamp(1rem, 4vw, 2.5rem)`.
+**Containers.** Landing sections and the nav and footer inner rail run to 1280px; landing content (clock row, ruler, claim, stations) narrows to 1120px; generic `wall-section` blocks to 1200px; the dashboard to 1000px; app work surfaces with a grid (plan, event page) widen to 1400px; single-column forms are `min(440px, 100%)`. Horizontal gutter is always `clamp(1rem, 4vw, 2.5rem)`.
 
 **Rhythm.** Section padding is `clamp(2.5rem, 6vw, 5rem)` vertically. Inside a face, padding is `clamp(1rem, 2.5vw, 1.75rem)` (forms go to 2rem). Component gaps step 0.5rem, 0.75rem, 1rem, 1.5rem, 2.5rem. Grids use CSS grid with `gap`, never margins between siblings.
 
-**Two-column work surfaces.** Plan and participation pages put the form or event card in a fixed left column (`minmax(300px, 400px)` or 420px) and the time grid in the remaining space, collapsing to one column at 900px. The landing claim is `1.4fr / 1fr`, collapsing at 800px; the sample section is `1fr / 1.3fr`, collapsing at 900px.
+**Two-column work surfaces.** Plan and event pages put the form or event card in a fixed left column (`minmax(300px, 400px)` or 420px) and the time grid in the remaining space, collapsing to one column at 900px. The landing claim is `1.4fr / 1fr`, collapsing at 800px; the sample section is `1fr / 1.3fr`, collapsing at 900px.
 
 **Breakpoints observed.** 480px (stations go one column), 520px (event card stacks its time), 767.98px (Bootstrap nav collapse; the header wraps and the plate button shrinks to 0.7rem), 800px (claim and stations reflow), 900px (the clock row becomes a horizontally scrolling, scroll-snapping rail of all five clocks at `minmax(150px, 36vw)` each, bleeding into the gutter with the scrollbar hidden; work surfaces stack). All five clocks always ship; none is hidden on a phone. Touch is detected with `any-pointer: coarse`, not width: the paint-mode switch appears and the grid action bar sticks to the bottom.
 

@@ -21,12 +21,12 @@ class ParticipantMailer < ApplicationMailer
   after_deliver :mark_delivered
 
   def organizer_link
-    @link = participation_url(params.fetch(:token))
+    @link = participant_url(params.fetch(:token))
     mail(subject: "#{SUBJECT_PREFIX}your organizer link")
   end
 
   def invitation
-    @link = participation_url(params.fetch(:token))
+    @link = participant_url(params.fetch(:token))
     @offer = offer_summary
     mail(reply_to: @organizer.email, subject: subject_for("#{mail_safe(@organizer.name)} invited you to #{mail_safe(@event.name)}"))
   end
@@ -132,9 +132,9 @@ class ParticipantMailer < ApplicationMailer
   # the claim after it was queued without a token.
   def guest_link
     return if @participant.organizer?
-    return my_participation_url(@participant) if @participant.claimed?
+    return participant_url(@participant) if @participant.claimed?
 
-    participation_url(params[:token]) if params[:token]
+    participant_url(params[:token]) if params[:token]
   end
 
   # "Pizza (30 min) at 20:00 (Asia/Kolkata), 15:30 (Europe/Berlin)": each

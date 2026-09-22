@@ -79,7 +79,7 @@ class EventSchedulingWorkflowTest < ActionDispatch::IntegrationTest
     follow_redirect!
     post "#{guest_link}/claim"
     guest = event.guests.first
-    assert_redirected_to my_participation_path(guest)
+    assert_redirected_to participant_path(guest)
     assert_equal User.find_by(email: "gwen@example.com"), guest.reload.user
   end
 

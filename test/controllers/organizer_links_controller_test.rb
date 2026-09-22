@@ -24,10 +24,10 @@ class OrganizerLinksControllerTest < ActionDispatch::IntegrationTest
     assert_equal Participant.digest(raw_token(:planning_organizer)), organizer.token_digest
     assert_equal users(:owner).id, organizer.user_id
 
-    get participation_path(raw_token(:planning_organizer))
+    get participant_path(raw_token(:planning_organizer))
     assert_response :success
     sign_in users(:owner)
-    get my_participation_path(organizer)
+    get participant_path(organizer)
     assert_response :success
   end
 

@@ -14,7 +14,7 @@ class ForgeryProtectionTest < ActionDispatch::IntegrationTest
     guest = participants(:planning_guest)
     before = guest.time_slots.order(:start_time).pluck(:start_time)
 
-    patch participation_path(raw_token(:planning_guest)), params: { time_slots: { time_slot_array: "2030-01-15T11:00:00Z" } }
+    patch participant_path(raw_token(:planning_guest)), params: { time_slots: { time_slot_array: "2030-01-15T11:00:00Z" } }
 
     assert_response :unprocessable_entity
     assert_equal before, guest.time_slots.reload.order(:start_time).pluck(:start_time)

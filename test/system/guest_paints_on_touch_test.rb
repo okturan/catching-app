@@ -8,7 +8,7 @@ class GuestPaintsOnTouchTest < MobileSystemTestCase
     event.plan_items.create!(name: "Averyveryverylongplanitemnamewithoutanyspacesatalltostretchthecardpastitswidth", duration_minutes: 45, position: 1,
       description: "A second line that is also rather long and should wrap inside the card instead of widening the page")
 
-    visit participation_path(raw_token(:planning_guest))
+    visit participant_path(raw_token(:planning_guest))
     assert page.evaluate_script("matchMedia('(any-pointer: coarse)').matches"), "touch emulation is not active"
     assert_selector "#time-grid-show .slot.selectable", count: 2
     assert_selector "dl.event-facts a.quiet-link", text: "maps.example"

@@ -49,7 +49,7 @@ class ParticipantMailerTest < ActionMailer::TestCase
       assert_includes body, "Invitation from PayPal Support paypal.example (owner@example.com)"
       assert_includes body, "/p/#{@token}"
       assert_not_includes body, "evil.example/desc", "the description never reaches the mail"
-      assert_equal body.scan("http://example.com/p/").size, body.scan("://").size, "only the participation link may carry a scheme"
+      assert_equal body.scan("http://example.com/p/").size, body.scan("://").size, "only the participant link may carry a scheme"
       assert_includes body, "You will get at most: up to 5 resends, one confirmation when you reply, up to 5 notes if the organizer changes the plan, one message each time the time is set or reopened, and one if it is cancelled."
       assert_not_includes body, "one message when the time is set."
       assert_includes body, "60-minute slots between 15 Jan and 15 Jan 2030 (UTC)"
@@ -69,7 +69,7 @@ class ParticipantMailerTest < ActionMailer::TestCase
     assert_includes text, "Tue 15 Jan 2030: 14:30–17:30, 19:30–20:30"
     assert_includes text, "(Asia/Kolkata)"
     assert_includes text, "Tue 15 Jan 2030: 09:00–12:00, 14:00–15:00"
-    assert_not_includes text, "/p/"
+    assert_no_match %r{/p/[A-Za-z0-9]{32}}, text
     closing = "To change your reply, use the link from your invitation. You will hear from us when the time is set, and if the organizer changes the plan."
     assert text.strip.end_with?(closing), text
     assert_match(/<p>#{Regexp.escape(closing)}<\/p>\s*<\/body>/, mail.html_part.body.to_s)
@@ -104,9 +104,9 @@ class ParticipantMailerTest < ActionMailer::TestCase
       assert_not_includes body, "cooperative", "plan descriptions stay on the page"
       assert_not_includes body, "Visit", "the event description never reaches a mail"
       assert_not_includes body, "zoom.us"
-      assert_includes body, "http://example.com/participations/#{@guest.id}"
-      assert_equal body.scan("://").size, body.scan("http://example.com/participations/#{@guest.id}").size, "only the participation link carries a scheme"
-      assert_not_includes body, "/p/"
+      assert_includes body, "http://example.com/p/#{@guest.id}"
+      assert_equal body.scan("://").size, body.scan("http://example.com/p/#{@guest.id}").size, "only the participant link carries a scheme"
+      assert_no_match %r{/p/[A-Za-z0-9]{32}}, body
       assert_not_includes body, "offered times", "a details notice says nothing about picks"
     end
     leave = "To stop hearing about this event, open your link and choose Leave this event."
@@ -191,7 +191,7 @@ class ParticipantMailerTest < ActionMailer::TestCase
       assert_not_includes body, "maps.example", "place_url never reaches a mail"
       assert_includes body, "You will hear from us again only if the organizer changes the plan, reopens the time or cancels."
       assert_not_includes body, "This is the last message about this event."
-      assert_equal body.scan("://").size, body.scan("http://example.com/participations/#{guest.id}").size, "only the participation link carries a scheme"
+      assert_equal body.scan("://").size, body.scan("http://example.com/p/#{guest.id}").size, "only the participant link carries a scheme"
     end
     assert_not_includes mail.subject, "maps.example"
     assert_not_includes mail.attachments.first.body.decoded, "maps.example"
@@ -204,8 +204,8 @@ class ParticipantMailerTest < ActionMailer::TestCase
     mail = finalized_mail(guest)
 
     [ mail.html_part.body.to_s, mail.text_part.body.to_s ].each do |body|
-      assert_includes body, "http://example.com/participations/#{guest.id}"
-      assert_not_includes body, "/p/"
+      assert_includes body, "http://example.com/p/#{guest.id}"
+      assert_no_match %r{/p/[A-Za-z0-9]{32}}, body
     end
     text = mail.text_part.body.to_s.strip
     assert text.end_with?("You will hear from us again only if the organizer changes the plan, reopens the time or cancels.\n\nTo stop hearing about this event, open your link and choose Leave this event."), text
@@ -220,8 +220,8 @@ class ParticipantMailerTest < ActionMailer::TestCase
 
     [ mail.html_part.body.to_s, mail.text_part.body.to_s ].each do |body|
       assert_includes body, "http://example.com/p/#{pending}"
-      assert_not_includes body, "/participations/"
-      assert_equal body.scan("http://example.com/p/#{pending}").size, body.scan("://").size, "only the participation link carries a scheme"
+      assert_no_match %r{/p/\d+\b}, body
+      assert_equal body.scan("http://example.com/p/#{pending}").size, body.scan("://").size, "only the participant link carries a scheme"
       assert_includes body, "To stop hearing about this event, open your link and choose Leave this event."
     end
   end
@@ -236,7 +236,6 @@ class ParticipantMailerTest < ActionMailer::TestCase
       assert_includes body, "Open your organizer link"
       assert_not_includes body, "://"
       assert_not_includes body, "/p/"
-      assert_not_includes body, "/participations/"
       assert_not_includes body, "Leave this event"
       assert_includes body, "You will hear from us again only if the organizer changes the plan, reopens the time or cancels."
     end
@@ -287,7 +286,7 @@ class ParticipantMailerTest < ActionMailer::TestCase
       assert_includes body, "In the event's zone: Tue 15 Jan 2030 10:00–11:00 (UTC)"
       assert_includes body, "Nothing else will be sent about this event."
       assert_includes body, "If you added it to your calendar, the attached file removes it."
-      assert_not_includes body, "/p/"
+      assert_no_match %r{/p/[A-Za-z0-9]{32}}, body
       assert_not_includes body, "://"
     end
     assert_equal [ "catching-app.ics" ], mail.attachments.map(&:filename)
@@ -347,10 +346,10 @@ class ParticipantMailerTest < ActionMailer::TestCase
       assert_includes body, "Olivia evil.example Owner withdrew this time and is planning again."
       assert_includes body, "Your painted times still count. Open your link to change them. You will get one message when a new time is set."
       assert_includes body, "If you added it to your calendar, the attached file removes it."
-      assert_includes body, "http://example.com/participations/#{guest.id}"
+      assert_includes body, "http://example.com/p/#{guest.id}"
       assert_not_includes body, "maps.example"
       assert_not_includes body, "zoom.us"
-      assert_equal body.scan("://").size, body.scan("http://example.com/participations/#{guest.id}").size, "only the participation link carries a scheme"
+      assert_equal body.scan("://").size, body.scan("http://example.com/p/#{guest.id}").size, "only the participant link carries a scheme"
     end
     text = mail.text_part.body.to_s.strip
     assert text.end_with?("You will get one message when a new time is set.\n\nTo stop hearing about this event, open your link and choose Leave this event."), text
@@ -380,8 +379,8 @@ class ParticipantMailerTest < ActionMailer::TestCase
 
     [ mail.html_part.body.to_s, mail.text_part.body.to_s ].each do |body|
       assert_includes body, "http://example.com/p/#{pending}"
-      assert_not_includes body, "/participations/"
-      assert_equal body.scan("http://example.com/p/#{pending}").size, body.scan("://").size, "only the participation link carries a scheme"
+      assert_no_match %r{/p/\d+\b}, body
+      assert_equal body.scan("http://example.com/p/#{pending}").size, body.scan("://").size, "only the participant link carries a scheme"
       assert_includes body, " is no longer set for Tue 15 Jan 2030 10:00–11:00 (UTC)."
       assert_not_includes body, "In the event's zone"
       assert_includes body, "To stop hearing about this event, open your link and choose Leave this event."

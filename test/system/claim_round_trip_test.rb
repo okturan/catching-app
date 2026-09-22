@@ -4,7 +4,7 @@ class ClaimRoundTripTest < ApplicationSystemTestCase
   test "a guest signs up from their link and keeps the event in the new account" do
     pending = participants(:planning_pending)
 
-    visit participation_path(raw_token(:planning_pending))
+    visit participant_path(raw_token(:planning_pending))
     click_link "Keep this event in your account"
     assert_text "Log in"
 
@@ -18,7 +18,7 @@ class ClaimRoundTripTest < ApplicationSystemTestCase
 
     assert_text "Keep Planning session in your account"
     click_button "Keep this event in my account"
-    assert_current_path my_participation_path(pending)
+    assert_current_path participant_path(pending)
     assert_equal User.find_by(email: "pat@example.com"), pending.reload.user
 
     visit dashboard_path

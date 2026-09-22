@@ -8,7 +8,7 @@ class OrganizerRevisesOfferTest < ApplicationSystemTestCase
   test "the organizer removes a picked time, the voided guest is asked again and replies, and the table follows" do
     guest = participants(:planning_guest)
 
-    visit participation_path(raw_token(:planning_organizer))
+    visit participant_path(raw_token(:planning_organizer))
     click_link "Change the times"
     assert_text "Change the times"
     assert_selector "#time-grid-define .slot.active", count: 2
@@ -42,7 +42,7 @@ class OrganizerRevisesOfferTest < ApplicationSystemTestCase
     assert guest.reload.reply_voided_at.present?
     assert_equal 0, guest.time_slots.count
 
-    visit participation_path(raw_token(:planning_guest))
+    visit participant_path(raw_token(:planning_guest))
     assert_selector ".grid-action-bar .grid-notice[role=status]", text: "None of the times you picked are offered any more. Pick again."
     assert_equal "[]", find("[data-controller=availability]")["data-availability-mine-value"]
     assert_selector "#time-grid-show .slot.selectable", count: 2
@@ -57,7 +57,7 @@ class OrganizerRevisesOfferTest < ApplicationSystemTestCase
     assert_selector "#time-grid-show .slot.active", count: 1
     assert_nil guest.reload.reply_voided_at
 
-    visit participation_path(raw_token(:planning_organizer))
+    visit participant_path(raw_token(:planning_organizer))
     assert_selector "#participant-table td", text: "replied (1 slot)"
     assert_no_selector ".grid-action-bar .grid-notice"
     assert_button "Set in stone"

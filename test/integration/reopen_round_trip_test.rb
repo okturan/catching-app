@@ -17,13 +17,13 @@ class ReopenRoundTripTest < ActionDispatch::IntegrationTest
   end
 
   def finalize!(slot)
-    perform_enqueued_jobs { post participation_finalization_path(@organizer_token), params: { time_slots: { time_slot_array: slot } } }
+    perform_enqueued_jobs { post participant_finalization_path(@organizer_token), params: { time_slots: { time_slot_array: slot } } }
     assert_equal "Meeting time confirmed.", flash[:notice]
     assert @event.reload.finalized?
   end
 
   def reopen!
-    perform_enqueued_jobs { post participation_reopening_path(@organizer_token) }
+    perform_enqueued_jobs { post participant_reopening_path(@organizer_token) }
     assert_match(/\AThe set time was withdrawn\. 2 guests were told\./, flash[:notice])
     assert_not @event.reload.finalized?
   end
@@ -40,7 +40,7 @@ class ReopenRoundTripTest < ActionDispatch::IntegrationTest
     finalize!(@ten)
     first = ActionMailer::Base.deliveries.last(3)
     assert_equal %w[invitee@example.com owner@example.com pending@example.com], first.flat_map(&:to).sort
-    get participation_calendar_path(@guest_token)
+    get participant_calendar_path(@guest_token)
     assert_response :success
 
     reopen!
@@ -51,18 +51,18 @@ class ReopenRoundTripTest < ActionDispatch::IntegrationTest
       assert_includes mail.attachments.first.body.decoded, "STATUS:CANCELLED"
       assert_includes mail.attachments.first.body.decoded, "DTSTART:20300115T100000Z"
     end
-    get participation_calendar_path(@guest_token)
+    get participant_calendar_path(@guest_token)
     assert_response :not_found
-    get participation_path(@guest_token)
+    get participant_path(@guest_token)
     assert_select ".grid-notice", text: /The set time was withdrawn on/
     assert_select "[data-availability-mine-value=?]", [ @ten ].to_json
 
-    patch participation_offer_path(@organizer_token), params: { time_slots: { time_slot_array: [ @ten, @eleven, @twelve ].join(",") }, notice: { send: "0" } }
+    patch participant_offer_path(@organizer_token), params: { time_slots: { time_slot_array: [ @ten, @eleven, @twelve ].join(",") }, notice: { send: "0" } }
     assert_equal "Times updated: 1 added, 0 removed.", flash[:notice]
     assert_equal 0, MailDelivery.event_updated.count
-    patch participation_path(@guest_token), params: { time_slots: { time_slot_array: [ @ten, @twelve ].join(",") } }
+    patch participant_path(@guest_token), params: { time_slots: { time_slot_array: [ @ten, @twelve ].join(",") } }
     assert_equal "Availability saved.", flash[:notice]
-    get participation_path(@guest_token)
+    get participant_path(@guest_token)
     assert_select ".grid-notice", count: 0
     assert_equal [ Time.utc(2030, 1, 15, 10), Time.utc(2030, 1, 15, 12) ], @event.mutually_available_start_times
 
@@ -73,13 +73,13 @@ class ReopenRoundTripTest < ActionDispatch::IntegrationTest
 
     reopen!
     assert_equal 2, @event.reopen_count
-    get participation_path(@organizer_token)
+    get participant_path(@organizer_token)
     assert_select ".event-reopened span", text: "Reopened twice — the last time"
 
     finalize!(@ten)
     third = ActionMailer::Base.deliveries.last(3)
 
-    post participation_reopening_path(@organizer_token)
+    post participant_reopening_path(@organizer_token)
     assert_response :see_other
     assert_equal "This event was reopened twice already. Cancel it and plan a new one.", flash[:alert]
     @event.reload

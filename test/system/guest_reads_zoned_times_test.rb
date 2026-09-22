@@ -9,7 +9,7 @@ class GuestReadsZonedTimesTest < ApplicationSystemTestCase
   end
 
   test "derived plan starts follow the picker zone on load and on change" do
-    visit participation_path(raw_token(:finalized_guest))
+    visit participant_path(raw_token(:finalized_guest))
 
     assert_equal "Europe/Berlin", find("#timezone-picker-show").value
     assert_selector "dl.event-facts ol.event-plan li:nth-child(1) time[data-zoned-instant]", text: "11:00 (Europe/Berlin)"
@@ -29,7 +29,7 @@ class GuestReadsZonedTimesTest < ApplicationSystemTestCase
   test "dated notes on a cancelled page keep their date in the picker zone" do
     @event.cancel!
 
-    visit participation_path(raw_token(:finalized_guest))
+    visit participant_path(raw_token(:finalized_guest))
 
     assert_selector ".event-when.is-cancelled", text: "Was set for Tue 15 Jan 2030 11:00 (Europe/Berlin) to 12:00 (Europe/Berlin)"
     assert_selector ".event-when.is-cancelled time[data-zoned-format='date-time']", text: /\(Europe\/Berlin\)\z/

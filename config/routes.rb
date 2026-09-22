@@ -13,42 +13,30 @@ Rails.application.routes.draw do
   resources :events, only: %i[new create]
   resources :organizer_links, only: %i[new create]
 
-  # Actions shared by the token family (/p/:token) and the session family
-  # (/participations/:participation_id). The viewer is always the scope
-  # parameter; nested ids name a target guest.
-  concern :participation_actions do
-    scope module: :participations do
-      resource :decline, only: :create
-      resource :finalization, only: :create
-      resources :invitations, only: :create
-      resources :participants, only: :destroy do
-        resource :resend, only: :create
-        resource :link_reveal, only: :create
-      end
-      resource :details, only: %i[edit update] # organizer
-      resource :offer, only: %i[edit update] # organizer, while open: Change the times
-      resource :notice, only: :create # organizer: Tell the guests
-      resource :cancellation, only: :create # organizer: terminal, read-only afterwards
-      resource :reopening, only: :create # organizer, finalized: Reopen the time
-      resource :calendar, only: :show, path: "calendar.ics", format: false # any participant, finalized
-      resources :plan_items, path: "plan", only: %i[create update destroy] do # organizer
-        resource :move, only: :create, controller: :plan_item_moves # organizer: move[position]
-      end
-    end
-  end
-
-  scope "p/:token", constraints: { token: %r{[^/]+} }, format: false do
-    resource :participation, path: "", only: %i[show update destroy] do
-      concerns :participation_actions
-      scope module: :participations do
+  # One address per participant, /p/:key. The key is the token of an
+  # emailed link, or behind a session the participant's id. Nested ids name
+  # a guest the organizer acts on, or an item of the plan.
+  scope "p/:key", constraints: { key: %r{[^/]+} }, format: false do
+    resource :participant, path: "", only: %i[show update destroy] do
+      scope module: :participants do
+        resource :decline, only: :create
+        resource :finalization, only: :create
+        resources :invitations, only: :create
+        resources :guests, only: :destroy do
+          resource :resend, only: :create
+          resource :link_reveal, only: :create
+        end
+        resource :details, only: %i[edit update]
+        resource :offer, only: %i[edit update]
+        resource :notice, only: :create
+        resource :cancellation, only: :create
+        resource :reopening, only: :create
+        resource :calendar, only: :show, path: "calendar.ics"
+        resources :plan_items, path: "plan", only: %i[create update destroy] do
+          resource :move, only: :create, controller: :plan_item_moves
+        end
         resource :claim, only: %i[show create]
       end
-    end
-  end
-
-  scope "participations/:participation_id", as: :my do
-    resource :participation, path: "", only: %i[show update destroy] do
-      concerns :participation_actions
     end
   end
 end
