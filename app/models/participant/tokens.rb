@@ -37,6 +37,12 @@ module Participant::Tokens
     new_token.tap { update!(token_digest: self.class.digest(it)) }
   end
 
+  # The token for a link handed out anew: the first live one, then pending
+  # ones beside it, so a link sent earlier keeps working.
+  def issue_token!
+    token_digest? ? issue_pending_token! : issue_live_token!
+  end
+
   # Guests' pending tokens never expire; organizer recovery passes
   # expires_in: 24.hours. The live token and the claim are untouched.
   def issue_pending_token!(expires_in: nil)

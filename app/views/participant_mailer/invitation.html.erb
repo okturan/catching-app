@@ -1,6 +1,6 @@
 <p>Invitation from <%= mail_safe(@organizer.name) %> (<%= @organizer.email %>)</p>
 <p><strong><%= mail_safe(@event.name) %></strong></p>
-<% if @offer %><p><%= @offer %></p><% end %>
+<p><%= @offer %></p>
 <p>Paint the times that work for you:</p>
 <p><%= link_to @link, @link %></p>
 <p>You will get at most: up to 5 resends, one confirmation when you reply, up to 5 notes if the organizer changes the plan, one message each time the time is set or reopened, and one if it is cancelled.</p>

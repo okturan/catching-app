@@ -6,7 +6,6 @@ module MailDelivery::Caps
   GENERIC_MESSAGE = "Could not send right now. Try again later.".freeze
   CREATION_MESSAGE = "Could not create the event right now. Try again later.".freeze
 
-  INVITATION_DAILY_BUDGET = -> { Integer(ENV.fetch("INVITATION_DAILY_BUDGET", 500)) }
   RECIPIENTS_PER_ORGANIZER_PER_DAY = 100
   RECIPIENTS_PER_STARTER_ORGANIZER_PER_DAY = 20
   INVITATIONS_PER_IP_PER_DAY = 200
@@ -23,22 +22,19 @@ module MailDelivery::Caps
   # change notice can never buy a fresh invitation allowance or the reverse.
   DAILY_KEY_KINDS = %w[invitation event_updated].freeze
 
-  module_function
+  extend self
 
   # Raises when an invitation to `recipient_email` from `organizer` must not
   # be sent now. `request_ip` may be nil (jobs, console). The per-event rules
-  # count invitations only: a notice is not a resend.
+  # count invitations only, and failed ones not at all: a notice is not a
+  # resend.
   def check_invitation!(event:, organizer:, recipient_email:, request_ip:)
     recipient = MailDelivery.canonical(recipient_email)
-    check_daily_keys!(organizer: organizer, recipient: recipient, request_ip: request_ip)
+    check_daily_keys!(organizer:, recipient:, request_ip:)
 
-    per_address = MailDelivery.invitation.where(event_id: event.id, canonical_recipient_email: recipient, failed_at: nil)
-    raise MailDelivery::CapExceeded, "This address has received the maximum of #{INVITATIONS_PER_EVENT_ADDRESS} invitations for this event." if per_address.count >= INVITATIONS_PER_EVENT_ADDRESS
-
-    last = per_address.order(created_at: :desc).first
-    if last && last.created_at > RESEND_COOLDOWN.ago
-      raise MailDelivery::CapExceeded, "Wait a few minutes before sending to this address again."
-    end
+    sent = MailDelivery.invitation.where(event:, canonical_recipient_email: recipient, failed_at: nil)
+    raise MailDelivery::CapExceeded, "This address has received the maximum of #{INVITATIONS_PER_EVENT_ADDRESS} invitations for this event." if sent.count >= INVITATIONS_PER_EVENT_ADDRESS
+    raise MailDelivery::CapExceeded, "Wait a few minutes before sending to this address again." if sent.since(RESEND_COOLDOWN.ago).exists?
   end
 
   # Raises when a change notice to `recipient_email` about `event` must not be
@@ -47,39 +43,11 @@ module MailDelivery::Caps
   # ten minutes. Deliveries rescues the refusal per recipient and counts it.
   def check_update_notice!(event:, organizer:, recipient_email:, request_ip:)
     recipient = MailDelivery.canonical(recipient_email)
-    check_daily_keys!(organizer: organizer, recipient: recipient, request_ip: request_ip)
+    check_daily_keys!(organizer:, recipient:, request_ip:)
 
-    per_address = MailDelivery.event_updated.where(event_id: event.id, canonical_recipient_email: recipient, failed_at: nil)
-    raise MailDelivery::CapExceeded, "This address has received the maximum of #{UPDATE_NOTICES_PER_EVENT_ADDRESS} notices for this event." if per_address.count >= UPDATE_NOTICES_PER_EVENT_ADDRESS
-
-    last = per_address.order(created_at: :desc).first
-    if last && last.created_at > UPDATE_NOTICE_COOLDOWN.ago
-      raise MailDelivery::CapExceeded, "This address was notified less than 10 minutes ago."
-    end
-  end
-
-  # The four daily keys: the global budget, the organizer's allowance, the
-  # request IP and the canonical recipient, all counted over invitations and
-  # change notices together in the last 24 hours.
-  def check_daily_keys!(organizer:, recipient:, request_ip:)
-    sender = MailDelivery.canonical(organizer.email)
-    recent = MailDelivery.where(kind: DAILY_KEY_KINDS).since(24.hours.ago)
-
-    if recent.count >= INVITATION_DAILY_BUDGET.call
-      Rails.logger.warn("MailDelivery::Caps: global invitation budget reached")
-      raise MailDelivery::CapExceeded, GENERIC_MESSAGE
-    end
-
-    allowance = organizer_has_finalized?(organizer) ? RECIPIENTS_PER_ORGANIZER_PER_DAY : RECIPIENTS_PER_STARTER_ORGANIZER_PER_DAY
-    raise MailDelivery::CapExceeded, GENERIC_MESSAGE if recent.where(sender_email: sender).count >= allowance
-
-    if request_ip.present? && recent.where(request_ip: request_ip).count >= INVITATIONS_PER_IP_PER_DAY
-      raise MailDelivery::CapExceeded, GENERIC_MESSAGE
-    end
-
-    if recent.where(canonical_recipient_email: recipient).count >= INVITATIONS_PER_RECIPIENT_PER_DAY
-      raise MailDelivery::CapExceeded, GENERIC_MESSAGE
-    end
+    sent = MailDelivery.event_updated.where(event:, canonical_recipient_email: recipient, failed_at: nil)
+    raise MailDelivery::CapExceeded, "This address has received the maximum of #{UPDATE_NOTICES_PER_EVENT_ADDRESS} notices for this event." if sent.count >= UPDATE_NOTICES_PER_EVENT_ADDRESS
+    raise MailDelivery::CapExceeded, "This address was notified less than 10 minutes ago." if sent.since(UPDATE_NOTICE_COOLDOWN.ago).exists?
   end
 
   # True when a recovery or organizer-link mail may go to `email` now.
@@ -99,8 +67,8 @@ module MailDelivery::Caps
       .count { MailDelivery.canonical(it) == canonical }
     raise MailDelivery::CapExceeded, CREATION_MESSAGE if opened >= OPENED_EVENTS_PER_ORGANIZER_PER_DAY
 
-    if request_ip.present?
-      unopened_links = MailDelivery.organizer_link.since(day).where(request_ip: request_ip)
+    if request_ip
+      unopened_links = MailDelivery.organizer_link.since(day).where(request_ip:)
         .joins(:participant).merge(Participant.where(link_opened_at: nil))
       raise MailDelivery::CapExceeded, CREATION_MESSAGE if unopened_links.count >= UNOPENED_EVENTS_PER_IP_PER_DAY
       if unopened_links.where(canonical_recipient_email: canonical).count >= UNOPENED_EVENTS_PER_ADDRESS_PER_DAY
@@ -111,5 +79,24 @@ module MailDelivery::Caps
 
   def organizer_has_finalized?(organizer)
     Participant.organizer.where(email: organizer.email).joins(:event).merge(Event.finalized).exists?
+  end
+
+  private
+
+  # The four daily keys: the global budget, the organizer's allowance, the
+  # request IP and the canonical recipient, all counted over invitations and
+  # change notices together in the last 24 hours.
+  def check_daily_keys!(organizer:, recipient:, request_ip:)
+    recent = MailDelivery.where(kind: DAILY_KEY_KINDS).since(24.hours.ago)
+
+    if recent.count >= Integer(ENV.fetch("INVITATION_DAILY_BUDGET", 500))
+      Rails.logger.warn("MailDelivery::Caps: global invitation budget reached")
+      raise MailDelivery::CapExceeded, GENERIC_MESSAGE
+    end
+
+    allowance = organizer_has_finalized?(organizer) ? RECIPIENTS_PER_ORGANIZER_PER_DAY : RECIPIENTS_PER_STARTER_ORGANIZER_PER_DAY
+    raise MailDelivery::CapExceeded, GENERIC_MESSAGE if recent.where(sender_email: organizer.email).count >= allowance
+    raise MailDelivery::CapExceeded, GENERIC_MESSAGE if request_ip && recent.where(request_ip:).count >= INVITATIONS_PER_IP_PER_DAY
+    raise MailDelivery::CapExceeded, GENERIC_MESSAGE if recent.where(canonical_recipient_email: recipient).count >= INVITATIONS_PER_RECIPIENT_PER_DAY
   end
 end

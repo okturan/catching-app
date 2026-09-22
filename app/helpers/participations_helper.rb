@@ -37,10 +37,10 @@ module ParticipationsHelper
     label
   end
 
-  def event_window(event, zone_name = event.time_zone)
-    zone = ActiveSupport::TimeZone[zone_name] || ActiveSupport::TimeZone["UTC"]
-    start_time = event.start_time.in_time_zone(zone)
-    end_time = event.end_time.in_time_zone(zone)
-    "#{start_time.strftime('%a %-d %b %H:%M')}–#{end_time.strftime('%H:%M')} (#{zone.name})"
+  # "Tue 15 Jan 20:00–21:00 (Europe/Berlin)", the way the page's JavaScript
+  # prints the set time.
+  def event_window(event)
+    start_time, end_time = [ event.start_time, event.end_time ].map { it.in_time_zone(event.time_zone) }
+    "#{start_time.to_fs(:day)} #{start_time.to_fs(:time)}–#{end_time.to_fs(:time)} (#{event.time_zone})"
   end
 end

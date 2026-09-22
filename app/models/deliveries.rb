@@ -3,55 +3,7 @@
 # is cancelled only cancelled! passes; every other kind raises, so no later
 # action can put mail about a cancelled event in anyone's inbox.
 module Deliveries
-  module_function
-
-  def invitation!(event:, guest:, organizer:, request_ip:)
-    ensure_not_cancelled!(event)
-    MailDelivery::Caps.check_invitation!(event: event, organizer: organizer, recipient_email: guest.email, request_ip: request_ip)
-    raw_token = guest.token_digest ? guest.issue_pending_token! : guest.issue_live_token!
-    delivery = record!(event: event, participant: guest, kind: :invitation, recipient_email: guest.email,
-      sender_email: MailDelivery.canonical(organizer.email), request_ip: request_ip)
-    enqueue(delivery, raw_token)
-    # The first invitation of an event describes it as it stands, so the
-    # guests it reaches know about every revision so far. A later invitee or
-    # a Resend to one guest tells nobody else, so it must not hide a change
-    # the guests already linked were never told about.
-    mark_notified(event) if event.guests.active.linked.where.not(id: guest.id).none?
-    raw_token
-  end
-
-  def organizer_link!(event:, organizer:, request_ip:, pending: false)
-    ensure_not_cancelled!(event)
-    raw_token = pending ? organizer.issue_pending_token!(expires_in: 24.hours) : organizer.issue_live_token!
-    delivery = record!(event: event, participant: organizer, kind: :organizer_link, recipient_email: organizer.email,
-      request_ip: request_ip)
-    enqueue(delivery, raw_token)
-    raw_token
-  end
-
-  def response_confirmation!(event:, guest:)
-    ensure_not_cancelled!(event)
-    delivery = record!(event: event, participant: guest, kind: :response_confirmation, recipient_email: guest.email)
-    enqueue(delivery, nil)
-  end
-
-  # After finalize!: everyone active with a link, the organizer included as
-  # a receipt, never capped. An unclaimed guest gets a fresh pending token
-  # for the link in the mail (the Resend mechanism: the live token keeps
-  # working, the previous pending one retires); a claimed guest is linked to
-  # the signed-in page by the mailer; the organizer's copy carries no link.
-  # The set window travels in the params so a retried job never reads the
-  # row, and the batch marks the guests as told about this revision.
-  def finalized!(event:)
-    ensure_not_cancelled!(event)
-    window = [ event.start_time, event.end_time ]
-    event.participants.active.linked.find_each do |participant|
-      raw_token = participant.guest? && !participant.claimed? ? participant.issue_pending_token! : nil
-      delivery = record!(event: event, participant: participant, kind: :finalized, recipient_email: participant.email)
-      enqueue(delivery, raw_token, window: window, sequence: event.revision)
-    end
-    mark_notified(event)
-  end
+  extend self
 
   # How far a change notice reached, in the words the organizer reads.
   Report = Data.define(:sent, :skipped) do
@@ -63,34 +15,100 @@ module Deliveries
     end
   end
 
+  def invitation!(event:, guest:, organizer:, request_ip:)
+    event.ensure_not_cancelled!
+    MailDelivery::Caps.check_invitation!(event:, organizer:, recipient_email: guest.email, request_ip:)
+    mail!(:invitation, event:, to: guest, token: guest.issue_token!, sender: organizer, request_ip:)
+    # The first invitation of an event describes it as it stands, so the
+    # guests it reaches know about every revision so far. A later invitee or
+    # a Resend to one guest tells nobody else, so it must not hide a change
+    # the guests already linked were never told about.
+    mark_notified(event) if event.guests.active.linked.where.not(id: guest.id).none?
+  end
+
+  def organizer_link!(event:, organizer:, request_ip:, pending: false)
+    event.ensure_not_cancelled!
+    token = pending ? organizer.issue_pending_token!(expires_in: 24.hours) : organizer.issue_live_token!
+    mail!(:organizer_link, event:, to: organizer, token:, request_ip:)
+  end
+
+  def response_confirmation!(event:, guest:)
+    event.ensure_not_cancelled!
+    mail!(:response_confirmation, event:, to: guest)
+  end
+
+  # After finalize!: everyone active with a link, the organizer included as
+  # a receipt, never capped. The set window travels in the params so a
+  # retried job never reads the row, and the batch marks the guests as told
+  # about this revision.
+  def finalized!(event:)
+    event.ensure_not_cancelled!
+    window = [ event.start_time, event.end_time ]
+    event.participants.active.linked.each do |participant|
+      mail!(:finalized, event:, to: participant, token: link_token!(participant), window:, sequence: event.revision)
+    end
+    mark_notified(event)
+  end
+
   # One coalesced change notice, only when the organizer asks (the details
   # checkbox, the offer checkbox or Tell the guests). Recipients are active
   # linked guests; an offer notice goes only to guests who already replied,
   # and skips declined guests when nothing was added. A recipient over the
   # notice caps is skipped and counted. The organizer never receives one.
   def event_updated!(event:, organizer:, request_ip:, reason:, changes: nil)
-    ensure_not_cancelled!(event)
-    raise Refusal, "Open your organizer link before emailing guests" if organizer.link_opened_at.blank?
+    event.ensure_not_cancelled!
+    raise Refusal, "Open your organizer link before emailing guests" unless organizer.link_opened_at?
 
-    sent = 0
-    skipped = 0
-    notice_recipients(event, reason).find_each do |guest|
-      begin
-        MailDelivery::Caps.check_update_notice!(event: event, organizer: organizer, recipient_email: guest.email, request_ip: request_ip)
-      rescue MailDelivery::CapExceeded
-        skipped += 1
-        next
-      end
-
-      raw_token = guest.claimed? ? nil : guest.issue_pending_token!
-      delivery = record!(event: event, participant: guest, kind: :event_updated, recipient_email: guest.email,
-        sender_email: MailDelivery.canonical(organizer.email), request_ip: request_ip)
-      enqueue(delivery, raw_token, reason:, changes:)
+    sent = skipped = 0
+    notice_recipients(event, reason).each do |guest|
+      MailDelivery::Caps.check_update_notice!(event:, organizer:, recipient_email: guest.email, request_ip:)
+    rescue MailDelivery::CapExceeded
+      skipped += 1
+    else
+      mail!(:event_updated, event:, to: guest, token: link_token!(guest), sender: organizer, request_ip:, reason:, changes:)
       sent += 1
     end
     mark_notified(event) if sent.positive?
     Report.new(sent:, skipped:)
   end
+
+  # Recorded, never mailed: the organizer copies the link from the page.
+  def reveal_link!(event:, guest:, organizer:, request_ip:)
+    event.ensure_not_cancelled!
+    guest.issue_token!.tap do
+      MailDelivery.create!(event:, participant: guest, kind: :link_shown, recipient_email: guest.email,
+        sender_email: organizer.email, request_ip:)
+    end
+  end
+
+  # The one last mail: everyone active with a link, declined guests and the
+  # organizer included, left and never-invited excluded. No token, no link,
+  # no cap. The set window, when there was one, travels in the params so a
+  # retried job never reads the live row. Returns the number of people told.
+  def cancelled!(event:)
+    window = [ event.start_time, event.end_time ] if event.finalized?
+    told = event.participants.active.linked.to_a
+    told.each { mail!(:cancelled, event:, to: it, sender: event.organizer, window:, sequence: event.revision) }
+    mark_notified(event)
+    told.size
+  end
+
+  # After reopen!: every active linked guest hears once that the set time is
+  # withdrawn, the organizer (who pressed the button) not at all. Never
+  # capped: reopen! itself allows at most two per event. The withdrawn
+  # window travels in the params so the job prints it and builds the
+  # cancelled calendar file without reading the row. Returns the number told.
+  def reopened!(event:, previous_window:)
+    event.ensure_not_cancelled!
+    told = event.guests.active.linked.to_a
+    told.each do |guest|
+      mail!(:reopened, event:, to: guest, token: link_token!(guest), sender: event.organizer, previous_window:, sequence: event.revision)
+    end
+    mark_notified(event)
+    told.size
+  end
+
+  private
 
   def notice_recipients(event, reason)
     recipients = event.guests.active.linked
@@ -100,61 +118,18 @@ module Deliveries
     event.offer_revision_added.zero? ? recipients.where(declined_at: nil) : recipients
   end
 
-  def reveal_link!(event:, guest:, organizer:, request_ip:)
-    ensure_not_cancelled!(event)
-    raw_token = guest.token_digest ? guest.issue_pending_token! : guest.issue_live_token!
-    record!(event: event, participant: guest, kind: :link_shown, recipient_email: guest.email,
-      sender_email: MailDelivery.canonical(organizer.email), request_ip: request_ip)
-    raw_token
+  # The claim rule for a mail's link: a fresh pending token for an unclaimed
+  # guest, which retires the previous pending one and leaves the live link
+  # working; none for a claimed guest, whom the mailer links to the
+  # signed-in page, nor for the organizer, whose copy carries no link.
+  def link_token!(participant)
+    participant.issue_pending_token! if participant.guest? && !participant.claimed?
   end
 
-  # The one last mail: everyone active with a link, declined guests and the
-  # organizer included, left and never-invited excluded. No token, no link,
-  # no cap. The set window, when there was one, travels in the params so a
-  # retried job never reads the live row. Returns the number of people told.
-  def cancelled!(event:)
-    organizer = event.organizer
-    window = [ event.start_time, event.end_time ] if event.finalized?
-    told = 0
-    event.participants.active.linked.find_each do |participant|
-      delivery = record!(event: event, participant: participant, kind: :cancelled, recipient_email: participant.email,
-        sender_email: MailDelivery.canonical(organizer.email))
-      enqueue(delivery, nil, window: window, sequence: event.revision)
-      told += 1
-    end
-    mark_notified(event)
-    told
-  end
-
-  # After reopen!: every active linked guest hears once that the set time is
-  # withdrawn, the organizer (who pressed the button) not at all. Never
-  # capped: reopen! itself allows at most two per event. The link follows the
-  # claim rule (a fresh pending token for an unclaimed guest, none for a
-  # claimed one), the withdrawn window travels in the params so the job
-  # prints it and builds the cancelled calendar file without reading the
-  # row, and the batch marks the guests as told. Returns the number told.
-  def reopened!(event:, previous_window:)
-    ensure_not_cancelled!(event)
-    organizer = event.organizer
-    told = 0
-    event.guests.active.linked.find_each do |guest|
-      raw_token = guest.claimed? ? nil : guest.issue_pending_token!
-      delivery = record!(event: event, participant: guest, kind: :reopened, recipient_email: guest.email,
-        sender_email: MailDelivery.canonical(organizer.email))
-      enqueue(delivery, raw_token, previous_window: previous_window, sequence: event.revision)
-      told += 1
-    end
-    mark_notified(event)
-    told
-  end
-
-  def record!(event:, participant:, kind:, recipient_email:, sender_email: nil, request_ip: nil)
-    MailDelivery.create!(event: event, participant: participant, kind: kind, recipient_email: recipient_email,
-      sender_email: sender_email, request_ip: request_ip)
-  end
-
-  def enqueue(delivery, raw_token, **extra)
-    ParticipantMailer.with(delivery: delivery, token: raw_token, **extra).public_send(delivery.kind).deliver_later
+  # The ledger row first, then the job; the rest of the params ride along.
+  def mail!(kind, event:, to:, token: nil, sender: nil, request_ip: nil, **params)
+    delivery = MailDelivery.create!(event:, participant: to, kind:, recipient_email: to.email, sender_email: sender&.email, request_ip:)
+    ParticipantMailer.with(delivery:, token:, **params).public_send(kind).deliver_later
   end
 
   # Monotonic: a batch enqueued from an older page must never lower the mark
@@ -162,9 +137,5 @@ module Deliveries
   def mark_notified(event)
     Event.where(id: event.id).where(notified_revision: ...event.revision).update_all(notified_revision: event.revision)
     event.notified_revision = [ event.notified_revision, event.revision ].max
-  end
-
-  def ensure_not_cancelled!(event)
-    raise Event::Closed, "This event was cancelled" if event.cancelled?
   end
 end

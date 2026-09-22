@@ -12,7 +12,9 @@ class MailDelivery < ApplicationRecord
 
   enum :kind, KINDS.index_by(&:itself), validate: true
 
-  before_validation :fill_canonical_recipient
+  # The organizer who sent it, as the cap key; queries normalize the same way.
+  normalizes :sender_email, with: -> { canonical(it) }
+  before_validation { self.canonical_recipient_email = self.class.canonical(recipient_email) }
 
   validates :recipient_email, presence: true
 
@@ -33,11 +35,5 @@ class MailDelivery < ApplicationRecord
     return :failed if failed_at
     return :delivered if delivered_at
     created_at < 15.minutes.ago ? :unknown : :queued
-  end
-
-  private
-
-  def fill_canonical_recipient
-    self.canonical_recipient_email = self.class.canonical(recipient_email) if recipient_email.present?
   end
 end

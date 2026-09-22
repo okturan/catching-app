@@ -1,8 +1,8 @@
 Invitation from <%= mail_safe(@organizer.name) %> (<%= @organizer.email %>)
 
 <%= mail_safe(@event.name) %>
-<% if @offer %><%= @offer %>
-<% end %>
+<%= @offer %>
+
 Paint the times that work for you:
 
 <%= @link %>

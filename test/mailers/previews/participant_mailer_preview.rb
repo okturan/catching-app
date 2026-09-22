@@ -109,7 +109,7 @@ class ParticipantMailerPreview < ActionMailer::Preview
   end
 
   # An unsaved ledger row: the mailer reads event, participant and recipient
-  # from it and skips the delivered stamp because it is not persisted.
+  # from it, and a preview never delivers, so nothing stamps it.
   def sample(kind, participant: sample_guest)
     MailDelivery.new(event: sample_event, participant: participant, kind: kind, recipient_email: participant.email)
   end

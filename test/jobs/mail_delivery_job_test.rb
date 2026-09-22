@@ -34,6 +34,21 @@ class MailDeliveryJobTest < ActiveJob::TestCase
     assert_no_enqueued_jobs only: MailDeliveryJob
   end
 
+  test "a guest removed while the mail was queued is not written to" do
+    guest = participants(:planning_guest)
+    row = MailDelivery.create!(event: events(:planning), participant: guest, kind: :response_confirmation, recipient_email: guest.email)
+    ParticipantMailer.with(delivery: row, token: nil).response_confirmation.deliver_later
+
+    guest.destroy!
+    perform_enqueued_jobs
+
+    assert_no_enqueued_jobs only: MailDeliveryJob
+    row.reload
+    assert_nil row.participant_id
+    assert_nil row.delivered_at
+    assert_nil row.failed_at
+  end
+
   test "the job never logs its arguments and is the configured delivery job" do
     assert_equal false, MailDeliveryJob.log_arguments
     assert_equal MailDeliveryJob, ParticipantMailer.delivery_job
