@@ -8,7 +8,7 @@ module Participations
     before_action :require_organizer!
 
     def create
-      told = Deliveries.reopened!(event: @event, previous_window: @event.reopen!)
+      told = @event.announce_reopening!(@event.reopen!)
 
       redirect_to scoped_path, status: :see_other, notice: [
         "The set time was withdrawn.",

@@ -300,4 +300,20 @@ class ParticipantTest < ActiveSupport::TestCase
     assert_not guest.valid?
     assert_equal [ "can't be blank" ], guest.errors[:email]
   end
+
+  test "a guest's first answer is confirmed by mail and a later one is not" do
+    replier, decliner = participants(:planning_pending), participants(:planning_unsent)
+
+    assert_difference "MailDelivery.response_confirmation.count", 2 do
+      replier.reply!([ Time.utc(2030, 1, 15, 10) ])
+      decliner.decline!
+    end
+    assert_equal [ replier.email, decliner.email ].sort, MailDelivery.response_confirmation.pluck(:recipient_email).sort
+
+    assert_no_difference "MailDelivery.response_confirmation.count" do
+      replier.reply!([ Time.utc(2030, 1, 15, 11) ])
+      replier.decline!
+      decliner.reply!([ Time.utc(2030, 1, 15, 10) ])
+    end
+  end
 end

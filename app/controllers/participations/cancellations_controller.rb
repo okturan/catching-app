@@ -6,7 +6,7 @@ module Participations
 
     def create
       @event.cancel!
-      told = Deliveries.cancelled!(event: @event)
+      told = @event.announce_cancellation!
 
       redirect_to scoped_path, status: :see_other,
         notice: "Event cancelled. #{helpers.pluralize(told, "person", plural: "people")} #{told == 1 ? "was" : "were"} told."

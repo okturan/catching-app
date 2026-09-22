@@ -21,7 +21,7 @@ class EventsController < ApplicationController
 
     @event = Event.plan!(attributes: event_params, organizer: { name: @organizer.name, email: @organizer.email, user: Current.user },
       starts_at: parsed_time_slots(slot_minutes: requested_slot_minutes))
-    Deliveries.organizer_link!(event: @event, organizer: @event.organizer, request_ip: request.remote_ip)
+    @event.organizer.send_organizer_link!(request_ip: request.remote_ip)
 
     flash[:organizer_email] = @organizer.email
     redirect_to pending_events_path, notice: "Event created.", status: :see_other

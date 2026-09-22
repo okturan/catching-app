@@ -40,7 +40,8 @@ module MailDelivery::Caps
   # Raises when a change notice to `recipient_email` about `event` must not be
   # sent now: the shared daily keys, then at most five notices per event and
   # address in its lifetime (failed rows do not count) and never two within
-  # ten minutes. Deliveries rescues the refusal per recipient and counts it.
+  # ten minutes. Event#notify_guests! rescues the refusal per recipient and
+  # counts it.
   def check_update_notice!(event:, organizer:, recipient_email:, request_ip:)
     recipient = MailDelivery.canonical(recipient_email)
     check_daily_keys!(organizer:, recipient:, request_ip:)

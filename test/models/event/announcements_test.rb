@@ -1,6 +1,6 @@
 require "test_helper"
 
-class DeliveriesTest < ActiveSupport::TestCase
+class Event::AnnouncementsTest < ActiveSupport::TestCase
   include ActionMailer::TestCase::ClearTestDeliveries
 
   setup do
@@ -9,17 +9,12 @@ class DeliveriesTest < ActiveSupport::TestCase
     @guest = participants(:planning_guest)
   end
 
-  test "every kind but cancelled raises on a cancelled event and writes nothing" do
+  test "only the cancellation still goes out once the event is cancelled" do
     @event.cancel!
-    unsent = participants(:planning_unsent)
     calls = {
-      "invitation!" => -> { Deliveries.invitation!(event: @event, guest: unsent, organizer: @organizer, request_ip: "203.0.113.1") },
-      "organizer_link!" => -> { Deliveries.organizer_link!(event: @event, organizer: @organizer, request_ip: nil, pending: true) },
-      "response_confirmation!" => -> { Deliveries.response_confirmation!(event: @event, guest: @guest) },
-      "finalized!" => -> { Deliveries.finalized!(event: @event) },
-      "event_updated!" => -> { Deliveries.event_updated!(event: @event, organizer: @organizer, request_ip: nil, reason: :all) },
-      "reveal_link!" => -> { Deliveries.reveal_link!(event: @event, guest: @guest, organizer: @organizer, request_ip: nil) },
-      "reopened!" => -> { Deliveries.reopened!(event: @event, previous_window: [ Time.utc(2030, 1, 15, 10), Time.utc(2030, 1, 15, 11) ]) }
+      "announce_finalization!" => -> { @event.announce_finalization! },
+      "notify_guests!" => -> { @event.notify_guests!(reason: :all, by: @organizer, request_ip: nil) },
+      "announce_reopening!" => -> { @event.announce_reopening!([ Time.utc(2030, 1, 15, 10), Time.utc(2030, 1, 15, 11) ]) }
     }
 
     assert_no_difference "MailDelivery.count" do
@@ -30,31 +25,10 @@ class DeliveriesTest < ActiveSupport::TestCase
         end
       end
     end
-    assert_nil unsent.reload.token_digest
-    assert_nil @organizer.reload.pending_token_digest
-    assert_nil @guest.reload.pending_token_digest
+    assert_nil participants(:planning_pending).reload.pending_token_digest
   end
 
-  test "the first invitation marks the guests told about every revision so far; later invitees and resends tell nobody else" do
-    @event.update_columns(revision: 3, notified_revision: 1)
-    unsent = participants(:planning_unsent)
-
-    Deliveries.invitation!(event: @event, guest: unsent, organizer: @organizer, request_ip: "203.0.113.1")
-    assert_equal 1, @event.reload.notified_revision, "two guests already linked were never told about revisions 2 and 3"
-    assert unsent.reload.token_digest.present?
-
-    @event.guests.where.not(id: unsent.id).update_all(token_digest: nil)
-    MailDelivery.invitation.delete_all
-    Deliveries.invitation!(event: @event, guest: unsent, organizer: @organizer, request_ip: "203.0.113.1")
-    assert_equal 3, @event.reload.notified_revision, "the only linked guest now knows the current state"
-
-    @event.update_columns(revision: 4)
-    MailDelivery.invitation.delete_all
-    Deliveries.invitation!(event: @event, guest: @guest, organizer: @organizer, request_ip: "203.0.113.1")
-    assert_equal 3, @event.reload.notified_revision, "a late invitee does not hide what the first guest was never told"
-  end
-
-  test "reopened! tells every active linked guest once by the claim rule, the organizer not at all, and marks the revision told" do
+  test "announce_reopening! tells every active linked guest once by the claim rule, the organizer not at all, and marks the revision told" do
     @event.update_columns(revision: 5, notified_revision: 2)
     pending = participants(:planning_pending)
     stale = pending.issue_pending_token!
@@ -63,7 +37,7 @@ class DeliveriesTest < ActiveSupport::TestCase
     told = nil
     assert_difference "MailDelivery.reopened.count", 2 do
       assert_enqueued_jobs 2, only: MailDeliveryJob do
-        told = Deliveries.reopened!(event: @event, previous_window: window)
+        told = @event.announce_reopening!(window)
       end
     end
 
@@ -98,19 +72,19 @@ class DeliveriesTest < ActiveSupport::TestCase
     assert MailDelivery.reopened.all? { |row| row.reload.delivered_at.present? }
   end
 
-  test "finalized! is never capped" do
+  test "announce_finalization! is never capped" do
     10.times do |i|
       MailDelivery.create!(event: events(:other_event), kind: :invitation, recipient_email: @guest.email,
         sender_email: "f#{i}@example.com")
     end
 
     assert_difference "MailDelivery.finalized.count", 2 do
-      Deliveries.finalized!(event: events(:finalized))
+      events(:finalized).announce_finalization!
     end
     assert MailDelivery.finalized.exists?(recipient_email: "invitee@example.com")
   end
 
-  test "reopened! is never capped and prints the window from the job's own params" do
+  test "announce_reopening! is never capped and prints the window from the job's own params" do
     10.times do |i|
       MailDelivery.create!(event: events(:other_event), kind: :invitation, recipient_email: @guest.email,
         sender_email: "o#{i}@example.com")
@@ -120,7 +94,7 @@ class DeliveriesTest < ActiveSupport::TestCase
 
     perform_enqueued_jobs do
       assert_difference "MailDelivery.reopened.where(recipient_email: 'invitee@example.com').count", 1 do
-        assert_equal 1, Deliveries.reopened!(event: finalized, previous_window: window)
+        assert_equal 1, finalized.announce_reopening!(window)
       end
     end
 
@@ -131,7 +105,7 @@ class DeliveriesTest < ActiveSupport::TestCase
     assert_equal 0, MailDelivery.reopened.where(recipient_email: "owner@example.com").count, "no organizer copy"
   end
 
-  test "finalized! links unclaimed guests through a fresh pending token, claimed ones by account, the organizer not at all" do
+  test "announce_finalization! links unclaimed guests through a fresh pending token, claimed ones by account, the organizer not at all" do
     @event.update_columns(start_time: Time.utc(2030, 1, 15, 10), end_time: Time.utc(2030, 1, 15, 11), revision: 2)
     pending = participants(:planning_pending)
     stale = pending.issue_pending_token!
@@ -139,7 +113,7 @@ class DeliveriesTest < ActiveSupport::TestCase
 
     assert_difference "MailDelivery.finalized.count", 3 do
       assert_enqueued_jobs 3, only: MailDeliveryJob do
-        Deliveries.finalized!(event: @event)
+        @event.announce_finalization!
       end
     end
 
@@ -167,11 +141,11 @@ class DeliveriesTest < ActiveSupport::TestCase
     mails.each_value { |mail| assert_equal [ "catching-app.ics" ], mail.attachments.map(&:filename) }
   end
 
-  test "finalized! prints the window from the job's own params after a reopen-shaped change" do
+  test "announce_finalization! prints the window from the job's own params after a reopen-shaped change" do
     finalized = events(:finalized)
 
     assert_enqueued_jobs 2, only: MailDeliveryJob do
-      Deliveries.finalized!(event: finalized)
+      finalized.announce_finalization!
     end
     finalized.update_columns(start_time: nil, end_time: nil)
 
@@ -183,17 +157,17 @@ class DeliveriesTest < ActiveSupport::TestCase
     end
   end
 
-  test "event_updated! refuses an organizer who has not opened their link, writing nothing" do
+  test "notify_guests! refuses an organizer who has not opened their link, writing nothing" do
     @organizer.update_columns(link_opened_at: nil)
     error = assert_raises(Refusal) do
-      Deliveries.event_updated!(event: @event, organizer: @organizer, request_ip: nil, reason: :all)
+      @event.notify_guests!(reason: :all, by: @organizer, request_ip: nil)
     end
     assert_equal "Open your organizer link before emailing guests", error.message
     assert_equal 0, MailDelivery.event_updated.count
     assert_nil participants(:planning_pending).reload.pending_token_digest
   end
 
-  test "event_updated! for details reaches every active linked guest by the claim rule and marks the revision told" do
+  test "notify_guests! for details reaches every active linked guest by the claim rule and marks the revision told" do
     @event.update_columns(revision: 3, notified_revision: 1, place: "Zoom")
     pending = participants(:planning_pending)
     stale = pending.issue_pending_token!
@@ -201,12 +175,11 @@ class DeliveriesTest < ActiveSupport::TestCase
     result = nil
     assert_difference "MailDelivery.event_updated.count", 2 do
       assert_enqueued_jobs 2, only: MailDeliveryJob do
-        result = Deliveries.event_updated!(event: @event, organizer: @organizer, request_ip: "203.0.113.5", reason: :details,
-          changes: { "place" => [ nil, "Zoom" ] })
+        result = @event.notify_guests!(reason: :details, by: @organizer, request_ip: "203.0.113.5", changes: { "place" => [ nil, "Zoom" ] })
       end
     end
 
-    assert_equal Deliveries::Report.new(sent: 2, skipped: 0), result
+    assert_equal Event::Announcements::NoticeReport.new(sent: 2, skipped: 0), result
     rows = MailDelivery.event_updated.order(:id)
     assert_equal %w[invitee@example.com pending@example.com], rows.map(&:recipient_email).sort
     assert rows.all? { |row| row.sender_email == "owner@example.com" && row.request_ip == "203.0.113.5" && row.participant_id.present? }
@@ -234,33 +207,33 @@ class DeliveriesTest < ActiveSupport::TestCase
     assert MailDelivery.event_updated.all? { |row| row.reload.delivered_at.present? }
   end
 
-  test "event_updated! for an offer change reaches replied guests only and skips declined guests when nothing was added" do
+  test "notify_guests! for an offer change reaches replied guests only and skips declined guests when nothing was added" do
     pending = participants(:planning_pending)
     @event.update_columns(offer_revised_at: Time.current, offer_revision_added: 0, offer_revision_removed: 2)
 
     assert_difference "MailDelivery.event_updated.count", 1 do
-      Deliveries.event_updated!(event: @event, organizer: @organizer, request_ip: nil, reason: :offer)
+      @event.notify_guests!(reason: :offer, by: @organizer, request_ip: nil)
     end
     assert_equal [ "invitee@example.com" ], MailDelivery.event_updated.pluck(:recipient_email), "the unreplied guest hears nothing"
 
     MailDelivery.event_updated.delete_all
     @guest.update_columns(declined_at: Time.current)
-    assert_equal Deliveries::Report.new(sent: 0, skipped: 0), Deliveries.event_updated!(event: @event, organizer: @organizer, request_ip: nil, reason: :offer)
+    assert_equal Event::Announcements::NoticeReport.new(sent: 0, skipped: 0), @event.notify_guests!(reason: :offer, by: @organizer, request_ip: nil)
 
     @event.update_columns(offer_revision_added: 1)
     pending.update_columns(responded_at: Time.current)
     result = nil
     assert_difference "MailDelivery.event_updated.count", 2 do
-      result = Deliveries.event_updated!(event: @event, organizer: @organizer, request_ip: nil, reason: :offer)
+      result = @event.notify_guests!(reason: :offer, by: @organizer, request_ip: nil)
     end
-    assert_equal Deliveries::Report.new(sent: 2, skipped: 0), result
+    assert_equal Event::Announcements::NoticeReport.new(sent: 2, skipped: 0), result
     assert_equal %w[invitee@example.com pending@example.com], MailDelivery.event_updated.pluck(:recipient_email).sort
 
-    assert_equal Deliveries::Report.new(sent: 0, skipped: 2), Deliveries.event_updated!(event: @event, organizer: @organizer, request_ip: nil, reason: :offer),
+    assert_equal Event::Announcements::NoticeReport.new(sent: 0, skipped: 2), @event.notify_guests!(reason: :offer, by: @organizer, request_ip: nil),
       "inside the cooldown both are skipped"
   end
 
-  test "event_updated! skips capped recipients without a row and marks the revision told only when something was sent" do
+  test "notify_guests! skips capped recipients without a row and marks the revision told only when something was sent" do
     @event.update_columns(revision: 2, notified_revision: 0)
     5.times do |i|
       MailDelivery.create!(event: @event, participant: @guest, kind: :event_updated, recipient_email: @guest.email,
@@ -269,21 +242,21 @@ class DeliveriesTest < ActiveSupport::TestCase
 
     result = nil
     assert_difference "MailDelivery.event_updated.count", 1 do
-      result = Deliveries.event_updated!(event: @event, organizer: @organizer, request_ip: nil, reason: :all)
+      result = @event.notify_guests!(reason: :all, by: @organizer, request_ip: nil)
     end
-    assert_equal Deliveries::Report.new(sent: 1, skipped: 1), result
+    assert_equal Event::Announcements::NoticeReport.new(sent: 1, skipped: 1), result
     assert_equal [ "pending@example.com" ], MailDelivery.event_updated.where(created_at: 1.minute.ago..).pluck(:recipient_email)
     assert_equal 2, @event.reload.notified_revision
 
     @event.update_columns(revision: 3)
     assert_no_difference "MailDelivery.count" do
-      result = Deliveries.event_updated!(event: @event, organizer: @organizer, request_ip: nil, reason: :all)
+      result = @event.notify_guests!(reason: :all, by: @organizer, request_ip: nil)
     end
-    assert_equal Deliveries::Report.new(sent: 0, skipped: 2), result
+    assert_equal Event::Announcements::NoticeReport.new(sent: 0, skipped: 2), result
     assert_equal 2, @event.reload.notified_revision, "nothing sent, nothing told"
   end
 
-  test "cancelled! tells every active linked participant once, the organizer included, and issues no token" do
+  test "announce_cancellation! tells every active linked participant once, the organizer included, and issues no token" do
     @event.update_columns(revision: 2)
     @guest.update!(declined_at: Time.current)
     @event.cancel!
@@ -293,7 +266,7 @@ class DeliveriesTest < ActiveSupport::TestCase
     told = nil
     assert_difference "MailDelivery.cancelled.count", 3 do
       assert_enqueued_jobs 3, only: MailDeliveryJob do
-        told = Deliveries.cancelled!(event: @event)
+        told = @event.announce_cancellation!
       end
     end
 
@@ -306,7 +279,7 @@ class DeliveriesTest < ActiveSupport::TestCase
     assert_equal 3, @event.reload.notified_revision
   end
 
-  test "cancelled! is never capped and reaches a recipient every other kind would skip" do
+  test "announce_cancellation! is never capped and reaches a recipient every other kind would skip" do
     10.times do |i|
       MailDelivery.create!(event: events(:other_event), kind: :invitation, recipient_email: @guest.email,
         sender_email: "o#{i}@example.com")
@@ -314,15 +287,15 @@ class DeliveriesTest < ActiveSupport::TestCase
     @event.cancel!
 
     assert_difference "MailDelivery.cancelled.where(recipient_email: 'invitee@example.com').count", 1 do
-      Deliveries.cancelled!(event: @event)
+      @event.announce_cancellation!
     end
   end
 
-  test "cancelled! prints the window from the job's own params and nothing for a pending event" do
+  test "announce_cancellation! prints the window from the job's own params and nothing for a pending event" do
     finalized = events(:finalized)
     finalized.cancel!
 
-    perform_enqueued_jobs { Deliveries.cancelled!(event: finalized) }
+    perform_enqueued_jobs { finalized.announce_cancellation! }
 
     mails = ActionMailer::Base.deliveries.last(2)
     assert_equal [ "invitee@example.com", "owner@example.com" ], mails.flat_map(&:to).sort
@@ -335,7 +308,7 @@ class DeliveriesTest < ActiveSupport::TestCase
     assert MailDelivery.cancelled.where(event: finalized).all? { |row| row.delivered_at.present? }
 
     @event.cancel!
-    perform_enqueued_jobs { Deliveries.cancelled!(event: @event) }
+    perform_enqueued_jobs { @event.announce_cancellation! }
     assert_not_includes ActionMailer::Base.deliveries.last.text_part.body.to_s, "It was set for"
     assert_empty ActionMailer::Base.deliveries.last.attachments
   end

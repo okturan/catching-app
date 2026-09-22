@@ -8,7 +8,7 @@ module Participations
 
     def create
       @revealed_guest = target_guest(params[:participant_id])
-      raw_token = Deliveries.reveal_link!(event: @event, guest: @revealed_guest, organizer: @participant, request_ip: request.remote_ip)
+      raw_token = @revealed_guest.reveal_link!(by: @participant, request_ip: request.remote_ip)
       @revealed_url = participation_url(raw_token)
 
       load_participation_page

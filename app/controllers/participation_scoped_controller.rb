@@ -104,7 +104,7 @@ class ParticipationScopedController < ApplicationController
   # Mails a change notice and returns the sentence that reports it. A refused
   # notice becomes the alert; whatever was saved before it stays saved.
   def notify_guests(reason, changes: nil)
-    Deliveries.event_updated!(event: @event, organizer: @participant, request_ip: request.remote_ip, reason:, changes:)
+    @event.notify_guests!(reason:, by: @participant, request_ip: request.remote_ip, changes:)
   rescue Refusal => refusal
     flash[:alert] = refusal.message
     nil

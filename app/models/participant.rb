@@ -1,7 +1,7 @@
 # Someone taking part in an event: its one organizer or a guest. Everyone is
 # reached through a capability link; an account only remembers events.
 class Participant < ApplicationRecord
-  include Tokens, Reply
+  include Tokens, Reply, Mailings
 
   EMAIL_FORMAT = URI::MailTo::EMAIL_REGEXP
 

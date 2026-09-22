@@ -5,7 +5,7 @@
 # Every write that others can see runs under the event's row lock and bumps
 # its revision, which calendar files publish as their SEQUENCE.
 class Event < ApplicationRecord
-  include Availability, Finalization, Cancellation, Plan
+  include Availability, Finalization, Cancellation, Plan, Announcements
 
   class Closed < Refusal; end
 

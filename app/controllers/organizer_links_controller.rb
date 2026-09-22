@@ -12,7 +12,7 @@ class OrganizerLinksController < ApplicationController
     email = Participant.normalize_value_for(:email, params.dig(:organizer_link, :email).to_s)
     if email.match?(Participant::EMAIL_FORMAT) && MailDelivery::Caps.organizer_link_allowed?(email)
       Participant.organizer.active.where(email:).joins(:event).merge(Event.not_cancelled).includes(:event).each do |organizer|
-        Deliveries.organizer_link!(event: organizer.event, organizer:, request_ip: request.remote_ip, pending: true)
+        organizer.send_organizer_link!(request_ip: request.remote_ip, pending: true)
       end
     end
 

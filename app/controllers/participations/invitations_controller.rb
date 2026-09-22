@@ -7,7 +7,7 @@ module Participations
     def create
       added, already = @event.add_guests!(Participant.addresses_from(params.dig(:invitations, :emails).to_s))
       guests = @event.participants.unsent.order(:created_at).to_a
-      guests.each { Deliveries.invitation!(event: @event, guest: it, organizer: @participant, request_ip: request.remote_ip) }
+      guests.each { it.invite!(by: @participant, request_ip: request.remote_ip) }
 
       redirect_to scoped_path, status: :see_other, notice: [
         ("#{added.size} added." if added.any?),

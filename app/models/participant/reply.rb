@@ -34,7 +34,7 @@ module Participant::Reply
       event.replace_time_slots!(participant: self, starts_at:)
       record_answer!(details, declined_at: nil)
     end
-    Deliveries.response_confirmation!(event:, guest: self) if first_reply
+    MailDelivery.deliver_later(:response_confirmation, to: self) if first_reply
   end
 
   # "None of these times work": slots cleared, out of consensus, link kept.
@@ -45,7 +45,7 @@ module Participant::Reply
       time_slots.delete_all
       record_answer!(details, declined_at: Time.current)
     end
-    Deliveries.response_confirmation!(event:, guest: self) if first_reply
+    MailDelivery.deliver_later(:response_confirmation, to: self) if first_reply
   end
 
   # The guest's kill switch: slots, both credentials and the claim, gone.

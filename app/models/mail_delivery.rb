@@ -20,6 +20,19 @@ class MailDelivery < ApplicationRecord
 
   scope :since, ->(time) { where(created_at: time..) }
 
+  # Every transactional mail starts here: its ledger row, then the job that
+  # sends it. The params after the recipient ride along to ParticipantMailer.
+  def self.deliver_later(kind, to:, token: nil, sender: nil, request_ip: nil, **params)
+    record!(kind, to:, sender:, request_ip:).tap do |delivery|
+      ParticipantMailer.with(delivery:, token:, **params).public_send(kind).deliver_later
+    end
+  end
+
+  # A row with no mail behind it, such as a link shown to copy.
+  def self.record!(kind, to:, sender: nil, request_ip: nil)
+    create!(event: to.event, participant: to, kind:, recipient_email: to.email, sender_email: sender&.email, request_ip:)
+  end
+
   # Cap key: plus-tags stripped; dots removed for Gmail. Plus-addressing must
   # not buy a fresh allowance.
   def self.canonical(email)
