@@ -2,8 +2,6 @@ require "test_helper"
 
 module Participations
   class CancellationsControllerTest < ActionDispatch::IntegrationTest
-    include ActiveJob::TestHelper
-
     setup do
       @event = events(:planning)
       @organizer = participants(:planning_organizer)

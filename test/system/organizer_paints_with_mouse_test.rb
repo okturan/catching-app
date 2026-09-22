@@ -2,15 +2,16 @@ require "application_system_test_case"
 
 class OrganizerPaintsWithMouseTest < ApplicationSystemTestCase
   setup do
-    login_as users(:owner), scope: :user
+    sign_in users(:owner)
   end
 
   test "organizer paints two adjacent cells and the selection follows the zone" do
     visit new_event_path
     assert_selector "#time-grid-define .slot[data-date]", minimum: 24
 
-    first_cell = find('#time-grid-define .slot[data-row="9"][data-col="0"]')
-    second_cell = find('#time-grid-define .slot[data-row="10"][data-col="0"]')
+    # Tomorrow, so moving the wall clock east never lands behind the cut-off.
+    first_cell = find('#time-grid-define .slot[data-row="9"][data-col="1"]')
+    second_cell = find('#time-grid-define .slot[data-row="10"][data-col="1"]')
     page.driver.browser.action.move_to(first_cell.native).pointer_down.move_to(second_cell.native).pointer_up.perform
 
     assert_selector "#time-grid-define .slot.active", count: 2

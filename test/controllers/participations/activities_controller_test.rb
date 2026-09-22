@@ -4,8 +4,6 @@ module Participations
   # Covers ActivitiesController and ActivityMovesController: the two plan
   # writers behind the organizer's Edit details page.
   class ActivitiesControllerTest < ActionDispatch::IntegrationTest
-    include ActiveJob::TestHelper
-
     setup do
       @event = events(:planning)
       @organizer = participants(:planning_organizer)

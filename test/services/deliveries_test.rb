@@ -1,7 +1,6 @@
 require "test_helper"
 
 class DeliveriesTest < ActiveSupport::TestCase
-  include ActiveJob::TestHelper
   include ActionMailer::TestCase::ClearTestDeliveries
 
   setup do

@@ -6,9 +6,18 @@ class MailDeliveryTest < ActiveSupport::TestCase
     @organizer = participants(:planning_organizer)
   end
 
-  def record(kind: :invitation, recipient: "guest@example.com", sender: @organizer.email, event: @event, created_at: Time.current, failed_at: nil, request_ip: nil)
-    MailDelivery.create!(event: event, participant: nil, kind: kind, recipient_email: recipient,
-      sender_email: MailDelivery.canonical(sender), created_at: created_at, failed_at: failed_at, request_ip: request_ip)
+  def ledger_row(kind: :invitation, recipient: "guest@example.com", sender: @organizer.email, event: @event, created_at: Time.current, failed_at: nil, request_ip: nil)
+    { event_id: event.id, kind: kind.to_s, recipient_email: recipient, canonical_recipient_email: MailDelivery.canonical(recipient),
+      sender_email: MailDelivery.canonical(sender), created_at:, failed_at:, request_ip: }
+  end
+
+  def record(**)
+    MailDelivery.create!(ledger_row(**))
+  end
+
+  # The caps count hundreds of rows; write them in one statement.
+  def record_many(count)
+    MailDelivery.insert_all!(Array.new(count) { |i| ledger_row(**yield(i)) })
   end
 
   def check!(recipient: "guest@example.com", request_ip: nil)
@@ -61,19 +70,19 @@ class MailDeliveryTest < ActiveSupport::TestCase
 
   test "an organizer without a finalized event gets the starter allowance" do
     starter = participants(:other_organizer)
-    20.times { |i| record(recipient: "g#{i}@example.com", sender: starter.email, event: events(:other_event)) }
+    record_many(20) { |i| { recipient: "g#{i}@example.com", sender: starter.email, event: events(:other_event) } }
     assert_raises(MailDelivery::CapExceeded) do
       MailDelivery::Caps.check_invitation!(event: events(:other_event), organizer: starter, recipient_email: "new@example.com", request_ip: nil)
     end
 
     # owner@example.com organizes the finalized fixture event, so it has the full allowance.
-    20.times { |i| record(recipient: "g#{i}@example.com") }
+    record_many(20) { |i| { recipient: "g#{i}@example.com" } }
     assert_nothing_raised { check!(recipient: "new@example.com") }
   end
 
   test "plus addressing shares one allowance" do
     starter = participants(:other_organizer)
-    20.times { |i| record(recipient: "g#{i}@example.com", sender: "other-owner+#{i}@example.com", event: events(:other_event)) }
+    record_many(20) { |i| { recipient: "g#{i}@example.com", sender: "other-owner+#{i}@example.com", event: events(:other_event) } }
 
     assert_raises(MailDelivery::CapExceeded) do
       MailDelivery::Caps.check_invitation!(event: events(:other_event), organizer: starter, recipient_email: "new@example.com", request_ip: nil)
@@ -93,7 +102,7 @@ class MailDeliveryTest < ActiveSupport::TestCase
     5.times { |i| record(recipient: "capped@example.com", created_at: (i + 1).hours.ago) }
     assert_raises(MailDelivery::CapExceeded) { check!(recipient: "capped@example.com") }
 
-    200.times { |i| record(recipient: "ip#{i}@example.com", sender: "s#{i % 30}@example.com", request_ip: "203.0.113.9") }
+    record_many(200) { |i| { recipient: "ip#{i}@example.com", sender: "s#{i % 30}@example.com", request_ip: "203.0.113.9" } }
     assert_raises(MailDelivery::CapExceeded) { check!(recipient: "another@example.com", request_ip: "203.0.113.9") }
   end
 
@@ -130,14 +139,14 @@ class MailDeliveryTest < ActiveSupport::TestCase
     assert_raises(MailDelivery::CapExceeded) { check!(recipient: "pair@example.com") }
 
     starter = participants(:other_organizer)
-    20.times { |i| record(kind: :event_updated, recipient: "g#{i}@example.com", sender: starter.email, event: events(:other_event)) }
+    record_many(20) { |i| { kind: :event_updated, recipient: "g#{i}@example.com", sender: starter.email, event: events(:other_event) } }
     [ :check_invitation!, :check_update_notice! ].each do |check|
       assert_raises(MailDelivery::CapExceeded, check.to_s) do
         MailDelivery::Caps.public_send(check, event: events(:other_event), organizer: starter, recipient_email: "new@example.com", request_ip: nil)
       end
     end
 
-    200.times { |i| record(kind: :event_updated, recipient: "ip#{i}@example.com", sender: "s#{i % 30}@example.com", request_ip: "203.0.113.9") }
+    record_many(200) { |i| { kind: :event_updated, recipient: "ip#{i}@example.com", sender: "s#{i % 30}@example.com", request_ip: "203.0.113.9" } }
     assert_raises(MailDelivery::CapExceeded) { check!(recipient: "another@example.com", request_ip: "203.0.113.9") }
     assert_raises(MailDelivery::CapExceeded) { notice_check!(recipient: "another@example.com", request_ip: "203.0.113.9") }
     assert_nothing_raised { notice_check!(recipient: "another@example.com", request_ip: "203.0.113.10") }

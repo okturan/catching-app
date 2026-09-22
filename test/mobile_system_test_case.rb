@@ -3,9 +3,7 @@ require "test_helper"
 # A second Capybara driver emulating a touch phone. The distinct driver name
 # gives it its own browser session next to ApplicationSystemTestCase.
 class MobileSystemTestCase < ActionDispatch::SystemTestCase
-  include Warden::Test::Helpers
-  include ActiveJob::TestHelper
-  include ActionMailer::TestCase::ClearTestDeliveries
+  include SystemTestHelper
 
   ANDROID_USER_AGENT = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 " \
     "(KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36".freeze
@@ -19,24 +17,14 @@ class MobileSystemTestCase < ActionDispatch::SystemTestCase
     )
   end
 
-  setup { Warden.test_mode! }
-  teardown { Warden.test_reset! }
-
   private
-
-  def hidden_value(selector)
-    find(selector, visible: false).value
-  end
 
   # Drags one finger from the first element through the others using real
   # touch events dispatched through DevTools (chromedriver's synthetic touch
   # pointer does not reach the page under mobile emulation). The grid panel is
   # scrolled fully into view first so the sticky action bar covers no cell.
-  # Skips the test when the driver has no DevTools access.
   def touch_drag(from, *through)
     browser = page.driver.browser
-    skip "touch dispatch needs a Chromium driver" unless browser.respond_to?(:execute_cdp)
-
     page.execute_script("arguments[0].closest('.time-grid-panel').scrollIntoView({ block: 'end', behavior: 'instant' })", from)
     settle_layout
     points = [ from, *through ].map { |element| center_of(element) }

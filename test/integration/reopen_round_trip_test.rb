@@ -5,9 +5,6 @@ require "test_helper"
 # withdrawn windows cleared by cancelled files in between, and the third
 # reopen refused.
 class ReopenRoundTripTest < ActionDispatch::IntegrationTest
-  include ActiveJob::TestHelper
-  include ActionMailer::TestCase::ClearTestDeliveries
-
   setup do
     @event = events(:planning)
     @organizer_token = raw_token(:planning_organizer)

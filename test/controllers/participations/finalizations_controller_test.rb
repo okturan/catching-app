@@ -2,9 +2,6 @@ require "test_helper"
 
 module Participations
   class FinalizationsControllerTest < ActionDispatch::IntegrationTest
-    include ActiveJob::TestHelper
-    include ActionMailer::TestCase::ClearTestDeliveries
-
     setup do
       @event = events(:planning)
       @organizer_token = raw_token(:planning_organizer)

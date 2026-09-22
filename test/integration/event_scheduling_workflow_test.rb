@@ -4,8 +4,6 @@ require "test_helper"
 # emailed link, invites, a guest replies through their link, the organizer
 # finalizes, and the guest later keeps the event in a new account.
 class EventSchedulingWorkflowTest < ActionDispatch::IntegrationTest
-  include ActionMailer::TestCase::ClearTestDeliveries
-
   test "organizer and guest schedule a meeting without accounts" do
     berlin = ActiveSupport::TimeZone["Europe/Berlin"]
     first_time = berlin.local(2032, 3, 20, 14, 0)

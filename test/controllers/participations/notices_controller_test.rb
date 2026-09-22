@@ -2,9 +2,6 @@ require "test_helper"
 
 module Participations
   class NoticesControllerTest < ActionDispatch::IntegrationTest
-    include ActiveJob::TestHelper
-    include ActionMailer::TestCase::ClearTestDeliveries
-
     setup do
       @event = events(:planning)
       @organizer = participants(:planning_organizer)

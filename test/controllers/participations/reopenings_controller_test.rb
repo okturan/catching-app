@@ -2,9 +2,6 @@ require "test_helper"
 
 module Participations
   class ReopeningsControllerTest < ActionDispatch::IntegrationTest
-    include ActiveJob::TestHelper
-    include ActionMailer::TestCase::ClearTestDeliveries
-
     setup do
       @event = events(:finalized)
       @organizer = participants(:finalized_organizer)
