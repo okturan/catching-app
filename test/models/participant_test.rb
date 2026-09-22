@@ -279,4 +279,18 @@ class ParticipantTest < ActiveSupport::TestCase
     assert guest.reload.left?
     assert_nil guest.reply_voided_at
   end
+
+  test "a reply is older than a revision or a reopen only when that came after it" do
+    guest = participants(:planning_guest)
+    assert_not guest.replied_before_revision?
+    assert_not guest.replied_before_reopen?
+
+    guest.event.offer_revised_at = guest.responded_at + 1.day
+    guest.event.reopened_at = guest.responded_at - 1.day
+    assert guest.replied_before_revision?
+    assert_not guest.replied_before_reopen?
+
+    guest.responded_at = nil
+    assert_not guest.replied_before_revision?
+  end
 end

@@ -21,6 +21,11 @@ module Participant::Reply
     responded_at? && event.offer_revised_at? && responded_at < event.offer_revised_at
   end
 
+  # Replied before the organizer last withdrew a set time.
+  def replied_before_reopen?
+    responded_at? && event.reopened_at? && responded_at < event.reopened_at
+  end
+
   # Saves painted times with the reply's stamps; details may carry a name and
   # a time zone. The first reply is confirmed by mail.
   def reply!(starts_at, details = {})

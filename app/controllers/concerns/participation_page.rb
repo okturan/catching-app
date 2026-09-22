@@ -44,15 +44,15 @@ module ParticipationPage
   # the later one speaks. Nil for the organizer, for a guest who never
   # replied, and once the guest has saved again.
   def revision_notice
-    return nil unless @event.open? && @participant.guest? && @participant.responded_at.present?
+    return unless @event.open? && @participant.guest? && @participant.responded_at?
     return :voided if @participant.voided?
 
-    reopened = @event.reopened_at.present? && @participant.responded_at < @event.reopened_at
+    reopened = @participant.replied_before_reopen?
     revised = @participant.replied_before_revision?
     return :reopened if reopened && (!revised || @event.reopened_at > @event.offer_revised_at)
-    return nil unless revised
-    return :stale if @participant.declined_at.nil?
+    return unless revised
+    return :stale unless @participant.declined_at?
 
-    @event.offer_revision_added.positive? ? :declined_added : nil
+    :declined_added if @event.offer_revision_added.positive?
   end
 end
