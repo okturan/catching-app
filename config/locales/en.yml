@@ -11,3 +11,17 @@ en:
         slot_minutes: Slot length
       plan_item:
         duration_minutes: Length
+    errors:
+      models:
+        event:
+          attributes:
+            duration_minutes:
+              less_than_or_equal_to: must be at most 24 hours
+        plan_item:
+          attributes:
+            duration_minutes:
+              less_than_or_equal_to: must be at most 24 hours
+  errors:
+    messages:
+      not_a_web_address: must be a web address starting with http:// or https://
+      unknown_time_zone: is not a known time zone

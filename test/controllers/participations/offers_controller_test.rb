@@ -93,7 +93,7 @@ module Participations
       assert_select ".offer-note", count: 0
       assert_select "table#time-grid-define[role=grid][data-slot-minutes='60'][data-time-zone='UTC'][data-not-before]"
       not_before = css_select("#time-grid-define").first["data-not-before"]
-      assert_in_delta TimeSlotParser::PAST_GRACE.ago, Time.iso8601(not_before), 60
+      assert_in_delta TimeSlot::PAST_GRACE.ago, Time.iso8601(not_before), 60
       assert_select "#selection-summary[aria-live=polite]"
       assert_select "#paint-mode[role=radiogroup]"
       assert_select "a[href=?]", participation_path(@organizer_token), text: "Back to the event"

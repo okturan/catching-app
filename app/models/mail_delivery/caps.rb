@@ -18,7 +18,6 @@ module MailDelivery::Caps
   OPENED_EVENTS_PER_ORGANIZER_PER_DAY = 5
   UNOPENED_EVENTS_PER_ADDRESS_PER_DAY = 3
   UNOPENED_EVENTS_PER_IP_PER_DAY = 10
-  GUESTS_PER_EVENT = 50
 
   # The two organizer-triggered guest mails share the four daily keys, so a
   # change notice can never buy a fresh invitation allowance or the reverse.

@@ -10,13 +10,9 @@ module ParticipationPage
     @role = viewer_role
     @plan = @event.plan_timeline
 
-    offered = slot_instants(@organizer)
-    @offered_slots = offered.map(&:iso8601)
-    # Every offered instant is behind the parser's cut-off: nothing can be
-    # painted or set until the organizer changes the times.
-    cutoff = TimeSlotParser::PAST_GRACE.ago
-    @every_offer_past = offered.any? && offered.all? { |instant| instant < cutoff }
-    @my_slots = slot_instants(@participant).map(&:iso8601)
+    @offered_slots = @organizer.available_start_times.map(&:iso8601)
+    @every_offer_past = @event.every_offer_past?
+    @my_slots = @participant.available_start_times.map(&:iso8601)
     @revision_notice = revision_notice
     @consensus_slots = @event.mutually_available_start_times.map(&:iso8601)
     others = @event.participants.counting.where.not(id: @participant.id).select(:id)
@@ -40,10 +36,6 @@ module ParticipationPage
     end
   end
 
-  def slot_instants(participant)
-    @event.time_slots.where(participant_id: participant.id).order(:start_time).pluck(:start_time)
-  end
-
   # What a guest who already replied must hear, while the event is open:
   # their reply was voided; the set time was withdrawn since they replied;
   # or the offer changed since they replied (a declined guest only when
@@ -55,7 +47,7 @@ module ParticipationPage
     return :voided if @participant.voided?
 
     reopened = @event.reopened_at.present? && @participant.responded_at < @event.reopened_at
-    revised = @event.offer_revised_at.present? && @participant.responded_at < @event.offer_revised_at
+    revised = @participant.replied_before_revision?
     return :reopened if reopened && (!revised || @event.reopened_at > @event.offer_revised_at)
     return nil unless revised
     return :stale if @participant.declined_at.nil?

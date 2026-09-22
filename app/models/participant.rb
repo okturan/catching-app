@@ -1,139 +1,57 @@
+# Someone taking part in an event: its one organizer or a guest. Everyone is
+# reached through a capability link; an account only remembers events.
 class Participant < ApplicationRecord
-  TOKEN_FORMAT = /\A[A-Za-z0-9]{32}\z/
-  EMAIL_FORMAT = URI::MailTo::EMAIL_REGEXP
+  include Tokens, Reply
 
-  # Result of resolving a raw capability token.
-  TokenResolution = Data.define(:participant, :via_pending, :canonical_token)
+  EMAIL_FORMAT = URI::MailTo::EMAIL_REGEXP
 
   belongs_to :event
   belongs_to :user, optional: true
-
   has_many :time_slots, dependent: :delete_all
   has_many :mail_deliveries
 
   enum :role, { organizer: "organizer", guest: "guest" }, validate: true
 
-  normalizes :email, with: ->(email) { email.strip.downcase }
-  normalizes :name, with: ->(name) { name.squish.presence }
+  normalizes :email, with: -> { it.strip.downcase }
+  normalizes :name, with: -> { it.squish.presence }
 
-  validates :email, presence: true, length: { maximum: 254 }, format: { with: EMAIL_FORMAT },
-    uniqueness: { scope: :event_id }
+  validates :email, presence: true, length: { maximum: 254 }, format: { with: EMAIL_FORMAT }, uniqueness: { scope: :event_id }
   validates :name, length: { maximum: 100 }
   validates :name, presence: true, if: :organizer?
-  validate :time_zone_is_known
+  validates :time_zone, time_zone: true, allow_nil: true
 
   scope :active, -> { where(left_at: nil) }
-  # Who counts for consensus: replied, not declined, not left, and not
-  # voided by an offer revision that removed every pick.
-  scope :counting, -> { where.not(responded_at: nil).where(declined_at: nil, left_at: nil, reply_voided_at: nil) }
   scope :linked, -> { where.not(token_digest: nil) }
   scope :unsent, -> { guest.active.where(token_digest: nil) }
 
-  class << self
-    def digest(raw_token)
-      Digest::SHA256.hexdigest(raw_token)
-    end
+  # The addresses in an "Invite people" box: split on commas and new lines,
+  # normalized and deduplicated. A bad address names itself.
+  def self.addresses_from(text)
+    raise Refusal, "The invitation list is too long" if text.bytesize > 4.kilobytes
 
-    # Strips mail-client suffixes such as a trailing "." or ")".
-    def canonical_token(raw_token)
-      raw_token.sub(/[^A-Za-z0-9]+\z/, "")
-    end
+    addresses = text.split(/[\n,]/).filter_map { normalize_value_for(:email, it).presence }.uniq
+    invalid = addresses.find { !it.match?(EMAIL_FORMAT) || it.length > 254 }
+    raise Refusal, "#{invalid} is not a valid email address" if invalid
 
-    # Resolves a raw token without a query when it cannot be a token. A pending
-    # token resolves the participant but changes nothing: promotion happens on
-    # the first write, see #promote_pending!.
-    def resolve_token(raw_token)
-      canonical = canonical_token(raw_token)
-      return nil unless canonical.match?(TOKEN_FORMAT)
-
-      hashed = digest(canonical)
-      participant = active.where(token_digest: hashed)
-        .or(active.where(pending_token_digest: hashed)
-          .where("pending_token_expires_at IS NULL OR pending_token_expires_at > ?", Time.current))
-        .first
-      return nil unless participant
-
-      TokenResolution.new(
-        participant: participant,
-        via_pending: participant.pending_token_digest == hashed,
-        canonical_token: canonical
-      )
-    end
+    addresses
   end
 
-  def counting?
-    responded_at.present? && declined_at.nil? && left_at.nil? && reply_voided_at.nil?
-  end
-
-  # Replied, then left with no offered pick by an offer revision.
-  def voided?
-    reply_voided_at.present?
-  end
-
-  def left?
-    left_at.present?
+  # When this participant can meet, earliest first: the organizer's offer or
+  # a guest's picks.
+  def available_start_times
+    time_slots.order(:start_time).pluck(:start_time)
   end
 
   def claimed?
-    user_id.present?
+    user_id?
+  end
+
+  def left?
+    left_at?
   end
 
   # The name other participants see: an address is never shown to guests.
   def display_name
     name || "Guest"
-  end
-
-  def issue_live_token!
-    raw = SecureRandom.base58(32)
-    update!(token_digest: self.class.digest(raw))
-    raw
-  end
-
-  # Guests receive pending tokens without expiry; organizer recovery passes
-  # expires_in: 24.hours. The live token and the claim are untouched.
-  def issue_pending_token!(expires_in: nil)
-    raw = SecureRandom.base58(32)
-    update!(
-      pending_token_digest: self.class.digest(raw),
-      pending_token_expires_at: expires_in && expires_in.from_now
-    )
-    raw
-  end
-
-  # Makes a pending token live in one guarded statement. The claim is cleared
-  # unless the actor is the claiming user, so a forwarded resend cannot keep
-  # somebody else's account attached.
-  def promote_pending!(pending_digest, actor: nil)
-    changes = {
-      token_digest: pending_digest,
-      pending_token_digest: nil,
-      pending_token_expires_at: nil,
-      updated_at: Time.current
-    }
-    changes[:user_id] = nil unless actor && user_id && actor.id == user_id
-
-    promoted = self.class.where(id: id, pending_token_digest: pending_digest).update_all(changes)
-    reload
-    promoted == 1
-  end
-
-  # The guest's kill switch: slots gone, both credentials gone, claim gone.
-  def leave!
-    event.with_lock do
-      now = Time.current
-      time_slots.delete_all
-      update!(
-        responded_at: now, declined_at: now, left_at: now, reply_voided_at: nil, user_id: nil,
-        token_digest: nil, pending_token_digest: nil, pending_token_expires_at: nil
-      )
-    end
-  end
-
-  private
-
-  def time_zone_is_known
-    return if time_zone.nil? || ActiveSupport::TimeZone[time_zone]
-
-    errors.add(:time_zone, "is not a known time zone")
   end
 end

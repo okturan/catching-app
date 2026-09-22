@@ -60,7 +60,7 @@
       <h2 id="plan-heading">The plan</h2>
       <% timeline = @event.plan_timeline %>
       <% if @event.finalized? && @event.plan_minutes > @event.window_minutes %>
-        <p class="plan-note">The plan runs <%= duration_label(@event.plan_minutes) %>; the set time is <%= duration_label(@event.window_minutes) %>.</p>
+        <p class="plan-note">The plan runs <%= Length.new(@event.plan_minutes) %>; the set time is <%= Length.new(@event.window_minutes) %>.</p>
       <% end %>
       <% if timeline.empty? %>
         <p class="plan-empty">Nothing planned yet. Guests read the plan on their card, in order.</p>

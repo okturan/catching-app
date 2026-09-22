@@ -83,7 +83,7 @@ class EventTest < ActiveSupport::TestCase
 
     @event.place_url = "https://#{'a' * 1990}.example"
     assert_not @event.valid?
-    assert_includes @event.errors[:place_url], "must be a web address starting with http:// or https://"
+    assert_equal [ "is too long (maximum is 2000 characters)" ], @event.errors[:place_url]
   end
 
   test "database refuses a place_url the model did not see" do
@@ -348,7 +348,7 @@ class EventTest < ActiveSupport::TestCase
     slots = @event.time_slots.order(:id).pluck(:id)
     writers = {
       "replace_time_slots!" => -> { @event.replace_time_slots!(participant: @guest, starts_at: [ Time.utc(2030, 1, 15, 11) ]) },
-      "mark_unavailable!" => -> { @event.mark_unavailable!(participant: @guest) },
+      "decline!" => -> { @guest.decline! },
       "finalize!" => -> { @event.finalize!(starts_at: [ Time.utc(2030, 1, 15, 10) ]) },
       "update_details!" => -> { @event.update_details!(name: "Renamed") },
       "add_plan_item!" => -> { @event.add_plan_item!(name: "Late") },
@@ -484,22 +484,22 @@ class EventTest < ActiveSupport::TestCase
 
   test "alignment is anchored at local midnight in the event zone" do
     kolkata = plan(time_zone: "Asia/Kolkata", starts_at: [ Time.utc(2031, 2, 10, 4, 30) ])
-    assert_nothing_raised { kolkata.ensure_aligned!([ Time.utc(2031, 2, 10, 5, 30) ]) }
-    assert_raises(Refusal) { kolkata.ensure_aligned!([ Time.utc(2031, 2, 10, 5, 0) ]) }
+    assert kolkata.aligned?([ Time.utc(2031, 2, 10, 5, 30) ])
+    assert_not kolkata.aligned?([ Time.utc(2031, 2, 10, 5, 0) ])
 
-    error = assert_raises(Refusal) { @event.ensure_aligned!([ Time.utc(2030, 1, 15, 10, 15) ]) }
+    error = assert_raises(Refusal) { @event.replace_time_slots!(participant: @organizer, starts_at: [ Time.utc(2030, 1, 15, 10, 15) ]) }
     assert_equal "Select time slots on the event's 60-minute grid", error.message
 
     fifteen = plan(slot_minutes: 15, starts_at: [ Time.utc(2031, 2, 10, 9, 15) ])
-    assert_raises(Refusal) { fifteen.ensure_aligned!([ Time.utc(2031, 2, 10, 9, 7) ]) }
+    assert_not fifteen.aligned?([ Time.utc(2031, 2, 10, 9, 7) ])
 
     santiago = plan(time_zone: "America/Santiago", starts_at: [ Time.utc(2031, 2, 10, 12) ])
     gap_day = ActiveSupport::TimeZone["America/Santiago"].parse("2026-09-06 01:00")
-    assert_nothing_raised { santiago.ensure_aligned!([ gap_day, gap_day + 1.hour ]) }
+    assert santiago.aligned?([ gap_day, gap_day + 1.hour ])
 
     lord_howe = plan(time_zone: "Australia/Lord_Howe", starts_at: [ Time.utc(2031, 2, 10, 12) ])
     after_shift = ActiveSupport::TimeZone["Australia/Lord_Howe"].parse("2026-04-05 03:30")
-    assert_nothing_raised { lord_howe.ensure_aligned!([ after_shift ]) }
+    assert lord_howe.aligned?([ after_shift ])
   end
 
   test "consensus counts responders only and needs a guest" do
@@ -715,19 +715,16 @@ class EventTest < ActiveSupport::TestCase
     assert_nil @event.reload.offer_revised_at
   end
 
-  test "mark_unavailable! and a new save clear the void in one statement" do
-    @guest.update_columns(reply_voided_at: Time.current)
+  test "add_guests! adds new addresses, reports the known ones, skips the organizer and holds the limit" do
+    added, already = @event.add_guests!(%w[new@example.com invitee@example.com owner@example.com])
 
-    assert_nothing_raised { @event.mark_unavailable!(participant: @guest) }
-    @guest.reload
-    assert @guest.declined_at.present?
-    assert_nil @guest.reply_voided_at
+    assert_equal %w[new@example.com], added
+    assert_equal %w[invitee@example.com], already
+    assert @event.guests.exists?(email: "new@example.com", token_digest: nil)
 
-    @guest.update_columns(declined_at: nil)
-    @guest.update_columns(reply_voided_at: Time.current)
-    @event.replace_time_slots!(participant: @guest, starts_at: [ hour(15, 10) ])
-    @guest.update!(responded_at: Time.current, declined_at: nil, reply_voided_at: nil)
-    assert @guest.reload.counting?
+    room = Event::GUEST_LIMIT - @event.guests.active.count
+    error = assert_raises(Refusal) { @event.add_guests!(Array.new(room + 1) { "g#{it}@example.com" }) }
+    assert_equal "An event can have at most 50 guests", error.message
   end
 
   test "guests may only pick offered instants and duplicates collapse" do
@@ -738,14 +735,6 @@ class EventTest < ActiveSupport::TestCase
 
     @event.replace_time_slots!(participant: @guest, starts_at: [ Time.utc(2030, 1, 15, 11), Time.utc(2030, 1, 15, 11) ])
     assert_equal [ Time.utc(2030, 1, 15, 11) ], @event.time_slots.where(participant_id: @guest.id).pluck(:start_time)
-  end
-
-  test "mark_unavailable! clears slots and excludes the guest" do
-    @event.mark_unavailable!(participant: @guest)
-
-    assert_equal 0, @guest.time_slots.count
-    assert @guest.reload.declined_at.present?
-    assert_empty @event.mutually_available_start_times
   end
 
   test "finalize! needs a reply, consensus and one continuous window of whole slots" do

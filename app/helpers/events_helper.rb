@@ -52,15 +52,6 @@ module EventsHelper
     aria
   end
 
-  # "1 h 30 min", "2 h", "45 min": a length, never a clock reading, so no zone.
-  def duration_label(minutes)
-    hours, rest = minutes.to_i.divmod(60)
-    parts = []
-    parts << "#{hours} h" if hours.positive?
-    parts << "#{rest} min" if rest.positive?
-    parts.join(" ")
-  end
-
   # Every quarter hour up to four hours, then a few long stretches.
   def duration_choices
     (DURATION_STEP..240).step(DURATION_STEP).to_a + DURATION_TAIL
@@ -72,7 +63,7 @@ module EventsHelper
   def duration_select_options(slot_minutes, selected)
     step = slot_minutes.to_i
     disabled = step.positive? ? duration_choices.reject { |minutes| (minutes % step).zero? } : []
-    options_for_select(duration_choices.map { |minutes| [ duration_label(minutes), minutes ] },
+    options_for_select(duration_choices.map { |minutes| [ Length.new(minutes).to_s, minutes ] },
       selected: selected, disabled: disabled)
   end
 
@@ -80,14 +71,12 @@ module EventsHelper
   # length keeps it in the list so saving the row never clears it.
   def plan_duration_options(selected)
     choices = (PLAN_DURATIONS | [ selected ].compact).sort
-    options_for_select(choices.map { |minutes| [ duration_label(minutes), minutes ] }, selected)
+    options_for_select(choices.map { |minutes| [ Length.new(minutes).to_s, minutes ] }, selected)
   end
 
   # "Pizza · 30 min", or the name alone when the item has no length.
   def plan_item_label(item)
-    return item.name if item.duration_minutes.nil?
-
-    "#{item.name} · #{duration_label(item.duration_minutes)}"
+    [ item.name, item.length ].compact.join(" · ")
   end
 
   # The one place a place link is rendered: an anchor on a value the model

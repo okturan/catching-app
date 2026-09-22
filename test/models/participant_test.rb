@@ -6,7 +6,7 @@ class ParticipantTest < ActiveSupport::TestCase
 
     raw = guest.issue_live_token!
 
-    assert_match Participant::TOKEN_FORMAT, raw
+    assert_match Participant::Tokens::FORMAT, raw
     assert_equal Digest::SHA256.hexdigest(raw), guest.reload.token_digest
     assert_equal guest, Participant.resolve_token(raw).participant
     assert_nil Participant.resolve_token(raw.reverse)
@@ -232,5 +232,51 @@ class ParticipantTest < ActiveSupport::TestCase
     assert guest.valid?
     guest.time_zone = "UTC"
     assert guest.valid?
+  end
+
+  test "addresses_from splits on commas and new lines, normalizes and dedupes" do
+    assert_equal %w[bob@example.com cy@example.com], Participant.addresses_from("Bob@Example.com, cy@example.com\nbob@example.com\n\n")
+    assert_empty Participant.addresses_from("")
+  end
+
+  test "addresses_from names an invalid address and caps the text at four kilobytes" do
+    error = assert_raises(Refusal) { Participant.addresses_from("bob@example.com, not-an-address") }
+    assert_equal "not-an-address is not a valid email address", error.message
+
+    error = assert_raises(Refusal) { Participant.addresses_from("x" * 4097) }
+    assert_equal "The invitation list is too long", error.message
+  end
+
+  test "declining clears the slots, takes the guest out of consensus and keeps the link" do
+    guest = participants(:planning_guest)
+
+    guest.decline!(time_zone: "Asia/Tokyo")
+
+    assert_empty guest.time_slots
+    assert guest.reload.declined_at?
+    assert_equal "Asia/Tokyo", guest.time_zone
+    assert guest.token_digest?
+    assert_empty events(:planning).mutually_available_start_times
+  end
+
+  # An offer revision can void a guest between the moment the row is read and
+  # the moment the event is locked; every answer must clear it anyway.
+  test "an answer clears a void committed after the guest was read" do
+    guest = participants(:planning_guest)
+    void_elsewhere = -> { Participant.where(id: guest.id).update_all(reply_voided_at: Time.current) }
+
+    void_elsewhere.call
+    guest.reply!([ Time.utc(2030, 1, 15, 11) ])
+    assert guest.reload.counting?
+
+    void_elsewhere.call
+    guest.decline!
+    assert_nil guest.reload.reply_voided_at
+
+    guest.update_columns(declined_at: nil)
+    void_elsewhere.call
+    guest.leave!
+    assert guest.reload.left?
+    assert_nil guest.reply_voided_at
   end
 end

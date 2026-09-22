@@ -38,4 +38,48 @@ class TimeSlotTest < ActiveSupport::TestCase
 
     assert_equal 0, TimeSlot.where(participant_id: guest.id).count
   end
+
+  test "parses, normalizes, sorts, and deduplicates ISO timestamps" do
+    parsed = TimeSlot.parse(
+      "2030-01-15T12:00:00+02:00,2030-01-15T09:00:00Z,2030-01-15T12:00:00+02:00", slot_minutes: 60
+    )
+
+    assert_equal [ Time.utc(2030, 1, 15, 9), Time.utc(2030, 1, 15, 10) ], parsed
+  end
+
+  test "requires ISO 8601 timestamps" do
+    error = assert_raises(Refusal) { TimeSlot.parse("tomorrow morning", slot_minutes: 60) }
+
+    assert_equal "Time slots must use ISO 8601 timestamps", error.message
+  end
+
+  test "requires at least one timestamp" do
+    error = assert_raises(Refusal) { TimeSlot.parse("", slot_minutes: 60) }
+
+    assert_equal "Select at least one time slot", error.message
+  end
+
+  test "rejects timestamps spanning more than 31 days" do
+    error = assert_raises(Refusal) do
+      TimeSlot.parse("2030-01-01T10:00:00Z,2030-02-02T10:00:00Z", slot_minutes: 60)
+    end
+
+    assert_equal "Time slots must fit within a 31-day window", error.message
+  end
+
+  test "the cap is 31 days of 25-hour days, counted in the event's slots" do
+    hourly = 776.times.map { |offset| (Time.utc(2030, 1, 11) + offset.hours).iso8601 }
+    error = assert_raises(Refusal) { TimeSlot.parse(hourly.join(","), slot_minutes: 60) }
+    assert_equal "Select no more than 775 time slots", error.message
+
+    quarterly = 3101.times.map { |offset| (Time.utc(2030, 1, 11) + (offset * 15).minutes).iso8601 }
+    error = assert_raises(Refusal) { TimeSlot.parse(quarterly.join(","), slot_minutes: 15) }
+    assert_equal "Select no more than 3100 time slots", error.message
+  end
+
+  test "rejects instants from before yesterday" do
+    error = assert_raises(Refusal) { TimeSlot.parse(2.days.ago.utc.iso8601, slot_minutes: 60) }
+
+    assert_equal "Select time slots from today onward", error.message
+  end
 end

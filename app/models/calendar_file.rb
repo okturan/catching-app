@@ -11,7 +11,6 @@
 # event's own window is used. STATUS follows the event unless the caller
 # says otherwise (the reopened mail withdraws a window that is not cancelled).
 class CalendarFile
-  include EventsHelper
   include MailTextHelper
 
   STATUSES = { confirmed: "CONFIRMED", cancelled: "CANCELLED" }.freeze
@@ -93,8 +92,7 @@ class CalendarFile
     paragraphs = []
     paragraphs << event.description if page? && event.description.present?
     plan_lines = event.plan_items.each_with_index.map do |item, index|
-      length = item.duration_minutes ? " (#{duration_label(item.duration_minutes)})" : ""
-      "#{index + 1}. #{text(item.name)}#{length}"
+      "#{index + 1}. #{text(item.name)}#{" (#{item.length})" if item.length}"
     end
     paragraphs << plan_lines.join("\n") if plan_lines.any?
     paragraphs << CREDIT

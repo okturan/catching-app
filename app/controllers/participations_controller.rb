@@ -10,25 +10,9 @@ class ParticipationsController < ParticipationScopedController
     load_participation_page
   end
 
-  # Guest availability.
+  # A guest's painted times.
   def update
-    starts_at = parsed_time_slots(slot_minutes: @event.slot_minutes)
-    first_reply = @participant.responded_at.nil?
-
-    @event.transaction do
-      @event.replace_time_slots!(participant: @participant, starts_at:)
-      # A revision that voided this guest may have committed between the load
-      # above and the lock inside replace_time_slots!; reload so clearing
-      # reply_voided_at is a real change and reaches the row.
-      @participant.reload.update!(
-        responded_at: Time.current,
-        declined_at: nil,
-        reply_voided_at: nil,
-        name: params.dig(:participant, :name).presence || @participant.name,
-        time_zone: params.dig(:participant, :time_zone).presence || @participant.time_zone
-      )
-    end
-    Deliveries.response_confirmation!(event: @event, guest: @participant) if first_reply
+    @participant.reply!(parsed_time_slots(slot_minutes: @event.slot_minutes), params.fetch(:participant, {}).permit(:name, :time_zone))
 
     redirect_to scoped_path, notice: "Availability saved."
   end

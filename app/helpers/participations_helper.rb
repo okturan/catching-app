@@ -24,18 +24,12 @@ module ParticipationsHelper
     last ? last.state : :queued
   end
 
-  # A counting guest who saved before the last offer revision.
-  def stale_reply?(guest)
-    revised_at = guest.event.offer_revised_at
-    guest.responded_at.present? && guest.reply_voided_at.nil? && revised_at.present? && guest.responded_at < revised_at
-  end
-
   def guest_state_label(guest, deliveries, slot_count: nil)
     state = guest_state(guest, deliveries)
     label = STATE_LABELS.fetch(state)
     if state == :replied && slot_count
       detail = pluralize(slot_count, "slot")
-      detail += ", before the last change" if stale_reply?(guest)
+      detail += ", before the last change" if guest.replied_before_revision?
       label = "#{label} (#{detail})"
     end
     last = (deliveries[guest.id] || []).last

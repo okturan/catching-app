@@ -6,7 +6,6 @@
 class ParticipantMailer < ApplicationMailer
   helper MailTextHelper
   include MailTextHelper
-  include EventsHelper
 
   CALENDAR_ATTACHMENT = "catching-app.ics".freeze
   CALENDAR_MIME_TYPE = "text/calendar; method=PUBLISH".freeze
@@ -35,7 +34,7 @@ class ParticipantMailer < ApplicationMailer
 
   def response_confirmation
     zone = @participant&.time_zone.presence || @event.time_zone
-    instants = @event.time_slots.where(participant_id: @participant.id).order(:start_time).pluck(:start_time)
+    instants = @participant.available_start_times
     @declined = instants.empty?
     @recipient_ranges = coalesced_ranges(instants, @event.slot_minutes, zone)
     @event_ranges = coalesced_ranges(instants, @event.slot_minutes, @event.time_zone)
@@ -52,7 +51,7 @@ class ParticipantMailer < ApplicationMailer
     @recipient_window = window_in(zone, start_time, end_time)
     @event_window = window_in(@event.time_zone, start_time, end_time)
     @place = mail_safe(@event.place).presence
-    @duration = @event.duration_minutes && duration_label(@event.duration_minutes)
+    @duration = @event.planned_length
     @plan = plan_lines(start_time, zone)
     @link = guest_link
     attach_calendar(window: [ start_time, end_time ], status: :confirmed)
@@ -74,7 +73,7 @@ class ParticipantMailer < ApplicationMailer
     @changes = params[:changes].to_h
     @renamed = @changes["name"]
     @place = mail_safe(@event.place).presence
-    @duration = @event.duration_minutes && duration_label(@event.duration_minutes)
+    @duration = @event.planned_length
     @plan = @event.plan_items.map { plan_item_line(it) }
     @situation = offer_situation if @reason == :offer
     @reason_line = reason_line
@@ -170,7 +169,7 @@ class ParticipantMailer < ApplicationMailer
   # description.
   def plan_item_line(item)
     line = mail_safe(item.name)
-    line += " (#{duration_label(item.duration_minutes)})" if item.duration_minutes
+    line += " (#{item.length})" if item.length
     line
   end
 
@@ -185,7 +184,7 @@ class ParticipantMailer < ApplicationMailer
       "None of the times you picked are offered any more. Please pick again."
     elsif @participant.declined_at.present?
       "You said none of the times worked. New times were added."
-    elsif @participant.responded_at && @event.offer_revised_at && @participant.responded_at < @event.offer_revised_at
+    elsif @participant.replied_before_revision?
       "Some of the offered times changed (#{@event.offer_revision_added} added, #{@event.offer_revision_removed} removed). " \
         "Your remaining picks still stand; look again."
     end
@@ -212,7 +211,7 @@ class ParticipantMailer < ApplicationMailer
   end
 
   def offer_summary
-    offered = @event.time_slots.where(participant_id: @organizer.id).order(:start_time).pluck(:start_time)
+    offered = @organizer.available_start_times
     return nil if offered.empty?
 
     zone = zone_named(@event.time_zone)

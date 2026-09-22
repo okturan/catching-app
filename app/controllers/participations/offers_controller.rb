@@ -43,7 +43,7 @@ module Participations
     # The offer as submitted, minus instants that crossed the cut-off while
     # the page was open; revise_offer! leaves the past alone anyway.
     def future_slots(step)
-      cutoff = TimeSlotParser::PAST_GRACE.ago
+      cutoff = TimeSlot::PAST_GRACE.ago
       slots = parsed_time_slots(slot_minutes: Event::SLOT_MINUTES.include?(step) ? step : @event.slot_minutes)
         .select { it >= cutoff }
       raise Refusal, "Select at least one time slot" if slots.empty?
@@ -54,10 +54,7 @@ module Participations
     def outcome(revision, report)
       voided = revision.voided_ids.size
       [
-        if revision.delta? then "Times updated: #{revision.added.size} added, #{revision.removed.size} removed."
-        elsif revision.grid_changed then "Slot length and zone updated."
-        else "Nothing changed."
-        end,
+        revision,
         (report if report&.reached_anyone?),
         ("#{helpers.pluralize(voided, "guest")} #{voided == 1 ? "needs" : "need"} a new reply." if voided.positive?),
         ("Planned length cleared: it no longer fits #{@event.slot_minutes}-minute slots." if revision.duration_cleared)
@@ -70,8 +67,8 @@ module Participations
     end
 
     def load_offer_page(echo: nil)
-      cutoff = TimeSlotParser::PAST_GRACE.ago
-      offered = @event.time_slots.where(participant: @event.organizer).order(:start_time).pluck(:start_time)
+      cutoff = TimeSlot::PAST_GRACE.ago
+      offered = @event.organizer.available_start_times
       future = offered.select { it >= cutoff }
       @past_count = offered.size - future.size
       @current_offer = future.map(&:iso8601)
