@@ -1,7 +1,7 @@
 class EventsController < ApplicationController
   include TimeSlotParams
 
-  skip_before_action :authenticate_user!, only: %i[new create pending]
+  allow_unauthenticated_access only: %i[new create pending]
 
   # A courtesy layer only; the ledger caps are what hold.
   rate_limit to: 5, within: 10.minutes, only: :create
@@ -19,7 +19,7 @@ class EventsController < ApplicationController
     @organizer = Participant.organizer.new(organizer_attributes)
     MailDelivery::Caps.check_event_creation!(organizer_email: @organizer.email, request_ip: request.remote_ip)
 
-    @event = Event.plan!(attributes: event_params, organizer: { name: @organizer.name, email: @organizer.email, user: current_user },
+    @event = Event.plan!(attributes: event_params, organizer: { name: @organizer.name, email: @organizer.email, user: Current.user },
       starts_at: parsed_time_slots(slot_minutes: requested_slot_minutes))
     Deliveries.organizer_link!(event: @event, organizer: @event.organizer, request_ip: request.remote_ip)
 
@@ -61,8 +61,8 @@ class EventsController < ApplicationController
 
   # Signed in, the organizer is the account; a posted organizer[email] is ignored.
   def organizer_attributes
-    if user_signed_in?
-      { email: current_user.email, name: current_user.full_name }
+    if authenticated?
+      { email: Current.user.email, name: Current.user.full_name }
     else
       params.fetch(:organizer, {}).permit(:name, :email)
     end

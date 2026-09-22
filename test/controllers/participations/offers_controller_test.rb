@@ -373,7 +373,7 @@ module Participations
 
     test "the session family needs a session and hides other accounts" do
       get edit_my_participation_offer_path(@organizer)
-      assert_redirected_to new_user_session_path
+      assert_redirected_to new_session_path
 
       sign_in users(:outsider)
       get edit_my_participation_offer_path(@organizer)

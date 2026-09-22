@@ -182,7 +182,7 @@ module Participations
 
     test "plan writes need a session in the account family and are not cached" do
       post my_participation_plan_items_path(@organizer), params: { plan_item: { name: "Pizza" } }
-      assert_redirected_to new_user_session_path
+      assert_redirected_to new_session_path
       assert_equal [ "Board games" ], plan_names
 
       post participation_plan_items_path(@organizer_token), params: { plan_item: { name: "Pizza" } }

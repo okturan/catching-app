@@ -1,9 +1,8 @@
 Rails.application.routes.draw do
-  devise_for :users, controllers: {
-    sessions: "users/sessions",
-    registrations: "users/registrations",
-    passwords: "users/passwords"
-  }
+  resource :session, only: %i[new create destroy]
+  resources :passwords, param: :token, only: %i[new create edit update]
+  resource :registration, only: %i[new create]
+  resource :account, only: %i[edit update destroy]
 
   get "up" => "rails/health#show", as: :rails_health_check
 

@@ -1,11 +1,11 @@
-// Devise and other single-column forms sit on one white face.
+// The account forms and other single-column forms sit on one white face.
 .form-inputs {
   @extend .face;
   width: min(440px, 100%);
   margin: clamp(1.5rem, 4vw, 3rem) auto 1rem;
   padding: clamp(1.25rem, 3vw, 2rem);
 
-  // Devise forms put the submit in a sibling block; it joins the same face.
+  // The account forms put the submit in a sibling block; it joins the same face.
   &:has(+ .form-actions) {
     margin-bottom: 0;
     border-bottom: 0;

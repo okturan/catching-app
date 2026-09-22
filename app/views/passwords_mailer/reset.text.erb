@@ -1,0 +1,7 @@
+Someone asked to reset the password of the Catching App account for <%= @user.email %>.
+
+Choose a new password here. The link works for an hour:
+
+<%= edit_password_url(@user.password_reset_token) %>
+
+If that wasn't you, ignore this email: your password stays as it is.

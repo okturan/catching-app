@@ -17,7 +17,7 @@ module Participations
 
     test "claiming needs a session and comes back after sign-in" do
       get participation_claim_path(@token)
-      assert_redirected_to new_user_session_path
+      assert_redirected_to new_session_path
 
       sign_in users(:outsider)
       get participation_claim_path(@token)

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_22_000003) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_23_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -111,6 +111,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_000003) do
     t.check_constraint "duration_minutes IS NULL OR duration_minutes > 0", name: "plan_items_duration_positive"
   end
 
+  create_table "sessions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "ip_address"
+    t.datetime "updated_at", null: false
+    t.string "user_agent"
+    t.bigint "user_id", null: false
+    t.index ["user_id"], name: "index_sessions_on_user_id"
+  end
+
   create_table "time_slots", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "event_id", null: false
@@ -124,16 +133,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_000003) do
 
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.string "email", default: "", null: false
-    t.string "encrypted_password", default: "", null: false
+    t.string "email", null: false
     t.string "first_name", null: false
     t.string "last_name", null: false
-    t.datetime "remember_created_at", precision: nil
-    t.datetime "reset_password_sent_at", precision: nil
-    t.string "reset_password_token"
+    t.string "password_digest", null: false
     t.datetime "updated_at", null: false
     t.index ["email"], name: "index_users_on_email", unique: true
-    t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
   add_foreign_key "mail_deliveries", "events", on_delete: :cascade
@@ -141,6 +146,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_000003) do
   add_foreign_key "participants", "events", on_delete: :cascade
   add_foreign_key "participants", "users", on_delete: :nullify
   add_foreign_key "plan_items", "events", on_delete: :cascade
+  add_foreign_key "sessions", "users", on_delete: :cascade
   add_foreign_key "time_slots", "events", on_delete: :cascade
   add_foreign_key "time_slots", "participants", column: ["participant_id", "event_id"], primary_key: ["id", "event_id"], name: "fk_time_slots_participant_in_event", on_delete: :cascade
 end

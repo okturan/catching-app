@@ -4,7 +4,7 @@ class AuthenticatedUiTest < ApplicationSystemTestCase
   test "owner signs in and reaches the event planner" do
     owner = users(:owner)
 
-    visit new_user_session_path
+    visit new_session_path
     assert_text "Log in"
 
     fill_in "Email", with: owner.email

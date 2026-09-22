@@ -598,13 +598,13 @@ class ParticipationsControllerTest < ActionDispatch::IntegrationTest
 
   test "the session family needs a session, ignores query tokens and hides other accounts" do
     get my_participation_path(@guest)
-    assert_redirected_to new_user_session_path
+    assert_redirected_to new_session_path
 
     get my_participation_path(@guest, token: @guest_token)
-    assert_redirected_to new_user_session_path
+    assert_redirected_to new_session_path
 
     patch my_participation_path(@guest), params: { time_slots: { time_slot_array: "2030-01-15T10:00:00Z" } }
-    assert_redirected_to new_user_session_path
+    assert_redirected_to new_session_path
 
     sign_in users(:outsider)
     get my_participation_path(@guest)

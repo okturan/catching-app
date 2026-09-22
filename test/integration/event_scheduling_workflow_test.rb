@@ -70,8 +70,8 @@ class EventSchedulingWorkflowTest < ActionDispatch::IntegrationTest
     assert_select "form#availability-form", count: 0
 
     get "#{guest_link}/claim"
-    assert_redirected_to new_user_session_path
-    post user_registration_path, params: { user: {
+    assert_redirected_to new_session_path
+    post registration_path, params: { user: {
       first_name: "Gwen", last_name: "Guest", email: "gwen@example.com",
       password: "correct horse battery staple", password_confirmation: "correct horse battery staple"
     } }

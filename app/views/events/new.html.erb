@@ -39,7 +39,7 @@
 
   <section class="form-events" aria-labelledby="organizer-heading">
     <h2 id="organizer-heading">Where do we send your link?</h2>
-    <% if user_signed_in? %>
+    <% if authenticated? %>
       <p class="form-note">Planning as <%= @organizer.name %> (<%= @organizer.email %>).</p>
     <% else %>
       <%= fields_for :organizer, @organizer do |organizer| %>

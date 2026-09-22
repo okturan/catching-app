@@ -17,7 +17,7 @@ gem "jsbundling-rails"
 gem "turbo-rails"
 
 # Application dependencies
-gem "devise"
+gem "bcrypt", "~> 3.1"
 gem "tzinfo-data", platforms: %i[windows jruby]
 
 group :development, :test do

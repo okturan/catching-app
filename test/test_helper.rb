@@ -32,5 +32,5 @@ module ActiveSupport
 end
 
 class ActionDispatch::IntegrationTest
-  include Devise::Test::IntegrationHelpers
+  include SessionTestHelper
 end

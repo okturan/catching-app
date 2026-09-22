@@ -323,7 +323,7 @@ module Participations
       assert_equal "no-store", response.headers["Cache-Control"]
 
       get edit_my_participation_details_path(@organizer)
-      assert_redirected_to new_user_session_path
+      assert_redirected_to new_session_path
     end
   end
 end

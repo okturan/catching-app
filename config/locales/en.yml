@@ -1,4 +1,4 @@
-# Application translations. Devise keeps its own file here.
+# Application translations.
 en:
   meta:
     title: We have some catching app to do!
@@ -14,6 +14,9 @@ en:
         slot_minutes: Slot length
       plan_item:
         duration_minutes: Length
+      user:
+        # has_secure_password's name for the current password an update must prove.
+        password_challenge: Current password
     errors:
       models:
         event:

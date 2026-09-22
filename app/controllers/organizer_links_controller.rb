@@ -1,6 +1,6 @@
 # Lost-link recovery. The response is constant whatever the address is.
 class OrganizerLinksController < ApplicationController
-  skip_before_action :authenticate_user!
+  allow_unauthenticated_access
 
   rate_limit to: 5, within: 1.hour, only: :create
 

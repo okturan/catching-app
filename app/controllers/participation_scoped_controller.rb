@@ -6,7 +6,7 @@
 class ParticipationScopedController < ApplicationController
   include TimeSlotParams
 
-  skip_before_action :authenticate_user!, if: :token_request?
+  allow_unauthenticated_access if: :token_request?
   before_action :set_participant
   before_action :canonicalize_token_path, if: :token_request?
   before_action :ensure_event_not_cancelled, unless: -> { request.get? }
@@ -41,7 +41,7 @@ class ParticipationScopedController < ApplicationController
       @resolution = Participant.resolve_token(params[:token]) or raise ActiveRecord::RecordNotFound
       @participant = @resolution.participant
     else
-      @participant = current_user.participants.active.includes(:event).find(params[:participation_id])
+      @participant = Current.user.participants.active.includes(:event).find(params[:participation_id])
     end
     @event = @participant.event
   end
@@ -64,7 +64,7 @@ class ParticipationScopedController < ApplicationController
   def promote_pending_token
     return unless @resolution.via_pending
 
-    @participant.promote_pending!(Participant.digest(@resolution.canonical_token), actor: current_user)
+    @participant.promote_pending!(Participant.digest(@resolution.canonical_token), actor: Current.user)
   end
 
   # Painting needs an open event; finalized and cancelled pages are read.

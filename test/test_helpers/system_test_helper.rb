@@ -9,7 +9,6 @@ module SystemTestHelper
   included do
     include ActionMailer::TestHelper
     include ActionMailer::TestCase::ClearTestDeliveries
-    include Devise::Test::IntegrationHelpers
 
     setup { @browser_clock = share_the_clock_with_the_browser }
     teardown { page.driver.browser.execute_cdp("Page.removeScriptToEvaluateOnNewDocument", identifier: @browser_clock) }
@@ -24,6 +23,15 @@ module SystemTestHelper
     pinned = (Time.current.to_r * 1000).to_i
     source = "Date.now = ((now, offset) => () => now() + offset)(Date.now, #{pinned} - Date.now())"
     page.driver.browser.execute_cdp("Page.addScriptToEvaluateOnNewDocument", source:).fetch("identifier")
+  end
+
+  # Signs in the way a person does, through the form.
+  def sign_in(user)
+    visit new_session_path
+    fill_in "Email", with: user.email
+    fill_in "Password", with: "correct horse battery staple"
+    click_button "Log in"
+    assert_current_path dashboard_path
   end
 
   def hidden_value(selector)

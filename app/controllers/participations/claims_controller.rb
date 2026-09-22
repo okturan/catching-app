@@ -2,7 +2,7 @@ module Participations
   # Links a token participation to the signed-in account. Binding is by
   # token possession only; email equality never links anything.
   class ClaimsController < ParticipationScopedController
-    before_action :authenticate_user!
+    before_action :require_authentication
     # Memory stays allowed: a cancelled event can still be kept in an account.
     skip_before_action :ensure_event_not_cancelled
 
@@ -13,7 +13,7 @@ module Participations
     def create
       claimed = @event.with_lock do
         Participant.where(id: @participant.id, user_id: nil, left_at: nil)
-          .update_all(user_id: current_user.id, updated_at: Time.current)
+          .update_all(user_id: Current.user.id, updated_at: Time.current)
       end
 
       if claimed == 1
@@ -23,7 +23,7 @@ module Participations
         explain_failed_claim
       end
     rescue ActiveRecord::RecordNotUnique
-      other = current_user.participants.find_by(event_id: @event.id)
+      other = Current.user.participants.find_by(event_id: @event.id)
       flash.now[:alert] = "You already take part in this event as #{other.email}"
       render :show, status: :unprocessable_entity
     end
@@ -31,7 +31,7 @@ module Participations
     private
 
     def claimed_by_current_user?
-      @participant.user_id == current_user.id
+      @participant.user_id == Current.user.id
     end
 
     def explain_failed_claim

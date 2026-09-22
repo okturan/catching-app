@@ -11,6 +11,7 @@ require "test_helper"
   20260922000001_derive_finalized_from_the_window
   20260922000002_rename_activities_to_plan_items
   20260922000003_drop_redundant_indexes
+  20260923000001_replace_devise_with_rails_authentication
 ].each { |file| require Rails.root.join("db/migrate/#{file}") }
 
 # Runs the foundation and planning migrations down and up inside the test
@@ -21,12 +22,12 @@ class GuestFirstFoundationMigrationsTest < ActiveSupport::TestCase
   MIGRATIONS = [
     CreateParticipants, AddSchedulingGridToEvents, ReparentTimeSlotsToParticipants, DropUserOwnership, DropDeadUserColumns,
     AddPlanningStateToEventsAndParticipants, RevampActivitiesIntoPlan, ExtendMailDeliveryKinds, DeriveFinalizedFromTheWindow,
-    RenameActivitiesToPlanItems, DropRedundantIndexes
+    RenameActivitiesToPlanItems, DropRedundantIndexes, ReplaceDeviseWithRailsAuthentication
   ].freeze
-  MODELS = [ Participant, MailDelivery, TimeSlot, Event, User, PlanItem ].freeze
+  MODELS = [ Participant, MailDelivery, TimeSlot, Event, User, Session, PlanItem ].freeze
 
   test "the migrations round-trip and reproduce db/schema.rb" do
-    connection.execute("TRUNCATE TABLE mail_deliveries, time_slots, participants, plan_items, events, users RESTART IDENTITY CASCADE")
+    connection.execute("TRUNCATE TABLE mail_deliveries, time_slots, participants, plan_items, events, sessions, users RESTART IDENTITY CASCADE")
 
     ActiveRecord::Migration.suppress_messages do
       MIGRATIONS.reverse_each { |migration| migration.new.migrate(:down) }
@@ -66,7 +67,7 @@ class GuestFirstFoundationMigrationsTest < ActiveSupport::TestCase
   end
 
   test "the backfill maps organizers, invitees and orphans" do
-    connection.execute("TRUNCATE TABLE mail_deliveries, time_slots, participants, plan_items, events, users RESTART IDENTITY CASCADE")
+    connection.execute("TRUNCATE TABLE mail_deliveries, time_slots, participants, plan_items, events, sessions, users RESTART IDENTITY CASCADE")
 
     ActiveRecord::Migration.suppress_messages do
       MIGRATIONS.reverse_each { |migration| migration.new.migrate(:down) }

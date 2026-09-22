@@ -22,7 +22,7 @@ The complete historical set is in [`docs/screenshots/legacy`](docs/screenshots/l
 - PostgreSQL 18
 - Node.js 24.18.0 LTS and npm 11.16.0
 - Propshaft, esbuild, Dart Sass, Turbo, Bootstrap 5, and Luxon
-- Devise for optional accounts; capability links for everyone else
+- Rails' built-in authentication for optional accounts; capability links for everyone else
 - Minitest, RuboCop Rails Omakase, Brakeman, and bundler-audit
 
 Runtime versions are pinned in `.ruby-version`, `.node-version`, `Gemfile.lock`, and `package-lock.json`. Dependency updates are applied by hand; `bin/bundler-audit` and `npm audit` run in CI.
