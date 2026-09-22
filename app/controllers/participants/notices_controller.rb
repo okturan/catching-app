@@ -1,6 +1,5 @@
 module Participants
-  # Tell the guests: one coalesced notice about everything that changed since
-  # the last mail reached them.
+  # Tell the guests: one notice for everything since the last mail.
   class NoticesController < ApplicationController
     include ParticipantScoped
 

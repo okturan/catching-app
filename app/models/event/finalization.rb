@@ -16,8 +16,7 @@ module Event::Finalization
     start_time?
   end
 
-  # Sets the time: one continuous window of slots every counting participant
-  # shares, once at least one guest has replied.
+  # One continuous window every counting participant shares.
   def finalize!(starts_at:)
     window = starts_at.uniq.sort
 
@@ -31,9 +30,7 @@ module Event::Finalization
     end
   end
 
-  # Withdraws the set time. The event plans again with every pick, reply,
-  # token and claim intact. Returns the withdrawn window, so the reopened mail
-  # can print it and clear the calendar entry.
+  # Every pick, reply, token and claim stays. Returns the withdrawn window.
   def reopen!
     with_lock do
       ensure_not_cancelled!
@@ -46,9 +43,8 @@ module Event::Finalization
     end
   end
 
-  # Start times every counting participant shares, in one statement so the
-  # count it is measured against comes from the same snapshot. At least one
-  # counting guest is required: an organizer alone never has consensus.
+  # One statement, so the count it is measured against comes from the same
+  # snapshot. An organizer alone never has consensus.
   def mutually_available_start_times
     counting = participants.counting
 

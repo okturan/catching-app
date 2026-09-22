@@ -1,10 +1,5 @@
-<%# The definer's controls, drawn by hand so events/new and offer/edit share
-    one contract with the JavaScript: select#event_slot_minutes,
-    select#timezone-picker-new[data-selected], the unnamed #event-begin and
-    #event-end date inputs and #range-tooltip. frozen: true renders step and
-    zone disabled with the caption that says why and drops their live hints, so
-    their aria-describedby names the caption alone; begin_min: an ISO date for
-    #event-begin[min] or nil. %>
+<%# frozen: step and zone are disabled, described by the caption that says
+    why. begin_min: the earliest first day, or nil. %>
 <% time_zone = event.time_zone.presence || params.dig(:event, :time_zone) %>
 <div>
   <label class="form-label" for="event_slot_minutes">Slot length</label>
@@ -47,8 +42,6 @@
             data: { definer_target: "end", action: "change->definer#redraw" } %>
     </div>
   </div>
-  <%# The range rule governs #event-begin and #event-end, which stay live on the
-      frozen offer page, so the hint renders in both states. %>
   <p class="form-text" id="grid-range-hint">Up to 31 days.</p>
 </fieldset>
 <div class="text-danger" id="range-tooltip" role="status" data-definer-target="rangeNote"></div>

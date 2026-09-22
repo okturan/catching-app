@@ -1,7 +1,5 @@
 module Participants
-  # The organizer's plan editor: add, change and remove one item. Items are
-  # found through the event, so another event's item is a 404 like any
-  # other bad link.
+  # Items are found through the event, so another event's item is a 404.
   class PlanItemsController < ApplicationController
     include ParticipantScoped
     include PlanWrites

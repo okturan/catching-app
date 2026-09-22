@@ -4,7 +4,7 @@ module Participants
 
     before_action :require_organizer!
 
-    # Organizer removes a guest. Ledger rows survive with participant_id NULL.
+    # The ledger keeps the guest's rows, with no participant.
     def destroy
       guest = target_guest(params[:id])
       @event.with_lock { guest.destroy! }

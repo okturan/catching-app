@@ -1,6 +1,5 @@
 module Participants
-  # One POST per rearrangement: move[position] names the target index and
-  # the model clamps it, so Up on the first item is a harmless no-op.
+  # The model clamps the position, so Up on the first item does nothing.
   class PlanItemMovesController < ApplicationController
     include ParticipantScoped
     include PlanWrites

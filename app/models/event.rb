@@ -1,9 +1,6 @@
-# A meeting to find a time for: an organizer's offer painted on a grid of
-# slots, the guests' painted replies, and in time one window they all share.
-#
-# Open while planning, finalized once the time is set, cancelled for good.
-# Every write that others can see runs under the event's row lock and bumps
-# its revision, which calendar files publish as their SEQUENCE.
+# A meeting to find a time for: open while planning, finalized once the time
+# is set, cancelled for good. Every write others can see runs under the row
+# lock and bumps the revision, which calendar files publish as SEQUENCE.
 class Event < ApplicationRecord
   include Availability, Finalization, Cancellation, Plan, Announcements
 
@@ -11,8 +8,6 @@ class Event < ApplicationRecord
 
   SLOT_MINUTES = [ 15, 30, 60 ].freeze
   GUEST_LIMIT = 50
-  # What an organizer edits on the details page; changing any of it is a new
-  # revision of what guests read.
   DETAIL_ATTRIBUTES = %w[name description place place_url duration_minutes].freeze
 
   has_many :participants
@@ -37,8 +32,7 @@ class Event < ApplicationRecord
   validates :duration_minutes, numericality: { only_integer: true, greater_than: 0, less_than_or_equal_to: 24 * 60 }, allow_nil: true
   validate :duration_fits_the_grid
 
-  # The only creation path: the event, its organizer and the offer, in one
-  # transaction. Guests are invited from the organizer's page later.
+  # The only creation path: the event, its organizer and the offer at once.
   def self.plan!(attributes:, organizer:, starts_at:)
     transaction do
       create!(attributes).tap do |event|
@@ -52,7 +46,6 @@ class Event < ApplicationRecord
     !finalized? && !cancelled?
   end
 
-  # The time is set and the event is still on.
   def set_in_stone?
     finalized? && !cancelled?
   end
@@ -71,8 +64,7 @@ class Event < ApplicationRecord
     Length.new(duration_minutes) if duration_minutes
   end
 
-  # The organizer's details edit, in one locked save. Only a change guests
-  # can see bumps the revision. Returns what changed, as attribute => [was, is].
+  # Returns what changed, as attribute => [was, is].
   def update_details!(attributes)
     with_lock do
       ensure_not_cancelled!
@@ -83,8 +75,7 @@ class Event < ApplicationRecord
     end
   end
 
-  # New addresses become guests without a link yet; the organizer's own is
-  # left out. Returns the addresses added and those already on the event.
+  # Returns the addresses added and those already on the event.
   def add_guests!(addresses)
     addresses -= [ organizer.email ]
     already = addresses & participants.pluck(:email)
@@ -97,7 +88,6 @@ class Event < ApplicationRecord
 
   private
 
-  # One message per problem: an invalid length or step has said so already.
   def duration_fits_the_grid
     return if duration_minutes.nil? || errors.include?(:duration_minutes) || errors.include?(:slot_minutes)
 

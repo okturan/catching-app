@@ -3,18 +3,14 @@
   <p class="lede mb-0">Paint your free hours on the grid, in your own zone. Your friends see them in theirs.</p>
 </div>
 
-<%# The form element is the two-column grid, so the grid panel and its controls
-    sit inside the form and can be ordered against the submit. Exactly three
-    children, in document order: the meeting, the grid, who you are. The submit
-    is the last thing in the last child, so on a phone the visitor meets the
-    grid — the only genuinely required input — before the button. %>
+<%# The form is the two-column grid, with three children in order: the
+    meeting, the grid, who you are. On a phone the grid comes before the
+    button. %>
 <%= form_with model: @event, class: "event-new-grid", data: {
       controller: "definer duration", action: "definer#submit definer:restepped->duration#restep", duration_step_value: @event.slot_minutes } do |form| %>
   <input name="time_slots[time_slot_array]" id="time_slot_array" type="hidden" value="<%= params.dig(:time_slots, :time_slot_array) %>"
     data-definer-target="slots">
 
-  <%# One summary for the whole form, first child, full width: the grid's
-      refusals, then the fields, then the organizer's two. %>
   <%= form.error_summary(definer_error_links(@event, organizer: @organizer)) %>
 
   <section class="form-events" aria-labelledby="meeting-heading">

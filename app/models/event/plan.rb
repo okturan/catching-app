@@ -1,7 +1,5 @@
-# The plan guests read on their card: ordered items, each with an optional
-# length, and once the time is set a start derived from the items before it.
-# Every write takes the lock, is refused once cancelled, and bumps the
-# revision; none of them mails anyone.
+# The plan guests read on their card. Every write takes the lock, is refused
+# once cancelled and bumps the revision; none mails anyone.
 module Event::Plan
   extend ActiveSupport::Concern
 
@@ -21,8 +19,7 @@ module Event::Plan
     revise_plan! { item.destroy! }
   end
 
-  # Moves an item to a target index, clamped to the plan, and numbers the
-  # plan densely again. Moving an item to where it is changes nothing.
+  # The target is clamped to the plan, which is numbered densely again.
   def move_plan_item!(item, position)
     with_lock do
       ensure_not_cancelled!
@@ -37,10 +34,9 @@ module Event::Plan
     end
   end
 
-  # Each item with its derived start: the set time plus the lengths of the
-  # items before it. There are no starts before the time is set or once the
-  # event is cancelled, and none after an item without a length. A mailer
-  # passes the start it was handed, so a retried job never reads the row.
+  # Each item with its start: the set time plus the lengths before it, and
+  # none after an item without a length. A mailer passes the start it was
+  # queued with.
   def plan_timeline(from: nil)
     cursor = from || (start_time unless cancelled?)
     plan_items.map do |item|

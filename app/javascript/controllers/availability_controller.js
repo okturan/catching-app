@@ -12,10 +12,8 @@ import { countsByInstant, populateTimeZoneSelect, slotISO, toDateTimes } from ".
 const SELECTABLE = ".slot.selectable[data-date]";
 
 // The event page's grid, in the viewer's zone. A guest paints the offered
-// times that work, the organizer paints the window to set from the times
-// everyone shares, and a finalized or cancelled event is only read. The
-// values carry the offer, the viewer's own picks, how many others hold each
-// time, the shared times and the set window.
+// times that work; the organizer paints the window to set from the times
+// everyone shares.
 export default class extends Controller {
   static targets = ["grid", "zone", "hideSwitch", "summary", "localWindow", "slots"];
   static values = { offered: Array, mine: Array, counts: Object, consensus: Array, setWindow: Array };
@@ -66,9 +64,8 @@ export default class extends Controller {
     this.gridTarget.classList.toggle("hide-unoffered", this.hideSwitchTarget.checked);
   }
 
-  // Every form on the page tells the server the zone the viewer reads in.
-  // The painting form also keeps its selection for this tab, so a refused
-  // save comes back with the paint still on.
+  // Every form sends the viewer's zone. The painting form also keeps its
+  // selection, so a refused save comes back with the paint still on.
   remember({ target: form }) {
     form.querySelectorAll('input[name="participant[time_zone]"]').forEach((input) => {
       input.value = this.zone;
@@ -140,9 +137,7 @@ export default class extends Controller {
     return this.offered.length > 0 && this.offered.every((instant) => this.isPast(instant)) && !this.finalized && !this.cancelled;
   }
 
-  // Every offered time is behind the cut-off: a guest reads why Save is gone;
-  // the organizer's action bar already says so server-side, with the plate
-  // that changes the times, so the summary stays quiet.
+  // Every offered time has passed; the organizer's bar already says so.
   retireSave() {
     this.summaryTarget.textContent = this.role === "organizer" ? "" : "All the offered times have passed.";
     if (!this.hasSlotsTarget) return;
@@ -159,10 +154,7 @@ export default class extends Controller {
     this.localWindowTarget.textContent = `${start.toFormat("ccc d LLL HH:mm")}–${end.toFormat("HH:mm")} (${this.zone})`;
   }
 
-  // Every server-rendered instant on the page (derived plan starts, the
-  // offer-change and reopen notes, the cancelled stamps) arrives in the
-  // event zone; the picker zone replaces it, and a dated label stays dated.
-  // An instant the formatter cannot read keeps the server's words.
+  // Server-rendered instants arrive in the event's zone.
   rewriteZonedInstants() {
     this.element.querySelectorAll("time[data-zoned-instant]").forEach((element) => {
       const label = zonedLabel(element.getAttribute("datetime"), this.zone, { format: element.dataset.zonedFormat || "time" });

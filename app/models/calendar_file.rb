@@ -1,15 +1,7 @@
-# One RFC 5545 file for one event, written by hand: no gem, no dependency.
-#
-# Two modes. Page mode is what a participant downloads from their own page
-# and may carry the join link (URL) and the event description. Mail mode is
-# the attachment: names pass through mail_safe, and neither the description
-# nor any URL travels, so a mail never carries an organizer-supplied link.
-# Neither mode carries a capability token or an ORGANIZER property.
-#
-# The window is passed by the mailers so a job retried after a reopen still
-# renders what was set; the page passes nothing and the event's own window
-# is used. STATUS follows the event unless the caller says otherwise (the
-# reopened mail withdraws a window that is not cancelled).
+# One RFC 5545 file for one event, written by hand. The page's file may carry
+# the join link and the description; a mail's attachment carries neither, so
+# a mail never carries an organizer-supplied link. Mailers pass the window
+# and sequence they were queued with.
 class CalendarFile
   STATUSES = { confirmed: "CONFIRMED", cancelled: "CANCELLED" }.freeze
   PRODID = "-//Catching App//EN".freeze
@@ -26,8 +18,6 @@ class CalendarFile
     @mode = mode
     @window = window || [ event.start_time, event.end_time ]
     @status = status || (event.cancelled? ? :cancelled : :confirmed)
-    # The sequence travels with the window so a delayed or retried job cannot
-    # publish a stale window at a newer revision.
     @sequence = sequence || event.revision
   end
 
@@ -84,8 +74,6 @@ class CalendarFile
     text(event.place)
   end
 
-  # Page mode: the event's own words first, then the plan, then the credit.
-  # Mail mode: the plan and the credit only.
   def description
     paragraphs = []
     paragraphs << event.description if page? && event.description.present?
@@ -97,8 +85,6 @@ class CalendarFile
     paragraphs.join("\n\n")
   end
 
-  # Organizer text reaches a mail only through mail_safe; the page shows the
-  # same words the reader already sees.
   def text(value)
     page? ? value.to_s : MailTextHelper.mail_safe(value)
   end
@@ -116,9 +102,8 @@ class CalendarFile
     value.to_s.gsub(/\r\n?/, "\n").gsub(/[\u0000-\u0009\u000b\u000c\u000e-\u001f\u007f]/, "").gsub(/[\\;,\n]/, ESCAPES)
   end
 
-  # Content lines longer than 75 octets continue on the next line after a
-  # single space; the break falls between characters, never inside a
-  # multi-byte sequence, so unfolding restores the original line.
+  # Lines over 75 octets fold between characters, never inside a multi-byte
+  # sequence, so unfolding restores the original.
   def fold(line)
     return [ line ] if line.bytesize <= FOLD_OCTETS
 

@@ -1,5 +1,4 @@
-# The title and share card of every page. A page may name itself with
-# content_for :meta_title; the description and the image are the site's.
+# A page may name itself with content_for :meta_title.
 module MetaTagsHelper
   def meta_title
     content_for(:meta_title) || t("meta.title")

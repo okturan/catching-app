@@ -3,8 +3,7 @@ module Participant::Reply
   extend ActiveSupport::Concern
 
   included do
-    # Who counts for consensus: replied, and not declined, left, or voided by
-    # an offer revision that took every pick away.
+    # Replied, and not declined, left or voided.
     scope :counting, -> { where.not(responded_at: nil).where(declined_at: nil, left_at: nil, reply_voided_at: nil) }
   end
 
@@ -16,18 +15,15 @@ module Participant::Reply
     reply_voided_at?
   end
 
-  # Replied before the organizer last changed the offered times.
   def replied_before_revision?
     responded_at? && event.offer_revised_at? && responded_at < event.offer_revised_at
   end
 
-  # Replied before the organizer last withdrew a set time.
   def replied_before_reopen?
     responded_at? && event.reopened_at? && responded_at < event.reopened_at
   end
 
-  # Saves painted times with the reply's stamps; details may carry a name and
-  # a time zone. The first reply is confirmed by mail.
+  # The first answer is confirmed by mail.
   def reply!(starts_at, details = {})
     first_reply = !responded_at?
     event.with_lock do
@@ -37,7 +33,7 @@ module Participant::Reply
     MailDelivery.deliver_later(:response_confirmation, to: self) if first_reply
   end
 
-  # "None of these times work": slots cleared, out of consensus, link kept.
+  # "None of these times work": out of consensus, link kept.
   def decline!(details = {})
     first_reply = !responded_at?
     event.with_lock do
@@ -48,7 +44,7 @@ module Participant::Reply
     MailDelivery.deliver_later(:response_confirmation, to: self) if first_reply
   end
 
-  # The guest's kill switch: slots, both credentials and the claim, gone.
+  # For good: slots, both credentials and the claim go.
   def leave!
     event.with_lock do
       time_slots.delete_all
@@ -60,8 +56,8 @@ module Participant::Reply
 
   private
 
-  # Written against the row as it is under the lock: an offer revision may
-  # have voided this guest since it was read, and answering clears that.
+  # Reloaded under the lock: an offer revision may have voided this guest
+  # since it was read, and answering clears that.
   def record_answer!(details, declined_at:)
     reload.update!(details.to_h.compact_blank.merge(responded_at: Time.current, declined_at:, reply_voided_at: nil))
   end

@@ -1,11 +1,7 @@
-// Pure helpers for the definer on the offer page. The DOM work (past cells,
-// badges, the confirm attribute) lives in the component and is covered by
-// the system tests; these decide, and are covered by node.
+// The decisions of the definer on Change the times; its controller does the
+// DOM work.
 
-// What one definer cell is: past when the instant is before notBefore (a
-// Luxon DateTime or null) or when the caller's isPast says so, and how many
-// guests hold it (counts: Map or plain object keyed by the cell's UTC ISO
-// key, which the caller may pass as key to save a conversion).
+// Whether a cell is past, and how many guests hold it.
 const definerCellState = (instant, { notBefore = null, isPast = null, counts = new Map(), key = null } = {}) => {
   const hasMillis = Boolean(instant && typeof instant.toMillis === "function");
   const past = isPast
@@ -19,10 +15,8 @@ const definerCellState = (instant, { notBefore = null, isPast = null, counts = n
 
 const plural = (count, word) => `${count} ${word}${count === 1 ? "" : "s"}`;
 
-// Instants of the current offer that guests hold and that the selection no
-// longer contains. removed counts those instants, picks sums the guests'
-// picks on them; warning and confirm are the sentences the action bar and
-// the form carry, empty when nothing held is being removed.
+// What the selection would take from guests: the action bar's warning and
+// the form's confirm, both empty when nothing held goes.
 const removalWarning = (currentOffer, selection, counts) => {
   const selected = selection instanceof Set ? selection : new Set(selection || []);
   const countOf = (iso) => {

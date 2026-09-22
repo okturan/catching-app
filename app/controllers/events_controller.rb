@@ -13,8 +13,6 @@ class EventsController < ApplicationController
     @organizer = Participant.organizer.new(organizer_attributes)
   end
 
-  # Anyone with an email address can plan. Nothing goes to guests until the
-  # organizer opens the emailed link.
   def create
     @organizer = Participant.organizer.new(organizer_attributes)
     MailDelivery::Caps.check_event_creation!(organizer_email: @organizer.email, request_ip: request.remote_ip)
@@ -39,8 +37,7 @@ class EventsController < ApplicationController
 
   private
 
-  # Every mistake at once: the event and its organizer are validated afresh,
-  # and a refusal about the grid joins them as the event's base error.
+  # Every mistake at once: a refusal about the grid joins the event's errors.
   def render_form_again(base: nil)
     @event = Event.new(event_params)
     @event.validate

@@ -1,11 +1,5 @@
-<%# The definer panel, shared by events/new and offer/edit: heading, the paint
-    instruction, the controls strip, the grid and its action bar. The controls
-    live here so the grid and the settings that redraw it stay together and
-    the grid comes before the submit at every width.
-    heading: the panel's h2; hint: :paint draws the painting instruction;
-    frozen: and begin_min: pass through to the controls.
-    data-not-before carries the parser's past cut-off so cells before it
-    render past and unselectable on both pages. %>
+<%# The grid and the settings that redraw it, together, before the submit at
+    every width. hint: :paint draws the painting instruction. %>
 <div class="time-grid-panel time-grid-define-wrapper" data-controller="paint-mode">
   <h2><%= heading %></h2>
   <% if hint == :paint %>

@@ -1,7 +1,4 @@
 module Participants
-  # Reopen the time: the organizer withdraws the set window under the same
-  # lock that set it, then every linked guest hears once and can paint again.
-  # A pending event and a third attempt are refused by the model.
   class ReopeningsController < ApplicationController
     include ParticipantScoped
 

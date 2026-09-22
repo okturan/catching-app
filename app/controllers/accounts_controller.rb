@@ -1,5 +1,3 @@
-# The signed-in person's own account: name, address and password, each
-# change proven with the current password, and the way out.
 class AccountsController < ApplicationController
   def edit
     @user = Current.user
@@ -15,7 +13,6 @@ class AccountsController < ApplicationController
     end
   end
 
-  # The events stay: their participants only forget the account.
   def destroy
     Current.user.destroy!
     cookies.delete(:session_id)
@@ -24,8 +21,7 @@ class AccountsController < ApplicationController
 
   private
 
-  # The challenge is always made: a request without the current password is
-  # checked against an empty one and refused.
+  # Always challenged: a request without the current password is refused.
   def account_params
     params.expect(user: %i[first_name last_name email password password_confirmation])
       .merge(password_challenge: params.dig(:user, :password_challenge).to_s)

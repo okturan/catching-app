@@ -1,8 +1,7 @@
-# Every transactional mail. Parameters: delivery (the MailDelivery ledger
-# row, which carries event, participant and recipient), token (the raw
-# capability token for the templates that carry a link), for finalized and
-# cancelled, window (the set start and end, or nil for a pending cancel),
-# and for reopened, previous_window (the withdrawn start and end).
+# Every transactional mail. The params carry the ledger row (event,
+# participant, recipient) and the raw token of a mail with a link. A window
+# is printed from the params, never from the row, so a job that runs after
+# the event changed still describes what it was queued for.
 class ParticipantMailer < ApplicationMailer
   helper MailTextHelper
   include MailTextHelper
@@ -39,10 +38,6 @@ class ParticipantMailer < ApplicationMailer
     mail(subject: subject_for("your reply to #{mail_safe(@event.name)} is saved"))
   end
 
-  # The set time and what a guest asks next: where, how long, the plan with
-  # derived starts, a link (guests only, by the claim rule) and the calendar
-  # file. The window comes from the params, never from the row, so a job
-  # that runs after a reopen still prints and attaches what was set.
   def finalized
     window = params.fetch(:window)
     describe_window(*window)
@@ -54,10 +49,8 @@ class ParticipantMailer < ApplicationMailer
     mail(reply_to: @organizer.email, subject: subject_for("#{mail_safe(@event.name)} is set for #{recipient_day(window.first)}"))
   end
 
-  # One coalesced notice: why it was sent, what is true now and, for an
-  # offer change, where the recipient's own picks stand. Guests only, the
-  # link by the claim rule. The body reads the current row on purpose: a
-  # notice describes the event as it is when the job runs.
+  # Unlike the others, a notice reads the current row: it describes the event
+  # as it is when the job runs.
   def event_updated
     @reason = params.fetch(:reason)
     @changes = params[:changes].to_h
@@ -71,9 +64,6 @@ class ParticipantMailer < ApplicationMailer
     mail(reply_to: @organizer.email, subject: subject_for("#{mail_safe(@organizer.name)} changed #{mail_safe(@event.name)}"))
   end
 
-  # No link and no promise of more mail. The window comes from the params,
-  # so a job that runs after the row changed still prints what was set; when
-  # there was one, the attached file withdraws the calendar entry.
   def cancelled
     if (window = params[:window])
       describe_window(*window)
@@ -82,10 +72,6 @@ class ParticipantMailer < ApplicationMailer
     mail(reply_to: @organizer.email, subject: subject_for("#{mail_safe(@event.name)} is cancelled"))
   end
 
-  # The set time is withdrawn: the window in both zones, the promise that
-  # the guest's paint still counts, the link by the claim rule and a file
-  # that clears the calendar entry. Guests only. The window comes from the
-  # params, never from the row, which is already pending again.
   def reopened
     window = params.fetch(:previous_window)
     describe_window(*window)
@@ -111,7 +97,6 @@ class ParticipantMailer < ApplicationMailer
     "#{SUBJECT_PREFIX}#{text}".squish.truncate(SUBJECT_LIMIT)
   end
 
-  # Times read in the recipient's own zone once they have chosen one.
   def recipient_zone
     @participant.time_zone || @event.time_zone
   end
@@ -126,10 +111,9 @@ class ParticipantMailer < ApplicationMailer
     @event_window = window_in(@event.time_zone, start_time, end_time)
   end
 
-  # Guests get a link by the claim rule: the pending token issued for this
-  # mail for an unclaimed guest, the signed-in page for a claimed one. The
-  # organizer's copy carries none, and so does the mail of a guest who lost
-  # the claim after it was queued without a token.
+  # The claim rule: an unclaimed guest's link carries the token queued with
+  # this mail, a claimed guest's leads to their account. The organizer's
+  # copy has none.
   def guest_link
     return if @participant.organizer?
     return participant_url(@participant) if @participant.claimed?
@@ -137,9 +121,7 @@ class ParticipantMailer < ApplicationMailer
     participant_url(params[:token]) if params[:token]
   end
 
-  # "Pizza (30 min) at 20:00 (Asia/Kolkata), 15:30 (Europe/Berlin)": each
-  # item with its derived start in the recipient zone, then the event zone
-  # when that differs. Names pass through mail_safe; descriptions stay home.
+  # "Pizza (30 min) at 20:00 (Asia/Kolkata), 15:30 (Europe/Berlin)"
   def plan_lines(start_time)
     both_zones = recipient_zone != @event.time_zone
     @event.plan_timeline(from: start_time).map do |item, start|
@@ -152,18 +134,14 @@ class ParticipantMailer < ApplicationMailer
     end
   end
 
-  # "Pizza (30 min)": the name through mail_safe and the length, never the
-  # description.
   def plan_item_line(item)
     line = mail_safe(item.name)
     line += " (#{item.length})" if item.length
     line
   end
 
-  # The recipient's own situation after an offer change, read from the row
-  # at send time: a voided guest has nothing left, a guest who replied
-  # before the change still holds some picks, a declined guest hears that
-  # times were added (removal-only revisions never reach them).
+  # Where the recipient's picks stand after an offer change. A declined guest
+  # only hears of revisions that added times.
   def offer_situation
     if @participant.voided?
       "None of the times you picked are offered any more. Please pick again."
@@ -175,7 +153,6 @@ class ParticipantMailer < ApplicationMailer
     end
   end
 
-  # The one reason line at the top of a notice.
   def reason_line
     organizer = mail_safe(@organizer.name)
     event = mail_safe(@event.name)

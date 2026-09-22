@@ -1,7 +1,5 @@
-# Signing in, the Rails way: a Session row per browser, its id in a signed
-# permanent cookie, and Current.session for the request. Every action asks
-# for a signed-in user unless its controller allows otherwise; an allowed
-# action still resumes the session, so Current.user is always resolved.
+# A Session row per browser, its id in a signed permanent cookie. An action
+# allowed without one still resumes it, so Current.user is always resolved.
 module Authentication
   extend ActiveSupport::Concern
 
@@ -35,8 +33,7 @@ module Authentication
     Session.find_by(id: cookies.signed[:session_id]) if cookies.signed[:session_id]
   end
 
-  # Back to where the visitor was going once they have signed in. A 303, so
-  # a signed-out DELETE is not repeated against the sign-in page.
+  # A 303, so a signed-out DELETE is not repeated against the sign-in page.
   def request_authentication
     session[:return_to_after_authenticating] = request.url
     redirect_to new_session_path, status: :see_other

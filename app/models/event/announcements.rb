@@ -1,7 +1,6 @@
-# The mails that go to everyone on an event at once: the set time, a change
-# notice, the withdrawn time and the cancellation. Each marks the guests told
-# about the revision it describes, and only the cancellation still goes out
-# once the event is cancelled.
+# The mails that go to everyone on an event at once. Each marks the guests
+# told about the revision it describes, and none but the cancellation goes
+# out once the event is cancelled. A window travels in the job's params.
 module Event::Announcements
   extend ActiveSupport::Concern
 
@@ -15,9 +14,7 @@ module Event::Announcements
     end
   end
 
-  # After finalize!: everyone active with a link, the organizer included as
-  # a receipt, never capped. The set window travels in the params so a
-  # retried job never reads the row.
+  # Everyone with a link, the organizer included as a receipt. Never capped.
   def announce_finalization!
     ensure_not_cancelled!
     window = [ start_time, end_time ]
@@ -27,11 +24,8 @@ module Event::Announcements
     mark_notified!
   end
 
-  # One coalesced change notice, only when the organizer asks (the details
-  # checkbox, the offer checkbox or Tell the guests). Recipients are active
-  # linked guests; an offer notice goes only to guests who already replied,
-  # and skips declined guests when nothing was added. A recipient over the
-  # notice caps is skipped and counted. The organizer never receives one.
+  # Sent only when the organizer asks. A guest over the notice caps is
+  # skipped and counted.
   def notify_guests!(reason:, by:, request_ip:, changes: nil)
     ensure_not_cancelled!
     raise Refusal, "Open your organizer link before emailing guests" unless by.link_opened_at?
@@ -49,11 +43,8 @@ module Event::Announcements
     NoticeReport.new(sent:, skipped:)
   end
 
-  # After reopen!: every active linked guest hears once that the set time is
-  # withdrawn, the organizer (who pressed the button) not at all. Never
-  # capped: reopen! itself allows at most two per event. The withdrawn window
-  # travels in the params so the job prints it and builds the cancelled
-  # calendar file without reading the row. Returns the number told.
+  # Every guest with a link, never capped: reopen! allows two per event.
+  # Returns the number told.
   def announce_reopening!(previous_window)
     ensure_not_cancelled!
     told = guests.active.linked.to_a
@@ -64,10 +55,8 @@ module Event::Announcements
     told.size
   end
 
-  # The one last mail: everyone active with a link, declined guests and the
-  # organizer included, left and never-invited excluded. No token, no link,
-  # no cap. The set window, when there was one, travels in the params so a
-  # retried job never reads the live row. Returns the number of people told.
+  # The one last mail, to everyone with a link: no token, no link, no cap.
+  # Returns the number told.
   def announce_cancellation!
     window = [ start_time, end_time ] if finalized?
     told = participants.active.linked.to_a
@@ -85,6 +74,8 @@ module Event::Announcements
 
   private
 
+  # An offer notice goes only to guests who replied, and skips declined ones
+  # when nothing was added.
   def notice_recipients(reason)
     recipients = guests.active.linked
     return recipients unless reason == :offer

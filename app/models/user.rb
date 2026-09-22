@@ -1,8 +1,5 @@
-# An account. It remembers the events its owner planned or claimed while
-# signed in; every event is still reached through its capability link.
-#
-# Validations are declared in the sign-up form's order, so its error
-# summary reads top to bottom.
+# An account remembers events; each is still reached through its link.
+# Validations follow the sign-up form's order, so its summary reads down.
 class User < ApplicationRecord
   PASSWORD_MINIMUM = 15
 

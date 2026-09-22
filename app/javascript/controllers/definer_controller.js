@@ -10,11 +10,8 @@ import { countsByInstant, parseSlotList, populateTimeZoneSelect, slotISO, toDate
 
 const SELECTABLE = ".slot.selectable[data-date]";
 
-// The offer grid of the planning form and of Change the times. The organizer
-// paints the instants they can do on a grid of days, in a zone and at a step
-// they choose; the selection lives in the form's slots field. On Change the
-// times the offer value holds the current offer and picked-counts the picks
-// guests hold on it, so the summary can name what a removal would drop.
+// The offer grid of the planning form and of Change the times. There, the
+// offer and picked-counts values let the summary name what a removal drops.
 export default class extends Controller {
   static targets = ["grid", "slots", "zone", "step", "begin", "end", "rangeNote", "summary"];
   static values = { offer: Array, pickedCounts: Object };
@@ -59,8 +56,7 @@ export default class extends Controller {
     this.draw(`Moved to ${this.zone} wall clock`);
   }
 
-  // A new step rescales the painted runs onto the new grid, and says so for
-  // the planned length to re-fit.
+  // Announced, so the planned length can re-fit.
   restep() {
     const next = Number(this.stepTarget.value);
     this.replaceSelection(rescale(this.selection, this.slotMinutes, next, this.zone));
@@ -74,9 +70,7 @@ export default class extends Controller {
     this.draw();
   }
 
-  // The one error native validation cannot raise. The button is never
-  // disabled: a dead primary action with no explanation is worse than a
-  // blocked one that says why and puts the visitor on the grid.
+  // Never a disabled button: a blocked one says why and shows the grid.
   submit(event) {
     this.serialize();
     if (this.selection.size > 0) return;
@@ -87,9 +81,7 @@ export default class extends Controller {
     this.gridTarget.querySelector('.slot[tabindex="0"]')?.focus();
   }
 
-  // Redraws the grid. `reason` says what the visitor just did to the
-  // selection, and shows only if something is still selected once the dates
-  // and the cut-off have pruned it.
+  // `reason` shows only if something is still selected after the pruning.
   draw(reason = "") {
     this.gridTarget.replaceChildren();
     this.note = "";
@@ -118,8 +110,6 @@ export default class extends Controller {
       .filter(Boolean).join(". ");
   }
 
-  // On Change the times the summary also names the picks a removal would
-  // drop, and the form asks before submitting such a removal.
   removalWarning() {
     if (!this.currentOffer) return "";
     const { warning, confirm } = removalWarning(this.currentOffer, this.selection, this.counts);
@@ -147,8 +137,7 @@ export default class extends Controller {
     return outside.length;
   }
 
-  // A zone remap can move a selected instant behind the cut-off; past cells
-  // take no paint, so the selection lets it go.
+  // A zone move can push a pick behind the cut-off.
   dropPast() {
     [...this.selection].forEach((iso) => {
       if (this.isPast(DateTime.fromISO(iso))) this.selection.delete(iso);
@@ -174,8 +163,7 @@ export default class extends Controller {
         .sort((a, b) => a.toMillis() - b.toMillis());
       this.beginTarget.value = instants[0].toISODate();
       this.endTarget.value = instants[instants.length - 1].toISODate();
-      // An offer that starts inside the grace window begins before today;
-      // the range must still be submittable.
+      // An offer inside the grace window starts before today.
       if (this.beginTarget.min && this.beginTarget.value < this.beginTarget.min) {
         this.beginTarget.min = this.beginTarget.value;
       }

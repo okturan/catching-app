@@ -1,6 +1,4 @@
-# Shared by the two plan-editing controllers: organizer only, refused once
-# cancelled by the base controller, and every outcome lands back on the
-# Edit details page.
+# Every outcome of a plan edit lands back on the details page.
 module Participants
   module PlanWrites
     extend ActiveSupport::Concern

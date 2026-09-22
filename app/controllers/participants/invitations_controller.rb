@@ -1,6 +1,5 @@
 module Participants
-  # Adds any new addresses, then sends an invitation to every guest without a
-  # live link. Nothing leaves before the organizer has opened the emailed link.
+  # Invites every guest without a link yet, new addresses included.
   class InvitationsController < ApplicationController
     include ParticipantScoped
 

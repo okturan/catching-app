@@ -1,5 +1,4 @@
-# A forgotten password: a link by mail, valid for an hour, to set a new one.
-# Asking never tells whether an address has an account, and setting one
+# Asking never tells whether an address has an account; a new password
 # signs out every browser.
 class PasswordsController < ApplicationController
   allow_unauthenticated_access

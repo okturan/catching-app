@@ -11,9 +11,7 @@ module ParticipantsHelper
     delivered: "sent"
   }.freeze
 
-  # A guest's line in the organizer table: their reply first, then the fate
-  # of their last invitation. A voided guest replied, but an offer revision
-  # took every pick away.
+  # A guest's reply first, then the fate of their last invitation.
   def guest_state_label(guest, invitations, slot_count:)
     last_invitation = invitations[guest.id]&.last
     state = guest_state(guest, last_invitation)
@@ -30,8 +28,7 @@ module ParticipantsHelper
     end
   end
 
-  # "Tue 15 Jan 20:00–21:00 (Europe/Berlin)", the way the page's JavaScript
-  # prints the set time.
+  # "Tue 15 Jan 20:00–21:00 (Europe/Berlin)", as the page's JavaScript prints it.
   def event_window(event)
     start_time, end_time = [ event.start_time, event.end_time ].map { it.in_time_zone(event.time_zone) }
     "#{start_time.to_fs(:day)} #{start_time.to_fs(:time)}–#{end_time.to_fs(:time)} (#{event.time_zone})"

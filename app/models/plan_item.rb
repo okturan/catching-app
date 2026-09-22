@@ -1,4 +1,3 @@
-# One item of an event's plan, read in (position, id) order.
 class PlanItem < ApplicationRecord
   PER_EVENT = 20
 

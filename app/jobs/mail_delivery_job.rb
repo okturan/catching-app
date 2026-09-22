@@ -1,9 +1,7 @@
 require "net/smtp"
 
-# Delivers ParticipantMailer mails and records the outcome in the ledger row
-# carried in the mailer params. Transient SMTP errors retry; permanent ones
-# are discarded; both mark the row failed after the last attempt. A guest
-# removed while the mail was queued is not written to.
+# Records each mail's fate in its ledger row. A guest removed while the mail
+# was queued is not written to.
 class MailDeliveryJob < ActionMailer::MailDeliveryJob
   self.log_arguments = false
 

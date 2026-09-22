@@ -1,5 +1,4 @@
-# A length of time in whole minutes, printed the way the pages print it:
-# "1 h 30 min", "2 h", "45 min". Never a clock reading, so never a zone.
+# "1 h 30 min", "2 h", "45 min": a length, never a clock reading.
 Length = Data.define(:minutes) do
   def to_s
     hours, rest = minutes.divmod(60)

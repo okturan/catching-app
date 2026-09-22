@@ -1,6 +1,4 @@
 module Participants
-  # The organizer calls the event off: one locked write, then one last mail
-  # to everyone with a link, the organizer included as a receipt.
   class CancellationsController < ApplicationController
     include ParticipantScoped
 

@@ -1,6 +1,5 @@
-# One painted instant: the organizer's offer or a guest's availability. Slots
-# are written in bulk, so the database carries the rules: the quarter hour,
-# one row per participant and instant, and a participant of the same event.
+# One painted instant. Slots are written in bulk, so the database holds the
+# rules.
 class TimeSlot < ApplicationRecord
   MAX_DAYS = 31
   # A day has at most 25 hours, on the night the clocks go back.
@@ -12,8 +11,7 @@ class TimeSlot < ApplicationRecord
   belongs_to :participant
   belongs_to :event
 
-  # The instants of a painted selection, as the grid serializes it: comma
-  # separated ISO 8601 times, deduplicated and in order.
+  # The grid's comma-separated ISO 8601 times, deduplicated and in order.
   def self.parse(value, slot_minutes:)
     values = value.to_s.split(",").compact_blank
     limit = MAX_HOURS * 60 / slot_minutes

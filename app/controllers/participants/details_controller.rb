@@ -1,7 +1,4 @@
 module Participants
-  # The organizer edits what guests read on the card: name, description,
-  # place, link and planned length. Slot length and zone are facts here,
-  # never fields. A ticked notice[send] mails the guests about the change.
   class DetailsController < ApplicationController
     include ParticipantScoped
 
@@ -32,8 +29,7 @@ module Participants
       params.dig(:notice, :send) == "1"
     end
 
-    # The checkbox is offered only when a notice could reach anyone: the
-    # organizer has opened their link and at least one guest holds one.
+    # Only when a notice could reach anyone.
     def notice_offered?
       @participant.link_opened_at? && @event.guests.active.linked.exists?
     end

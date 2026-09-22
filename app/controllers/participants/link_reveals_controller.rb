@@ -1,6 +1,5 @@
 module Participants
-  # "Show link to copy": an explicit, confirmed, recorded action. The URL is
-  # rendered once as text and never travels through the flash.
+  # The URL is shown once as text and never travels through the flash.
   class LinkRevealsController < ApplicationController
     include ParticipantScoped
     include EventPage

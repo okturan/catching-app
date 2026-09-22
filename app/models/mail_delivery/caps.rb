@@ -1,7 +1,6 @@
-# Abuse limits counted from the ledger. All are best-effort under concurrency:
-# two racing requests can exceed a cap by one, which is acceptable for an
-# anti-abuse limit. Refusals raise CapExceeded with a generic message that
-# never reveals whether an address is known.
+# Abuse limits counted from the ledger. Two racing requests can exceed a cap
+# by one, which an anti-abuse limit can live with. A refusal never reveals
+# whether an address is known.
 module MailDelivery::Caps
   GENERIC_MESSAGE = "Could not send right now. Try again later.".freeze
   CREATION_MESSAGE = "Could not create the event right now. Try again later.".freeze
@@ -24,10 +23,7 @@ module MailDelivery::Caps
 
   extend self
 
-  # Raises when an invitation to `recipient_email` from `organizer` must not
-  # be sent now. `request_ip` may be nil (jobs, console). The per-event rules
-  # count invitations only, and failed ones not at all: a notice is not a
-  # resend.
+  # The per-event rules count invitations only, and failed ones not at all.
   def check_invitation!(event:, organizer:, recipient_email:, request_ip:)
     recipient = MailDelivery.canonical(recipient_email)
     check_daily_keys!(organizer:, recipient:, request_ip:)
@@ -37,11 +33,6 @@ module MailDelivery::Caps
     raise MailDelivery::CapExceeded, "Wait a few minutes before sending to this address again." if sent.since(RESEND_COOLDOWN.ago).exists?
   end
 
-  # Raises when a change notice to `recipient_email` about `event` must not be
-  # sent now: the shared daily keys, then at most five notices per event and
-  # address in its lifetime (failed rows do not count) and never two within
-  # ten minutes. Event#notify_guests! rescues the refusal per recipient and
-  # counts it.
   def check_update_notice!(event:, organizer:, recipient_email:, request_ip:)
     recipient = MailDelivery.canonical(recipient_email)
     check_daily_keys!(organizer:, recipient:, request_ip:)
@@ -51,16 +42,13 @@ module MailDelivery::Caps
     raise MailDelivery::CapExceeded, "This address was notified less than 10 minutes ago." if sent.since(UPDATE_NOTICE_COOLDOWN.ago).exists?
   end
 
-  # True when a recovery or organizer-link mail may go to `email` now.
   def organizer_link_allowed?(email)
     MailDelivery.organizer_link.since(1.hour.ago)
       .where(canonical_recipient_email: MailDelivery.canonical(email)).none?
   end
 
-  # Raises when creating another event for `organizer_email` from `request_ip`
-  # must be refused. Opened events count per address; unopened ones count per
-  # IP and per (address, IP), so a third party cannot exhaust a victim from
-  # another network.
+  # Opened events count per address; unopened ones per IP and per address and
+  # IP, so a stranger elsewhere cannot use up a victim's allowance.
   def check_event_creation!(organizer_email:, request_ip:)
     day = 24.hours.ago
     canonical = MailDelivery.canonical(organizer_email)
@@ -84,9 +72,8 @@ module MailDelivery::Caps
 
   private
 
-  # The four daily keys: the global budget, the organizer's allowance, the
-  # request IP and the canonical recipient, all counted over invitations and
-  # change notices together in the last 24 hours.
+  # The global budget, the organizer, the IP and the recipient, each over the
+  # last 24 hours.
   def check_daily_keys!(organizer:, recipient:, request_ip:)
     recent = MailDelivery.where(kind: DAILY_KEY_KINDS).since(24.hours.ago)
 

@@ -3,9 +3,7 @@
 module Event::Availability
   extend ActiveSupport::Concern
 
-  # What revise_offer! did: the instants added and removed, the guests who
-  # lost some picks (trimmed) or all of them (voided), whether the step or
-  # zone moved, and whether a planned length stopped fitting and was cleared.
+  # What revise_offer! did. Trimmed guests lost some picks, voided ones all.
   Revision = Data.define(:added, :removed, :trimmed_ids, :voided_ids, :grid_changed, :duration_cleared) do
     def delta? = added.any? || removed.any?
     def no_op? = !delta? && !grid_changed
@@ -22,8 +20,7 @@ module Event::Availability
     validate :grid_is_frozen_after_replies, on: :update
   end
 
-  # Replaces one participant's painted slots: the organizer's offer when the
-  # event is planned, or a guest's reply, which may use offered instants only.
+  # A guest may paint only instants the organizer offers.
   def replace_time_slots!(participant:, starts_at:)
     with_lock do
       ensure_open!
@@ -35,12 +32,9 @@ module Event::Availability
     end
   end
 
-  # The organizer changes the offered times. The complete future offer comes
-  # in; instants behind the cut-off are left alone. Guest picks at removed
-  # instants go with them, so guest slots stay a subset of the offer, and a
-  # guest left with nothing is voided until they reply again. Step and zone
-  # may change only before the first reply. A submission that changes
-  # nothing writes nothing.
+  # The complete future offer comes in; instants behind the cut-off are left
+  # alone. Guest picks at removed instants go with them, and a guest left
+  # with nothing is voided until they reply again.
   def revise_offer!(starts_at:, slot_minutes: nil, time_zone: nil)
     with_lock do
       ensure_open!
@@ -69,14 +63,12 @@ module Event::Availability
     end
   end
 
-  # Slot length and zone relabel every cell, so they freeze at the first reply.
   def grid_frozen?
     guests.where.not(responded_at: nil).exists?
   end
 
-  # Every instant sits on the grid anchored at local midnight in the event's
-  # zone, as the JavaScript draws it. Rails moves a nonexistent local midnight
-  # forward, like Luxon's startOf("day").
+  # On the grid anchored at local midnight, as the JavaScript draws it. Rails
+  # moves a nonexistent local midnight forward, like Luxon's startOf("day").
   def aligned?(instants)
     zone = ActiveSupport::TimeZone[time_zone]
     instants.all? do |instant|
@@ -85,8 +77,6 @@ module Event::Availability
     end
   end
 
-  # The organizer offered times and every one of them is behind the cut-off:
-  # nothing can be painted or set until the offer changes.
   def every_offer_past?
     organizer.time_slots.exists? && organizer.time_slots.where(start_time: TimeSlot::PAST_GRACE.ago..).none?
   end
@@ -116,14 +106,13 @@ module Event::Availability
     [ wanted - current, current - wanted ]
   end
 
-  # Returns the guests who lost a pick.
   def remove_guest_picks_at!(removed)
     picks = time_slots.where(start_time: removed).where.not(participant: organizer)
     picks.distinct.pluck(:participant_id).tap { picks.delete_all }
   end
 
-  # A reply left with nothing is voided, not reset: it stays on record but no
-  # longer counts until the guest saves again. Returns the voided guests.
+  # Voided, not reset: the reply stays on record but stops counting until the
+  # guest saves again.
   def void_emptied_replies!
     emptied = guests.counting.where.not(id: time_slots.select(:participant_id)).pluck(:id)
     guests.where(id: emptied).update_all(reply_voided_at: Time.current, updated_at: Time.current) if emptied.any?
@@ -134,8 +123,8 @@ module Event::Availability
     update!(**attributes, revision: revision + 1)
   end
 
-  # A planned length is a hint, so a step change that leaves it off the grid
-  # clears it rather than refusing. True when cleared.
+  # A planned length is a hint, so a step change clears one that stopped
+  # fitting rather than refusing.
   def clear_unfitting_duration
     return false unless slot_minutes_changed? && duration_minutes && Event::SLOT_MINUTES.include?(slot_minutes)
     return false if (duration_minutes % slot_minutes).zero?

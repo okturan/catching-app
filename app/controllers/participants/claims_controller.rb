@@ -1,12 +1,11 @@
 module Participants
-  # Keeps a participant reached by link in the signed-in account. Binding is
-  # by token possession only; email equality never links anything. Once kept,
-  # the account's address for it is its id.
+  # Keeps a participant in the signed-in account, by token possession only:
+  # email equality never links anything.
   class ClaimsController < ApplicationController
     include ParticipantScoped
 
     before_action :require_authentication
-    # Memory stays allowed: a cancelled event can still be kept in an account.
+    # A cancelled event can still be kept.
     skip_before_action :ensure_event_not_cancelled
 
     def show

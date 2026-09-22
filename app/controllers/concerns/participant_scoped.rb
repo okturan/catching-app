@@ -1,8 +1,5 @@
-# Everything at /p/:key: one participant's view of their event. The key is
-# the token of an emailed link, which needs no session, or the participant's
-# id, which only the account that claimed it may open. Either way the
-# request has @participant and its @event, and every path built for the
-# participant carries the key it came in with.
+# Everything at /p/:key. The key is an emailed link's token, which needs no
+# session, or the participant's id, which only the claiming account opens.
 module ParticipantScoped
   extend ActiveSupport::Concern
 
@@ -49,7 +46,7 @@ module ParticipantScoped
     @event = @participant.event
   end
 
-  # A link a mail client mangled ("/p/<key>.") is sent to its clean form.
+  # "/p/<key>." from a mail client goes to the clean form.
   def canonicalize_key
     return if params[:key] == @participant.to_param
 
@@ -61,12 +58,10 @@ module ParticipantScoped
     @event.ensure_not_cancelled!
   end
 
-  # The first write through a pending token makes it live and retires the old one.
   def promote_pending_token
     @participant.promote_pending!(actor: Current.user) if @participant.found_by_pending_token?
   end
 
-  # Painting needs an open event; finalized and cancelled pages are read.
   def viewer_role
     @event.open? ? @participant.role : "viewer"
   end
@@ -92,8 +87,7 @@ module ParticipantScoped
     @event.guests.active.find(id)
   end
 
-  # Mails a change notice and returns the sentence that reports it. A refused
-  # notice becomes the alert; whatever was saved before it stays saved.
+  # A refused notice becomes the alert; what was saved before it stays saved.
   def notify_guests(reason, changes: nil)
     @event.notify_guests!(reason:, by: @participant, request_ip: request.remote_ip, changes:)
   rescue Refusal => refusal

@@ -1,8 +1,5 @@
-# Mail text: organizer words without a clickable link, and every time with
-# its zone named.
 module MailTextHelper
-  # Organizer-supplied text never carries a clickable URL into a mail. Also
-  # MailTextHelper.mail_safe, for the calendar file a mail attaches.
+  # Organizer text never carries a clickable URL into a mail.
   def mail_safe(text)
     text.to_s.gsub(%r{[a-z][a-z0-9+.\-]*://}i, "").squish
   end
@@ -18,7 +15,6 @@ module MailTextHelper
     "#{instant.in_time_zone(zone).to_fs(:time)} (#{zone})"
   end
 
-  # Painted instants as runs of touching slots, listed by local day:
   # { days: { "Tue 10 Feb 2031" => ["09:00–10:30"] }, more: 0, zone: "Europe/Berlin" }
   def coalesced_ranges(instants, slot_minutes, zone, max_days: 10)
     step = slot_minutes.minutes

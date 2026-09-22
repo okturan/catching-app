@@ -1,5 +1,4 @@
-# Someone taking part in an event: its one organizer or a guest. Everyone is
-# reached through a capability link; an account only remembers events.
+# The organizer or a guest of an event, reached through a capability link.
 class Participant < ApplicationRecord
   include Tokens, Reply, Mailings
 
@@ -24,8 +23,7 @@ class Participant < ApplicationRecord
   scope :linked, -> { where.not(token_digest: nil) }
   scope :unsent, -> { guest.active.where(token_digest: nil) }
 
-  # The addresses in an "Invite people" box: split on commas and new lines,
-  # normalized and deduplicated. A bad address names itself.
+  # The addresses in an "Invite people" box. A bad one names itself.
   def self.addresses_from(text)
     raise Refusal, "The invitation list is too long" if text.bytesize > 4.kilobytes
 
@@ -36,8 +34,7 @@ class Participant < ApplicationRecord
     addresses
   end
 
-  # When this participant can meet, earliest first: the organizer's offer or
-  # a guest's picks.
+  # The organizer's offer, or a guest's picks.
   def available_start_times
     time_slots.order(:start_time).pluck(:start_time)
   end
@@ -50,7 +47,7 @@ class Participant < ApplicationRecord
     left_at?
   end
 
-  # The name other participants see: an address is never shown to guests.
+  # An address is never shown to guests.
   def display_name
     name || "Guest"
   end
