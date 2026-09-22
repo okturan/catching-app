@@ -12,7 +12,7 @@ class User < ApplicationRecord
   normalizes :email, with: -> { it.strip.downcase }
 
   validates :first_name, :last_name, presence: true
-  validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }, uniqueness: true
+  validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP, allow_blank: true }, uniqueness: true
   validates :password, length: { minimum: PASSWORD_MINIMUM }, allow_nil: true
   # A reset must set a password; everywhere else a blank one keeps the old.
   validates :password, presence: true, on: :password_reset

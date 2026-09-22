@@ -21,11 +21,15 @@ class UserTest < ActiveSupport::TestCase
     assert_equal "Olivia Owner", user.full_name
   end
 
-  test "requires a valid email address" do
+  test "requires a valid email address, and a blank one is only blank" do
     user = User.new(first_name: "Valid", last_name: "Name", email: "not-an-email", password: "correct horse battery staple")
 
     assert_not user.valid?
     assert_includes user.errors[:email], "is invalid"
+
+    user.email = " "
+    assert_not user.valid?
+    assert_equal [ "can't be blank" ], user.errors[:email]
   end
 
   test "requires a password of at least fifteen characters" do

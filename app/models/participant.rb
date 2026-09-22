@@ -15,7 +15,7 @@ class Participant < ApplicationRecord
   normalizes :email, with: -> { it.strip.downcase }
   normalizes :name, with: -> { it.squish.presence }
 
-  validates :email, presence: true, length: { maximum: 254 }, format: { with: EMAIL_FORMAT }, uniqueness: { scope: :event_id }
+  validates :email, presence: true, length: { maximum: 254 }, format: { with: EMAIL_FORMAT, allow_blank: true }, uniqueness: { scope: :event_id }
   validates :name, length: { maximum: 100 }
   validates :name, presence: true, if: :organizer?
   validates :time_zone, time_zone: true, allow_nil: true

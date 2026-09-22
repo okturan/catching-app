@@ -293,4 +293,11 @@ class ParticipantTest < ActiveSupport::TestCase
     guest.responded_at = nil
     assert_not guest.replied_before_revision?
   end
+
+  test "a blank address is only blank, not also invalid" do
+    guest = events(:planning).participants.guest.new(email: "")
+
+    assert_not guest.valid?
+    assert_equal [ "can't be blank" ], guest.errors[:email]
+  end
 end
