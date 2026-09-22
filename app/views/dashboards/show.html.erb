@@ -1,4 +1,30 @@
 <div class="dashboard">
   <h1>Your events</h1>
-  <%= render "dashboards/shared/my_events" %>
+
+  <section aria-labelledby="organizing-heading">
+    <h2 class="section-title" id="organizing-heading">Organizing <span class="plate"><%= @organizing.size %></span></h2>
+    <% if @organizing.any? %>
+      <div class="event-list">
+        <%= render partial: "dashboards/participation", collection: @organizing, locals: { guest_counts: @guest_counts } %>
+      </div>
+    <% else %>
+      <div class="empty">
+        <span>Nothing planned yet.</span>
+        <%= link_to "Plan a meeting", new_event_path, class: "plate plate-button-sm" %>
+      </div>
+    <% end %>
+  </section>
+
+  <section aria-labelledby="invited-heading">
+    <h2 class="section-title" id="invited-heading">Invited <span class="plate"><%= @invited.size %></span></h2>
+    <% if @invited.any? %>
+      <div class="event-list">
+        <%= render partial: "dashboards/participation", collection: @invited, locals: { guest_counts: @guest_counts } %>
+      </div>
+    <% else %>
+      <div class="empty">
+        <span>No invitations yet. Guest links you open while signed in show up here.</span>
+      </div>
+    <% end %>
+  </section>
 </div>
