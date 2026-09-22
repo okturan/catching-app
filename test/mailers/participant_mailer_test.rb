@@ -246,7 +246,7 @@ class ParticipantMailerTest < ActionMailer::TestCase
   test "finalized attaches a confirmed calendar file built from the window params" do
     finalized = events(:finalized)
     finalized.update_columns(revision: 4, place_url: "https://zoom.us/j/1", place: "Zoom")
-    finalized.update_columns(status: false, start_time: nil, end_time: nil)
+    finalized.update_columns(start_time: nil, end_time: nil)
 
     mail = finalized_mail(participants(:finalized_guest), event: finalized)
 
@@ -328,7 +328,7 @@ class ParticipantMailerTest < ActionMailer::TestCase
 
   test "reopened names the withdrawn window in both zones, dates the subject in the recipient zone and attaches the cancelled file" do
     berlin = events(:finalized)
-    berlin.update_columns(time_zone: "Europe/Berlin", status: false, start_time: nil, end_time: nil, reopened_at: Time.current,
+    berlin.update_columns(time_zone: "Europe/Berlin", start_time: nil, end_time: nil, reopened_at: Time.current,
       reopen_count: 1, revision: 7, place: "Ege's place https://maps.example/x", place_url: "https://zoom.us/j/1")
     participants(:finalized_organizer).update!(name: "Olivia https://evil.example Owner")
     guest = participants(:finalized_guest)

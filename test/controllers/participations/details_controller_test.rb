@@ -76,7 +76,7 @@ module Participations
       assert_equal "Zoom", finalized.place
       assert_equal "https://zoom.us/j/1", finalized.place_url
       assert_equal 1, finalized.revision
-      assert finalized.status?
+      assert finalized.finalized?
     end
 
     test "the organizer saves details through either family and posted step and zone are ignored" do

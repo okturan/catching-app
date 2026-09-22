@@ -114,7 +114,7 @@ module Deliveries
   # retried job never reads the live row. Returns the number of people told.
   def cancelled!(event:)
     organizer = event.organizer
-    window = event.status? ? [ event.start_time, event.end_time ] : nil
+    window = [ event.start_time, event.end_time ] if event.finalized?
     told = 0
     event.participants.active.linked.find_each do |participant|
       delivery = record!(event: event, participant: participant, kind: :cancelled, recipient_email: participant.email,

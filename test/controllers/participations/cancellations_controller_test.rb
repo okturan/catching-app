@@ -54,14 +54,14 @@ module Participations
       assert_equal "Event cancelled. 2 people were told.", flash[:notice]
       finalized.reload
       assert finalized.cancelled?
-      assert finalized.status?
+      assert finalized.finalized?
       assert_equal Time.utc(2030, 1, 15, 10), finalized.start_time
       assert_equal Time.utc(2030, 1, 15, 11), finalized.end_time
 
       post my_participation_reopening_path(participants(:finalized_organizer))
       assert_response :see_other
       assert_equal "This event was cancelled", flash[:alert], "cancelled wins over reopen"
-      assert finalized.reload.status?
+      assert finalized.reload.finalized?
       assert_equal 0, MailDelivery.reopened.count
     end
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_06_000004) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_22_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -45,18 +45,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_06_000004) do
     t.integer "revision", default: 0, null: false
     t.integer "slot_minutes", default: 30, null: false
     t.datetime "start_time", precision: nil
-    t.boolean "status", default: false, null: false
     t.string "time_zone", default: "UTC", null: false
     t.datetime "updated_at", null: false
-    t.check_constraint "duration_minutes IS NULL OR duration_minutes > 0 AND duration_minutes <= 1440 AND (duration_minutes % 15) = 0", name: "events_duration_minutes_quarter_hour"
+    t.check_constraint "(start_time IS NULL) = (end_time IS NULL)", name: "events_window_complete"
+    t.check_constraint "duration_minutes IS NULL OR duration_minutes > 0 AND (duration_minutes % 15) = 0", name: "events_duration_minutes_whole_quarters"
     t.check_constraint "notified_revision >= 0 AND notified_revision <= revision", name: "events_revisions_ordered"
     t.check_constraint "offer_revised_at IS NULL AND offer_revision_added = 0 AND offer_revision_removed = 0 OR offer_revised_at IS NOT NULL AND (offer_revision_added + offer_revision_removed) > 0", name: "events_offer_revision_counts"
     t.check_constraint "place_url IS NULL OR place_url::text ~ '^[Hh][Tt][Tt][Pp][Ss]?://'::text", name: "events_place_url_scheme"
-    t.check_constraint "reopen_count >= 0 AND reopen_count <= 2", name: "events_reopen_count_bounded"
     t.check_constraint "slot_minutes = ANY (ARRAY[15, 30, 60])", name: "events_slot_minutes_allowed"
+    t.check_constraint "start_time IS NULL OR (EXTRACT(epoch FROM end_time - start_time)::bigint % (slot_minutes * 60)::bigint) = 0", name: "events_window_whole_slots"
     t.check_constraint "start_time IS NULL OR end_time IS NULL OR end_time > start_time", name: "events_end_time_after_start_time"
-    t.check_constraint "status = false OR (EXTRACT(epoch FROM end_time - start_time)::bigint % (slot_minutes * 60)::bigint) = 0", name: "events_finalized_window_whole_slots"
-    t.check_constraint "status = false OR start_time IS NOT NULL AND end_time IS NOT NULL AND end_time > start_time", name: "events_finalized_time_range"
   end
 
   create_table "mail_deliveries", force: :cascade do |t|

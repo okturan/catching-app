@@ -132,7 +132,7 @@ class DeliveriesTest < ActiveSupport::TestCase
   end
 
   test "finalized! links unclaimed guests through a fresh pending token, claimed ones by account, the organizer not at all" do
-    @event.update_columns(status: true, start_time: Time.utc(2030, 1, 15, 10), end_time: Time.utc(2030, 1, 15, 11), revision: 2)
+    @event.update_columns(start_time: Time.utc(2030, 1, 15, 10), end_time: Time.utc(2030, 1, 15, 11), revision: 2)
     pending = participants(:planning_pending)
     stale = pending.issue_pending_token!
     live_guest_digest = @guest.token_digest
@@ -173,7 +173,7 @@ class DeliveriesTest < ActiveSupport::TestCase
     assert_enqueued_jobs 2, only: MailDeliveryJob do
       Deliveries.finalized!(event: finalized)
     end
-    finalized.update_columns(status: false, start_time: nil, end_time: nil)
+    finalized.update_columns(start_time: nil, end_time: nil)
 
     assert_nothing_raised { perform_enqueued_jobs }
     mails = ActionMailer::Base.deliveries.last(2)

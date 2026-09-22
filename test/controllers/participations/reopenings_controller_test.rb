@@ -25,7 +25,7 @@ module Participations
       assert_response :not_found
 
       @event.reload
-      assert @event.status?
+      assert @event.finalized?
       assert_equal Time.utc(2030, 1, 15, 10), @event.start_time
       assert_equal 0, @event.reopen_count
       assert_equal 0, MailDelivery.reopened.count
@@ -74,7 +74,7 @@ module Participations
       assert_redirected_to participation_path(@organizer_token)
       assert_equal "The set time was withdrawn. 2 guests were told.", flash[:notice]
       @event.reload
-      assert_not @event.status?
+      assert_not @event.finalized?
       assert @event.open?
       assert_nil @event.start_time
       assert_nil @event.end_time
@@ -123,7 +123,7 @@ module Participations
       assert_response :see_other
       assert_redirected_to my_participation_path(@organizer)
       assert_equal "The set time was withdrawn. 1 guest was told.", flash[:notice]
-      assert_not @event.reload.status?
+      assert_not @event.reload.finalized?
 
       sign_in users(:invitee)
       get my_participation_path(@guest)
@@ -152,7 +152,7 @@ module Participations
       assert_redirected_to participation_path(@organizer_token)
       assert_equal "This event was reopened twice already. Cancel it and plan a new one.", flash[:alert]
       @event.reload
-      assert @event.status?
+      assert @event.finalized?
       assert_equal Time.utc(2030, 1, 15, 10), @event.start_time
       assert_equal 2, @event.reopen_count
       assert_equal 9, @event.revision

@@ -8,7 +8,7 @@ module Participations
     before_action { request.format = :html }
 
     def show
-      raise ActiveRecord::RecordNotFound unless @event.status?
+      raise ActiveRecord::RecordNotFound unless @event.finalized?
 
       send_data CalendarFile.new(@event, mode: :page).body,
         type: "text/calendar; charset=utf-8", disposition: "attachment", filename: "#{@event.name.parameterize.presence || 'event'}.ics"

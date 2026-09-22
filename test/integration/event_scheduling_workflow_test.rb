@@ -44,7 +44,7 @@ class EventSchedulingWorkflowTest < ActionDispatch::IntegrationTest
     assert_redirected_to organizer_link
     perform_enqueued_jobs
     event.reload
-    assert event.status?
+    assert event.finalized?
     assert_equal first_time.utc, event.start_time
     assert_equal (first_time + 30.minutes).utc, event.end_time
     finalized = ActionMailer::Base.deliveries.last(2)

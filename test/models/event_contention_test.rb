@@ -53,6 +53,6 @@ class EventContentionTest < ActiveSupport::TestCase
     assert_operator elapsed, :>=, 0.25, "finalize! should have blocked on the row lock"
     assert_kind_of Refusal, result
     assert_equal "Wait for at least one reply before confirming", result.message
-    assert_not @event.reload.status?
+    assert_not @event.reload.finalized?
   end
 end

@@ -19,13 +19,13 @@ class ReopenRoundTripTest < ActionDispatch::IntegrationTest
   def finalize!(slot)
     perform_enqueued_jobs { post participation_finalization_path(@organizer_token), params: { time_slots: { time_slot_array: slot } } }
     assert_equal "Meeting time confirmed.", flash[:notice]
-    assert @event.reload.status?
+    assert @event.reload.finalized?
   end
 
   def reopen!
     perform_enqueued_jobs { post participation_reopening_path(@organizer_token) }
     assert_match(/\AThe set time was withdrawn\. 2 guests were told\./, flash[:notice])
-    assert_not @event.reload.status?
+    assert_not @event.reload.finalized?
   end
 
   def sequence_of(mail)
@@ -83,7 +83,7 @@ class ReopenRoundTripTest < ActionDispatch::IntegrationTest
     assert_response :see_other
     assert_equal "This event was reopened twice already. Cancel it and plan a new one.", flash[:alert]
     @event.reload
-    assert @event.status?
+    assert @event.finalized?
     assert_equal Time.utc(2030, 1, 15, 10), @event.start_time
     assert_equal 2, @event.reopen_count
 

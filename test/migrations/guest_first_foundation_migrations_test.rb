@@ -8,6 +8,7 @@ require "test_helper"
   20260906000001_add_planning_state_to_events_and_participants
   20260906000002_revamp_activities_into_plan
   20260906000003_extend_mail_delivery_kinds
+  20260922000001_derive_finalized_from_the_window
 ].each { |file| require Rails.root.join("db/migrate/#{file}") }
 
 # Runs the foundation and planning migrations down and up inside the test
@@ -17,7 +18,7 @@ require "test_helper"
 class GuestFirstFoundationMigrationsTest < ActiveSupport::TestCase
   MIGRATIONS = [
     CreateParticipants, AddSchedulingGridToEvents, ReparentTimeSlotsToParticipants, DropUserOwnership, DropDeadUserColumns,
-    AddPlanningStateToEventsAndParticipants, RevampActivitiesIntoPlan, ExtendMailDeliveryKinds
+    AddPlanningStateToEventsAndParticipants, RevampActivitiesIntoPlan, ExtendMailDeliveryKinds, DeriveFinalizedFromTheWindow
   ].freeze
   MODELS = [ Participant, MailDelivery, TimeSlot, Event, User, Activity ].freeze
 

@@ -111,6 +111,6 @@ module MailDelivery::Caps
   end
 
   def organizer_has_finalized?(organizer)
-    Participant.organizer.where(email: organizer.email).joins(:event).merge(Event.where(status: true)).exists?
+    Participant.organizer.where(email: organizer.email).joins(:event).merge(Event.finalized).exists?
   end
 end

@@ -47,14 +47,14 @@ class Event < ApplicationRecord
   validates :place, length: { maximum: 200 }
   validates :slot_minutes, inclusion: { in: SLOT_MINUTES }
   validates :duration_minutes, numericality: { only_integer: true }, allow_nil: true
-  validates :start_time, :end_time, presence: true, if: :status?
+  validates :end_time, comparison: { greater_than: :start_time, message: "must be after the start time" }, if: :start_time?
   validate :time_zone_is_known
   validate :place_url_is_a_web_address
   validate :duration_is_whole_slots
-  validate :end_time_follows_start_time
   validate :grid_is_frozen_after_replies, on: :update
 
   scope :not_cancelled, -> { where(cancelled_at: nil) }
+  scope :finalized, -> { where.not(start_time: nil) }
 
   # The only creation path: the event, its organizer and the offer, in one
   # transaction. Guests are invited from the organizer's page later.
@@ -78,8 +78,13 @@ class Event < ApplicationRecord
     cancelled_at.present?
   end
 
+  # Finalized means the time is set: the window is the state.
+  def finalized?
+    start_time?
+  end
+
   def open?
-    !status? && !cancelled?
+    !finalized? && !cancelled?
   end
 
   # Slot length and zone relabel every cell, so they freeze at the first reply.
@@ -150,7 +155,7 @@ class Event < ApplicationRecord
   # not cancelled, and stop after the first item without a length. A mailer
   # passes the start it was handed (from:) so a retried job never reads the row.
   def plan_timeline(from: nil)
-    cursor = from || (status? && !cancelled? ? start_time : nil)
+    cursor = from || (start_time unless cancelled?)
     activities.map do |activity|
       start = cursor
       cursor = cursor && activity.duration ? cursor + activity.duration.minutes : nil
@@ -163,7 +168,7 @@ class Event < ApplicationRecord
   end
 
   def window_minutes
-    return unless status?
+    return unless finalized?
 
     ((end_time - start_time) / 60).to_i
   end
@@ -269,11 +274,11 @@ class Event < ApplicationRecord
   def reopen!
     with_lock do
       ensure_not_cancelled!
-      raise Refusal, "Only a set time can be reopened" unless status?
+      raise Refusal, "Only a set time can be reopened" unless finalized?
       raise Refusal, REOPEN_LIMIT_MESSAGE if reopen_count >= REOPEN_LIMIT
 
       window = [ start_time, end_time ]
-      update!(status: false, start_time: nil, end_time: nil, reopened_at: Time.current,
+      update!(start_time: nil, end_time: nil, reopened_at: Time.current,
         reopen_count: reopen_count + 1, revision: revision + 1)
       window
     end
@@ -301,7 +306,6 @@ class Event < ApplicationRecord
       update!(
         start_time: selected_slots.min,
         end_time: selected_slots.max + slot_length,
-        status: true,
         revision: revision + 1
       )
     end
@@ -348,7 +352,7 @@ class Event < ApplicationRecord
   # Cancelled wins over finalized: a cancelled event has one message.
   def ensure_pending!
     ensure_not_cancelled!
-    raise Closed, "Availability is closed for this event" if status?
+    raise Closed, "Availability is closed for this event" if finalized?
   end
 
   def ensure_not_cancelled!
@@ -440,12 +444,6 @@ class Event < ApplicationRecord
     elsif slot_minutes.to_i.positive? && (duration_minutes % slot_minutes).nonzero?
       errors.add(:duration_minutes, "must be a whole number of #{slot_minutes}-minute slots")
     end
-  end
-
-  def end_time_follows_start_time
-    return if start_time.blank? || end_time.blank? || end_time > start_time
-
-    errors.add(:end_time, "must be after the start time")
   end
 
   def grid_is_frozen_after_replies

@@ -97,7 +97,7 @@ class CalendarFileTest < ActiveSupport::TestCase
     assert_equal "CANCELLED", property(third, "STATUS")
 
     other = events(:planning)
-    other.update_columns(status: true, start_time: Time.utc(2030, 1, 15, 10), end_time: Time.utc(2030, 1, 15, 11))
+    other.update_columns(start_time: Time.utc(2030, 1, 15, 10), end_time: Time.utc(2030, 1, 15, 11))
     assert_not_equal expected, property(CalendarFile.new(other, mode: :page).body, "UID")
   end
 

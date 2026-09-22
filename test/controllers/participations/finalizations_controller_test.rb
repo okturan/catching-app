@@ -16,7 +16,7 @@ module Participations
       assert_redirected_to participation_path(@organizer_token)
       assert_equal "Meeting time confirmed.", flash[:notice]
       @event.reload
-      assert @event.status?
+      assert @event.finalized?
       assert_equal Time.utc(2030, 1, 15, 10), @event.start_time
       assert_equal Time.utc(2030, 1, 15, 11), @event.end_time
     end
@@ -62,14 +62,14 @@ module Participations
 
       assert_response :see_other
       assert_equal "Meeting time confirmed.", flash[:notice]
-      assert @event.reload.status?
+      assert @event.reload.finalized?
     end
 
     test "a guest token cannot finalize" do
       post participation_finalization_path(raw_token(:planning_guest)), params: { time_slots: { time_slot_array: @consensus } }
 
       assert_response :not_found
-      assert_not @event.reload.status?
+      assert_not @event.reload.finalized?
     end
 
     test "finalization errors redirect with the exact message" do

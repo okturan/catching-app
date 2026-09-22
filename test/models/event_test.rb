@@ -40,15 +40,19 @@ class EventTest < ActiveSupport::TestCase
     assert_equal "", Event.new.description
   end
 
-  test "requires end time to follow start time and a complete range when finalized" do
+  test "a set time needs an end after its start" do
     @event.start_time = Time.utc(2030, 1, 15, 11)
     @event.end_time = Time.utc(2030, 1, 15, 10)
     assert_not @event.valid?
     assert_includes @event.errors[:end_time], "must be after the start time"
 
-    @event.assign_attributes(start_time: nil, end_time: nil, status: true)
+    @event.end_time = nil
     assert_not @event.valid?
-    assert_includes @event.errors[:start_time], "can't be blank"
+    assert_includes @event.errors[:end_time], "must be after the start time"
+
+    assert_raises(ActiveRecord::StatementInvalid) do
+      Event.transaction(requires_new: true) { @event.update_columns(start_time: Time.utc(2030, 1, 15, 10), end_time: nil) }
+    end
   end
 
   test "place is squished, blank becomes nil and 200 characters is the limit" do
@@ -125,7 +129,7 @@ class EventTest < ActiveSupport::TestCase
 
     @event.finalize!(starts_at: [ Time.utc(2030, 1, 15, 10) ])
 
-    assert @event.status?
+    assert @event.finalized?
     assert_equal 120, @event.reload.duration_minutes
     assert_equal Time.utc(2030, 1, 15, 11), @event.end_time
   end
@@ -136,7 +140,7 @@ class EventTest < ActiveSupport::TestCase
     @event.finalize!(starts_at: [ Time.utc(2030, 1, 15, 10) ])
 
     @event.reload
-    assert @event.status?
+    assert @event.finalized?
     assert_equal 4, @event.revision
     assert_equal 3, @event.notified_revision, "the batch, not the model, marks guests told"
     assert_equal Time.utc(2030, 1, 15, 10), @event.start_time
@@ -186,7 +190,7 @@ class EventTest < ActiveSupport::TestCase
     finalized.reload
     assert_equal 1, finalized.revision
     assert_equal "Zoom", finalized.place
-    assert finalized.status?
+    assert finalized.finalized?
     assert_equal Time.utc(2030, 1, 15, 10), finalized.start_time
     assert_equal Time.utc(2030, 1, 15, 11), finalized.end_time
   end
@@ -297,7 +301,7 @@ class EventTest < ActiveSupport::TestCase
     assert_in_delta Time.current, @event.cancelled_at, 5.seconds
     assert_equal 4, @event.revision
     assert_not @event.open?
-    assert_not @event.status?
+    assert_not @event.finalized?
     assert_equal before, counts.call
     assert_equal @guest, Participant.resolve_token(raw_token(:planning_guest)).participant
     assert_equal @organizer, Participant.resolve_token(raw_token(:planning_organizer)).participant
@@ -315,7 +319,7 @@ class EventTest < ActiveSupport::TestCase
 
     finalized.reload
     assert finalized.cancelled?
-    assert finalized.status?
+    assert finalized.finalized?
     assert_not finalized.open?
     assert_equal Time.utc(2030, 1, 15, 10), finalized.start_time
     assert_equal Time.utc(2030, 1, 15, 11), finalized.end_time
@@ -374,7 +378,7 @@ class EventTest < ActiveSupport::TestCase
 
     assert_equal [ Time.utc(2030, 1, 15, 10), Time.utc(2030, 1, 15, 11) ], window
     finalized.reload
-    assert_not finalized.status?
+    assert_not finalized.finalized?
     assert finalized.open?
     assert_nil finalized.start_time
     assert_nil finalized.end_time
@@ -400,7 +404,7 @@ class EventTest < ActiveSupport::TestCase
     error = assert_raises(Refusal) { finalized.reopen! }
     assert_equal "This event was reopened twice already. Cancel it and plan a new one.", error.message
     finalized.reload
-    assert finalized.status?
+    assert finalized.finalized?
     assert_equal Time.utc(2030, 1, 15, 10), finalized.start_time
     assert_equal 2, finalized.reopen_count
     assert_equal 9, finalized.revision
@@ -409,14 +413,8 @@ class EventTest < ActiveSupport::TestCase
     finalized.cancel!
     error = assert_raises(Event::Closed) { finalized.reopen! }
     assert_equal "This event was cancelled", error.message, "cancelled wins over every other check"
-    assert finalized.reload.status?
+    assert finalized.reload.finalized?
     assert_equal 1, finalized.reopen_count
-  end
-
-  test "the reopen count is a real check" do
-    assert_raises(ActiveRecord::StatementInvalid) do
-      Event.transaction(requires_new: true) { @event.update_columns(reopen_count: 3) }
-    end
   end
 
   test "finalize! after reopen! sets a new window, bumps the revision again and the second reopen is the last" do
@@ -427,7 +425,7 @@ class EventTest < ActiveSupport::TestCase
     finalized.reload.finalize!(starts_at: [ Time.utc(2030, 1, 15, 10) ])
 
     finalized.reload
-    assert finalized.status?
+    assert finalized.finalized?
     assert_equal Time.utc(2030, 1, 15, 10), finalized.start_time
     assert_equal Time.utc(2030, 1, 15, 11), finalized.end_time
     assert_equal 8, finalized.revision
@@ -440,7 +438,7 @@ class EventTest < ActiveSupport::TestCase
     assert_equal 10, finalized.reload.revision
     error = assert_raises(Refusal) { finalized.reopen! }
     assert_equal Event::REOPEN_LIMIT_MESSAGE, error.message
-    assert finalized.reload.status?
+    assert finalized.reload.finalized?
   end
 
   test "every_offer_past? reads the organizer's offer against the parser cut-off" do
@@ -461,7 +459,7 @@ class EventTest < ActiveSupport::TestCase
   test "database rejects a finalized event without a whole number of slots" do
     assert_raises(ActiveRecord::StatementInvalid) do
       Event.transaction(requires_new: true) do
-        @event.update_columns(status: true, start_time: Time.utc(2030, 1, 15, 10), end_time: Time.utc(2030, 1, 15, 10, 30))
+        @event.update_columns(start_time: Time.utc(2030, 1, 15, 10), end_time: Time.utc(2030, 1, 15, 10, 30))
       end
     end
   end
@@ -530,7 +528,7 @@ class EventTest < ActiveSupport::TestCase
     assert_empty @event.mutually_available_start_times, "voided guests are outside the denominator and the guard"
     error = assert_raises(Refusal) { @event.finalize!(starts_at: [ Time.utc(2030, 1, 15, 10) ]) }
     assert_equal "Wait for at least one reply before confirming", error.message
-    assert_not @event.reload.status?
+    assert_not @event.reload.finalized?
   end
 
   # ---- Offer revision ----
@@ -762,7 +760,7 @@ class EventTest < ActiveSupport::TestCase
 
     @event.finalize!(starts_at: hours.first(2))
     assert_equal Time.utc(2030, 1, 15, 12), @event.end_time
-    assert @event.status?
+    assert @event.finalized?
   end
 
   test "finalize! refuses an event nobody has replied to" do

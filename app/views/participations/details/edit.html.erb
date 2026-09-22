@@ -9,7 +9,7 @@
   <h1>Edit details</h1>
   <div class="form-inputs details-face">
     <p class="details-facts"><%= @event.slot_minutes %>-minute slots · <%= @event.time_zone %></p>
-    <% if @event.status? %>
+    <% if @event.finalized? %>
       <p class="details-facts">Set in stone:
         <%= zoned_time(@event.start_time, @event.time_zone, format: :date_time) %> to
         <%= zoned_time(@event.end_time, @event.time_zone) %></p>
@@ -48,7 +48,7 @@
       </div>
       <% if notice_offered? %>
         <div class="form-check mb-4">
-          <%= check_box_tag "notice[send]", "1", @event.status?, id: "notice_send", class: "form-check-input" %>
+          <%= check_box_tag "notice[send]", "1", @event.finalized?, id: "notice_send", class: "form-check-input" %>
           <%= label_tag "notice_send", "Email the guests about this change", class: "form-check-label" %>
         </div>
       <% end %>
@@ -59,7 +59,7 @@
     <section class="plan-editor" aria-labelledby="plan-heading">
       <h2 id="plan-heading">The plan</h2>
       <% timeline = @event.plan_timeline %>
-      <% if @event.status? && @event.plan_minutes > @event.window_minutes %>
+      <% if @event.finalized? && @event.plan_minutes > @event.window_minutes %>
         <p class="plan-note">The plan runs <%= duration_label(@event.plan_minutes) %>; the set time is <%= duration_label(@event.window_minutes) %>.</p>
       <% end %>
       <% if timeline.empty? %>
