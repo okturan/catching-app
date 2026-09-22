@@ -4,9 +4,7 @@ module EventsHelper
   PLAN_DURATIONS = [ 15, 30, 45, 60, 90, 120, 150, 180, 240 ].freeze
 
   # Where each error on the planning form points. Base errors are the grid's:
-  # with the invitee field gone, every ArgumentError this form can raise comes
-  # from TimeSlotParser, replace_time_slots! or ensure_aligned!, so no message
-  # is matched and none needs to be.
+  # every refusal this form can meet is about the painted selection.
   ERROR_TARGETS = {
     name: "event_name",
     description: "event_description",

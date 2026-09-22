@@ -5,14 +5,12 @@ module Participations
     include PlanWrites
 
     def create
-      position = Integer(params.dig(:move, :position), exception: false)
-      if position.nil?
+      if (position = Integer(params.dig(:move, :position), exception: false))
+        @event.move_plan_item!(@event.activities.find(params[:activity_id]), position)
+        plan_updated
+      else
         redirect_to scoped_path(:details, edit: true), alert: "Pick a position for the item", status: :see_other
-        return
       end
-
-      @event.move_plan_item!(@event.activities.find(params[:activity_id]), position)
-      plan_updated
     end
   end
 end

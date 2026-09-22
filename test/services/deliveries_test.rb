@@ -25,7 +25,7 @@ class DeliveriesTest < ActiveSupport::TestCase
     assert_no_difference "MailDelivery.count" do
       assert_no_enqueued_jobs do
         calls.each do |name, call|
-          error = assert_raises(Event::ClosedError, name) { call.call }
+          error = assert_raises(Event::Closed, name) { call.call }
           assert_equal "This event was cancelled", error.message, name
         end
       end
@@ -183,15 +183,12 @@ class DeliveriesTest < ActiveSupport::TestCase
     end
   end
 
-  test "event_updated! refuses an organizer who has not opened their link, and an unknown reason, writing nothing" do
+  test "event_updated! refuses an organizer who has not opened their link, writing nothing" do
     @organizer.update_columns(link_opened_at: nil)
-    error = assert_raises(ArgumentError) do
+    error = assert_raises(Refusal) do
       Deliveries.event_updated!(event: @event, organizer: @organizer, request_ip: nil, reason: :all)
     end
     assert_equal "Open your organizer link before emailing guests", error.message
-
-    @organizer.update_columns(link_opened_at: Time.current)
-    assert_raises(ArgumentError) { Deliveries.event_updated!(event: @event, organizer: @organizer, request_ip: nil, reason: :plan) }
     assert_equal 0, MailDelivery.event_updated.count
     assert_nil participants(:planning_pending).reload.pending_token_digest
   end
@@ -209,7 +206,7 @@ class DeliveriesTest < ActiveSupport::TestCase
       end
     end
 
-    assert_equal({ sent: 2, skipped: 0 }, result)
+    assert_equal Deliveries::Report.new(sent: 2, skipped: 0), result
     rows = MailDelivery.event_updated.order(:id)
     assert_equal %w[invitee@example.com pending@example.com], rows.map(&:recipient_email).sort
     assert rows.all? { |row| row.sender_email == "owner@example.com" && row.request_ip == "203.0.113.5" && row.participant_id.present? }
@@ -248,7 +245,7 @@ class DeliveriesTest < ActiveSupport::TestCase
 
     MailDelivery.event_updated.delete_all
     @guest.update_columns(declined_at: Time.current)
-    assert_equal({ sent: 0, skipped: 0 }, Deliveries.event_updated!(event: @event, organizer: @organizer, request_ip: nil, reason: :offer))
+    assert_equal Deliveries::Report.new(sent: 0, skipped: 0), Deliveries.event_updated!(event: @event, organizer: @organizer, request_ip: nil, reason: :offer)
 
     @event.update_columns(offer_revision_added: 1)
     pending.update_columns(responded_at: Time.current)
@@ -256,11 +253,11 @@ class DeliveriesTest < ActiveSupport::TestCase
     assert_difference "MailDelivery.event_updated.count", 2 do
       result = Deliveries.event_updated!(event: @event, organizer: @organizer, request_ip: nil, reason: :offer)
     end
-    assert_equal({ sent: 2, skipped: 0 }, result)
+    assert_equal Deliveries::Report.new(sent: 2, skipped: 0), result
     assert_equal %w[invitee@example.com pending@example.com], MailDelivery.event_updated.pluck(:recipient_email).sort
 
-    assert_equal({ sent: 0, skipped: 2 }, Deliveries.event_updated!(event: @event, organizer: @organizer, request_ip: nil, reason: :offer),
-      "inside the cooldown both are skipped")
+    assert_equal Deliveries::Report.new(sent: 0, skipped: 2), Deliveries.event_updated!(event: @event, organizer: @organizer, request_ip: nil, reason: :offer),
+      "inside the cooldown both are skipped"
   end
 
   test "event_updated! skips capped recipients without a row and marks the revision told only when something was sent" do
@@ -274,7 +271,7 @@ class DeliveriesTest < ActiveSupport::TestCase
     assert_difference "MailDelivery.event_updated.count", 1 do
       result = Deliveries.event_updated!(event: @event, organizer: @organizer, request_ip: nil, reason: :all)
     end
-    assert_equal({ sent: 1, skipped: 1 }, result)
+    assert_equal Deliveries::Report.new(sent: 1, skipped: 1), result
     assert_equal [ "pending@example.com" ], MailDelivery.event_updated.where(created_at: 1.minute.ago..).pluck(:recipient_email)
     assert_equal 2, @event.reload.notified_revision
 
@@ -282,7 +279,7 @@ class DeliveriesTest < ActiveSupport::TestCase
     assert_no_difference "MailDelivery.count" do
       result = Deliveries.event_updated!(event: @event, organizer: @organizer, request_ip: nil, reason: :all)
     end
-    assert_equal({ sent: 0, skipped: 2 }, result)
+    assert_equal Deliveries::Report.new(sent: 0, skipped: 2), result
     assert_equal 2, @event.reload.notified_revision, "nothing sent, nothing told"
   end
 

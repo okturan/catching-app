@@ -39,7 +39,7 @@ class EventContentionTest < ActiveSupport::TestCase
     started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     finalizer = Thread.new do
       Event.find(@event.id).finalize!(starts_at: [ Time.utc(2031, 3, 1, 10) ])
-    rescue ArgumentError => error
+    rescue Refusal => error
       error
     ensure
       ActiveRecord::Base.connection_pool.release_connection
@@ -52,7 +52,7 @@ class EventContentionTest < ActiveSupport::TestCase
     elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
 
     assert_operator elapsed, :>=, 0.25, "finalize! should have blocked on the row lock"
-    assert_kind_of ArgumentError, result
+    assert_kind_of Refusal, result
     assert_equal "Wait for at least one reply before confirming", result.message
     assert_not @event.reload.status?
   end

@@ -5,7 +5,7 @@ class MailDelivery < ApplicationRecord
   KINDS = %w[organizer_link invitation response_confirmation finalized link_shown event_updated cancelled reopened].freeze
   DOT_INSENSITIVE_DOMAINS = %w[gmail.com googlemail.com].freeze
 
-  class CapExceeded < StandardError; end
+  class CapExceeded < Refusal; end
 
   belongs_to :event, inverse_of: :mail_deliveries
   belongs_to :participant, optional: true, inverse_of: :mail_deliveries

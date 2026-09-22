@@ -32,7 +32,7 @@
     <% end %>
   </div>
 
-  <%= render "events/definer_grid", event: @event, frozen: grid_frozen?, begin_min: @begin_min,
+  <%= render "events/definer_grid", event: @event, frozen: @event.grid_frozen?, begin_min: @begin_min,
         heading: "The times you offer", hint: :paint %>
 
   <div class="form-events">

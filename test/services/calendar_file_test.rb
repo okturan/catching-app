@@ -199,13 +199,9 @@ class CalendarFileTest < ActiveSupport::TestCase
     end
   end
 
-  test "a pending event without a window and a bad mode are refused" do
+  test "a window handed in outranks the event's own" do
     pending = events(:planning)
 
-    error = assert_raises(ArgumentError) { CalendarFile.new(pending, mode: :page) }
-    assert_equal "a set time is needed for a calendar file", error.message
-    assert_raises(ArgumentError) { CalendarFile.new(@event, mode: :text) }
-    assert_raises(ArgumentError) { CalendarFile.new(@event, mode: :mail, status: :tentative) }
     assert_includes CalendarFile.new(pending, mode: :mail, window: [ Time.utc(2030, 1, 15, 9), Time.utc(2030, 1, 15, 10) ]).body,
       "DTSTART:20300115T090000Z"
   end

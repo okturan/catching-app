@@ -94,8 +94,6 @@ class Participant < ApplicationRecord
   end
 
   def issue_live_token!
-    raise ArgumentError, "cannot issue a token for a participant who left" if left?
-
     raw = SecureRandom.base58(32)
     update!(token_digest: self.class.digest(raw))
     raw
@@ -104,8 +102,6 @@ class Participant < ApplicationRecord
   # Guests receive pending tokens without expiry; organizer recovery passes
   # expires_in: 24.hours. The live token and the claim are untouched.
   def issue_pending_token!(expires_in: nil)
-    raise ArgumentError, "cannot issue a token for a participant who left" if left?
-
     raw = SecureRandom.base58(32)
     update!(
       pending_token_digest: self.class.digest(raw),
@@ -137,8 +133,6 @@ class Participant < ApplicationRecord
 
   # The guest's kill switch: slots gone, both credentials gone, claim gone.
   def leave!
-    raise ArgumentError, "only guests can leave" unless guest?
-
     event.with_lock do
       now = Time.current
       time_slots.delete_all

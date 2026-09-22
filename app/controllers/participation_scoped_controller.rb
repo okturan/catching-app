@@ -1,25 +1,32 @@
 # Base for both route families. A token request (/p/:token) needs no session
 # and identifies the viewer by capability; a session request
 # (/participations/:id) identifies the viewer through the signed-in account.
-# Both resolve to one Participant row, and every action reads it as
-# @participant with its event as @event.
+# Both resolve to one Participant row, read as @participant, with its event
+# as @event.
 class ParticipationScopedController < ApplicationController
   include TimeSlotParams
-
-  CANCELLED_MESSAGE = "This event was cancelled".freeze
 
   skip_before_action :authenticate_user!, if: :token_request?
   before_action :set_participant
   before_action :canonicalize_token_path, if: :token_request?
-  before_action :refuse_closed_writes, unless: -> { request.get? }
+  before_action :ensure_event_not_cancelled, unless: -> { request.get? }
   before_action :promote_pending_token, if: :token_request?, unless: -> { request.get? }
-  after_action :forbid_caching
+  before_action :no_store
 
   rate_limit to: 30, within: 1.minute, unless: -> { request.get? },
     by: -> { request.path_parameters[:token] || request.remote_ip }
 
-  rescue_from ActiveRecord::RecordNotFound, with: :render_link_not_found
-  rescue_from Event::ClosedError, with: :event_closed
+  rescue_from ActiveRecord::RecordNotFound do
+    render "participations/not_found", status: :not_found
+  end
+
+  rescue_from Refusal do |refusal|
+    redirect_to scoped_path, alert: refusal.message, status: :see_other
+  end
+
+  rescue_from ActiveRecord::RecordInvalid do |invalid|
+    redirect_to scoped_path, alert: invalid.record.errors.full_messages.to_sentence, status: :see_other
+  end
 
   helper_method :token_request?, :scoped_path, :viewer_role
 
@@ -31,9 +38,7 @@ class ParticipationScopedController < ApplicationController
 
   def set_participant
     if token_request?
-      @resolution = Participant.resolve_token(params[:token])
-      raise ActiveRecord::RecordNotFound unless @resolution
-
+      @resolution = Participant.resolve_token(params[:token]) or raise ActiveRecord::RecordNotFound
       @participant = @resolution.participant
     else
       @participant = current_user.participants.active.includes(:event).find(params[:participation_id])
@@ -48,6 +53,11 @@ class ParticipationScopedController < ApplicationController
 
     redirect_to url_for(request.path_parameters.merge(token: @resolution.canonical_token, only_path: true)),
       status: :see_other
+  end
+
+  # A cancelled event refuses every write but Leave and Claim, which skip this.
+  def ensure_event_not_cancelled
+    @event.ensure_not_cancelled!
   end
 
   # The first write with a pending token makes it live and retires the old one.
@@ -65,7 +75,7 @@ class ParticipationScopedController < ApplicationController
   # Path to a nested action in the viewer's own route family; edit: true names
   # the edit page of a singular resource (edit_participation_details_path).
   def scoped_path(name = nil, *args, edit: false)
-    helper = [ (edit ? "edit" : nil), token_request? ? "participation" : "my_participation", name ].compact.join("_")
+    helper = [ ("edit" if edit), (token_request? ? "participation" : "my_participation"), name ].compact.join("_")
     viewer = token_request? ? @resolution.canonical_token : @participant
     public_send("#{helper}_path", viewer, *args)
   end
@@ -78,32 +88,10 @@ class ParticipationScopedController < ApplicationController
     raise ActiveRecord::RecordNotFound unless @participant.organizer?
   end
 
-  # Every write on a cancelled event answers one alert, before any token is
-  # promoted or any row touched. Leave (ParticipationsController#destroy)
-  # and Claim (Participations::ClaimsController) skip this callback: the
-  # guest's kill switch and memory stay available. Reads keep working for
-  # every valid link.
-  def refuse_closed_writes
-    refuse_cancelled
-  end
-
-  # The same alert for organizer pages whose GET must refuse as well
-  # (Edit details).
-  def refuse_cancelled
-    return unless @event.cancelled?
-
-    redirect_to scoped_path, alert: CANCELLED_MESSAGE, status: :see_other
-  end
-
-  # A model refusal on a closed event, raised by a writer, lands on the page
-  # with the model's message.
-  def event_closed(error)
-    redirect_to scoped_path, alert: error.message, status: :see_other
-  end
-
+  # Mail to guests waits until the organizer has proved their address.
   def require_opened_organizer!
     require_organizer!
-    return if @participant.link_opened_at.present?
+    return if @participant.link_opened_at?
 
     redirect_to scoped_path, status: :see_other,
       alert: "Open the organizer link we emailed to #{@participant.email} to send invitations."
@@ -113,23 +101,12 @@ class ParticipationScopedController < ApplicationController
     @event.guests.active.find(id)
   end
 
-  # The organizer hears how many guests a notice reached: " N guests
-  # emailed." and, when the cap or the cooldown skipped some, how long to
-  # wait. Leading space so it appends to a flash that already says what
-  # was saved.
-  def notice_report(result)
-    sent = result.fetch(:sent)
-    skipped = result.fetch(:skipped)
-    report = " #{sent} #{'guest'.pluralize(sent)} emailed."
-    report += " #{skipped} skipped (recently notified). Try again after 10 minutes." if skipped.positive?
-    report
-  end
-
-  def forbid_caching
-    response.headers["Cache-Control"] = "no-store"
-  end
-
-  def render_link_not_found
-    render "participations/not_found", status: :not_found
+  # Mails a change notice and returns the sentence that reports it. A refused
+  # notice becomes the alert; whatever was saved before it stays saved.
+  def notify_guests(reason, changes: nil)
+    Deliveries.event_updated!(event: @event, organizer: @participant, request_ip: request.remote_ip, reason:, changes:)
+  rescue Refusal => refusal
+    flash[:alert] = refusal.message
+    nil
   end
 end

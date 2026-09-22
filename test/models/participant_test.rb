@@ -65,11 +65,11 @@ class ParticipantTest < ActiveSupport::TestCase
     end
   end
 
-  test "tokens cannot be issued for a participant who left" do
+  test "the database never lets a guest who left hold a credential" do
     left = participants(:planning_left)
 
-    assert_raises(ArgumentError) { left.issue_live_token! }
-    assert_raises(ArgumentError) { left.issue_pending_token! }
+    assert_raises(ActiveRecord::StatementInvalid) { Participant.transaction(requires_new: true) { left.issue_live_token! } }
+    assert_raises(ActiveRecord::StatementInvalid) { Participant.transaction(requires_new: true) { left.issue_pending_token! } }
   end
 
   test "emails are normalized and strictly formatted" do
@@ -210,7 +210,6 @@ class ParticipantTest < ActiveSupport::TestCase
     assert_nil guest.user_id
     assert_nil guest.token_digest
     assert_nil Participant.find_by_token(raw_token(:planning_guest))
-    assert_raises(ArgumentError) { participants(:planning_organizer).leave! }
   end
 
   test "a voided guest leaves without a check violation" do

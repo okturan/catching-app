@@ -14,7 +14,6 @@ class CalendarFile
   include EventsHelper
   include MailTextHelper
 
-  MODES = %i[page mail].freeze
   STATUSES = { confirmed: "CONFIRMED", cancelled: "CANCELLED" }.freeze
   PRODID = "-//Catching App//EN".freeze
   ALARM_TRIGGER = "-PT15M".freeze
@@ -26,18 +25,13 @@ class CalendarFile
   attr_reader :event, :mode, :window, :status
 
   def initialize(event, mode:, window: nil, status: nil, sequence: nil)
-    raise ArgumentError, "mode must be :page or :mail" unless MODES.include?(mode)
-
     @event = event
     @mode = mode
     @window = window || [ event.start_time, event.end_time ]
-    raise ArgumentError, "a set time is needed for a calendar file" if @window.compact.size != 2
-
     @status = status || (event.cancelled? ? :cancelled : :confirmed)
     # The sequence travels with the window so a delayed or retried job cannot
     # publish a stale window at a newer revision.
     @sequence = sequence || event.revision
-    raise ArgumentError, "status must be :confirmed or :cancelled" unless STATUSES.key?(@status)
   end
 
   def body

@@ -27,7 +27,7 @@ module Participations
     end
 
     def activity_params
-      params.require(:activity).permit(:name, :duration, :description)
+      params.expect(activity: %i[name duration description])
     end
   end
 end

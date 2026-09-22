@@ -1,5 +1,5 @@
 class Event < ApplicationRecord
-  class ClosedError < StandardError; end
+  class Closed < Refusal; end
 
   # What revise_offer! did: the instants added and removed, the guests whose
   # picks were trimmed or voided, whether the step or zone moved and whether
@@ -104,6 +104,11 @@ class Event < ApplicationRecord
     status? || cancelled?
   end
 
+  # Slot length and zone relabel every cell, so they freeze at the first reply.
+  def grid_frozen?
+    guests.where.not(responded_at: nil).exists?
+  end
+
   # The organizer calls it off. Nothing is deleted and nothing else changes:
   # tokens, claims, slots, the plan and a set window all stay, so every link
   # keeps opening a page that says so.
@@ -186,9 +191,6 @@ class Event < ApplicationRecord
   end
 
   def replace_time_slots!(participant:, starts_at:)
-    raise ArgumentError, "Select at least one time slot" if starts_at.blank? || starts_at.any?(&:nil?)
-    raise ArgumentError, "Participant belongs to another event" unless participant.event_id == id
-
     with_lock do
       ensure_pending!
       ensure_aligned!(starts_at)
@@ -224,8 +226,6 @@ class Event < ApplicationRecord
   # new step is cleared. Returns a Revision; a submission that changes
   # nothing writes nothing.
   def revise_offer!(starts_at:, slot_minutes: nil, time_zone: nil)
-    raise ArgumentError, "Select at least one time slot" if starts_at.blank? || starts_at.any?(&:nil?)
-
     with_lock do
       ensure_pending!
       self.slot_minutes = slot_minutes if slot_minutes.present?
@@ -275,7 +275,7 @@ class Event < ApplicationRecord
       save!
       Revision.new(added: added, removed: removed, trimmed_ids: affected_ids - voided_ids, voided_ids: voided_ids,
         grid_changed: grid_changed, duration_cleared: duration_cleared)
-    rescue ActiveRecord::RecordInvalid, ArgumentError
+    rescue ActiveRecord::RecordInvalid, Refusal
       # A refused step, zone or grid leaves the row as it was in memory too,
       # so the same object can take the next lock.
       restore_attributes
@@ -291,8 +291,8 @@ class Event < ApplicationRecord
   def reopen!
     with_lock do
       ensure_not_cancelled!
-      raise ArgumentError, "Only a set time can be reopened" unless status?
-      raise ArgumentError, REOPEN_LIMIT_MESSAGE if reopen_count >= REOPEN_LIMIT
+      raise Refusal, "Only a set time can be reopened" unless status?
+      raise Refusal, REOPEN_LIMIT_MESSAGE if reopen_count >= REOPEN_LIMIT
 
       window = [ start_time, end_time ]
       update!(status: false, start_time: nil, end_time: nil, reopened_at: Time.current,
@@ -366,7 +366,17 @@ class Event < ApplicationRecord
     end
     return if aligned
 
-    raise ArgumentError, "Select time slots on the event's #{slot_minutes}-minute grid"
+    raise Refusal, "Select time slots on the event's #{slot_minutes}-minute grid"
+  end
+
+  # Cancelled wins over finalized: a cancelled event has one message.
+  def ensure_pending!
+    ensure_not_cancelled!
+    raise Closed, "Availability is closed for this event" if status?
+  end
+
+  def ensure_not_cancelled!
+    raise Closed, "This event was cancelled" if cancelled?
   end
 
   private
@@ -395,20 +405,11 @@ class Event < ApplicationRecord
     end
   end
 
-  # Cancelled wins over finalized: a cancelled event has one message.
-  def ensure_pending!
-    ensure_not_cancelled!
-    raise ClosedError, "Availability is closed for this event" if status?
-  end
-
-  def ensure_not_cancelled!
-    raise ClosedError, "This event was cancelled" if cancelled?
-  end
 
   def ensure_replies!
     return if participants.counting.guest.exists?
 
-    raise ArgumentError, "Wait for at least one reply before confirming"
+    raise Refusal, "Wait for at least one reply before confirming"
   end
 
   def ensure_slots_were_offered!(participant, selected_slots)
@@ -417,14 +418,14 @@ class Event < ApplicationRecord
     offered = time_slots.where(participant_id: organizer.id, start_time: selected_slots).pluck(:start_time)
     return if selected_slots.all? { |slot| offered.include?(slot) }
 
-    raise ArgumentError, "Select only time slots offered by the organizer"
+    raise Refusal, "Select only time slots offered by the organizer"
   end
 
   def ensure_consensus!(selected_slots)
     consensus_slots = mutually_available_start_times
     return if selected_slots.all? { |slot| consensus_slots.include?(slot) }
 
-    raise ArgumentError, "Select only time slots available to every participant"
+    raise Refusal, "Select only time slots available to every participant"
   end
 
   def ensure_contiguous!(selected_slots)
@@ -432,7 +433,7 @@ class Event < ApplicationRecord
       selected_slots.each_cons(2).all? { |earlier, later| later - earlier == slot_length }
     return if contiguous
 
-    raise ArgumentError, "Select one continuous meeting window"
+    raise Refusal, "Select one continuous meeting window"
   end
 
   def time_zone_is_known
@@ -478,8 +479,7 @@ class Event < ApplicationRecord
   end
 
   def grid_is_frozen_after_replies
-    return unless slot_minutes_changed? || time_zone_changed?
-    return unless participants.guest.where.not(responded_at: nil).exists?
+    return unless (slot_minutes_changed? || time_zone_changed?) && grid_frozen?
 
     errors.add(:slot_minutes, "cannot change after a guest has replied") if slot_minutes_changed?
     errors.add(:time_zone, "cannot change after a guest has replied") if time_zone_changed?

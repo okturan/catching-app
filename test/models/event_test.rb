@@ -178,7 +178,7 @@ class EventTest < ActiveSupport::TestCase
 
   test "update_details! is refused on a cancelled event and allowed on a finalized one" do
     @event.update_columns(cancelled_at: Time.current)
-    error = assert_raises(Event::ClosedError) { @event.update_details!(name: "New name") }
+    error = assert_raises(Event::Closed) { @event.update_details!(name: "New name") }
     assert_equal "This event was cancelled", error.message
     assert_equal "Planning session", @event.reload.name
 
@@ -218,11 +218,11 @@ class EventTest < ActiveSupport::TestCase
     assert_equal [ "Board games" ], @event.activities.pluck(:name)
 
     @event.update_columns(cancelled_at: Time.current)
-    error = assert_raises(Event::ClosedError) { @event.add_plan_item!(name: "Late") }
+    error = assert_raises(Event::Closed) { @event.add_plan_item!(name: "Late") }
     assert_equal "This event was cancelled", error.message
-    assert_raises(Event::ClosedError) { @event.update_plan_item!(activities(:planning_activity), name: "Late") }
-    assert_raises(Event::ClosedError) { @event.move_plan_item!(activities(:planning_activity), 0) }
-    assert_raises(Event::ClosedError) { @event.remove_plan_item!(activities(:planning_activity)) }
+    assert_raises(Event::Closed) { @event.update_plan_item!(activities(:planning_activity), name: "Late") }
+    assert_raises(Event::Closed) { @event.move_plan_item!(activities(:planning_activity), 0) }
+    assert_raises(Event::Closed) { @event.remove_plan_item!(activities(:planning_activity)) }
     assert_equal 7, @event.reload.revision
     assert_equal [ "Board games" ], @event.activities.reload.pluck(:name)
   end
@@ -305,7 +305,7 @@ class EventTest < ActiveSupport::TestCase
     assert_equal @organizer, Participant.find_by_token(raw_token(:planning_organizer))
     assert_equal users(:invitee).id, @guest.reload.user_id
 
-    error = assert_raises(Event::ClosedError) { @event.cancel! }
+    error = assert_raises(Event::Closed) { @event.cancel! }
     assert_equal "This event was cancelled", error.message
     assert_equal 4, @event.reload.revision
   end
@@ -358,7 +358,7 @@ class EventTest < ActiveSupport::TestCase
   test "every writer refuses a cancelled event with one message before any other check" do
     finalized = events(:finalized)
     finalized.cancel!
-    error = assert_raises(Event::ClosedError) { finalized.finalize!(starts_at: [ Time.utc(2030, 1, 15, 10) ]) }
+    error = assert_raises(Event::Closed) { finalized.finalize!(starts_at: [ Time.utc(2030, 1, 15, 10) ]) }
     assert_equal "This event was cancelled", error.message, "cancelled wins over the finalized message"
 
     @event.cancel!
@@ -373,7 +373,7 @@ class EventTest < ActiveSupport::TestCase
       "reopen!" => -> { @event.reopen! }
     }
     writers.each do |name, writer|
-      error = assert_raises(Event::ClosedError, name) { writer.call }
+      error = assert_raises(Event::Closed, name) { writer.call }
       assert_equal "This event was cancelled", error.message, name
     end
     assert_equal slots, @event.time_slots.order(:id).pluck(:id)
@@ -411,14 +411,14 @@ class EventTest < ActiveSupport::TestCase
   end
 
   test "reopen! refuses a pending event, a cancelled one and a third time with the exact messages" do
-    error = assert_raises(ArgumentError) { @event.reopen! }
+    error = assert_raises(Refusal) { @event.reopen! }
     assert_equal "Only a set time can be reopened", error.message
     assert_equal 0, @event.reload.reopen_count
     assert_equal 0, @event.revision
 
     finalized = events(:finalized)
     finalized.update_columns(reopen_count: 2, revision: 9)
-    error = assert_raises(ArgumentError) { finalized.reopen! }
+    error = assert_raises(Refusal) { finalized.reopen! }
     assert_equal "This event was reopened twice already. Cancel it and plan a new one.", error.message
     finalized.reload
     assert finalized.status?
@@ -428,7 +428,7 @@ class EventTest < ActiveSupport::TestCase
 
     finalized.update_columns(reopen_count: 1)
     finalized.cancel!
-    error = assert_raises(Event::ClosedError) { finalized.reopen! }
+    error = assert_raises(Event::Closed) { finalized.reopen! }
     assert_equal "This event was cancelled", error.message, "cancelled wins over every other check"
     assert finalized.reload.status?
     assert_equal 1, finalized.reopen_count
@@ -459,7 +459,7 @@ class EventTest < ActiveSupport::TestCase
     assert_equal 9, finalized.revision
     finalized.finalize!(starts_at: [ Time.utc(2030, 1, 15, 10) ])
     assert_equal 10, finalized.reload.revision
-    error = assert_raises(ArgumentError) { finalized.reopen! }
+    error = assert_raises(Refusal) { finalized.reopen! }
     assert_equal Event::REOPEN_LIMIT_MESSAGE, error.message
     assert finalized.reload.status?
   end
@@ -502,20 +502,20 @@ class EventTest < ActiveSupport::TestCase
 
   test "plan! rolls back everything when the offer is invalid" do
     assert_no_difference([ "Event.count", "Participant.count", "TimeSlot.count" ]) do
-      assert_raises(ArgumentError) { plan(starts_at: [ Time.utc(2031, 2, 10, 9, 15) ]) }
+      assert_raises(Refusal) { plan(starts_at: [ Time.utc(2031, 2, 10, 9, 15) ]) }
     end
   end
 
   test "alignment is anchored at local midnight in the event zone" do
     kolkata = plan(time_zone: "Asia/Kolkata", starts_at: [ Time.utc(2031, 2, 10, 4, 30) ])
     assert_nothing_raised { kolkata.ensure_aligned!([ Time.utc(2031, 2, 10, 5, 30) ]) }
-    assert_raises(ArgumentError) { kolkata.ensure_aligned!([ Time.utc(2031, 2, 10, 5, 0) ]) }
+    assert_raises(Refusal) { kolkata.ensure_aligned!([ Time.utc(2031, 2, 10, 5, 0) ]) }
 
-    error = assert_raises(ArgumentError) { @event.ensure_aligned!([ Time.utc(2030, 1, 15, 10, 15) ]) }
+    error = assert_raises(Refusal) { @event.ensure_aligned!([ Time.utc(2030, 1, 15, 10, 15) ]) }
     assert_equal "Select time slots on the event's 60-minute grid", error.message
 
     fifteen = plan(slot_minutes: 15, starts_at: [ Time.utc(2031, 2, 10, 9, 15) ])
-    assert_raises(ArgumentError) { fifteen.ensure_aligned!([ Time.utc(2031, 2, 10, 9, 7) ]) }
+    assert_raises(Refusal) { fifteen.ensure_aligned!([ Time.utc(2031, 2, 10, 9, 7) ]) }
 
     santiago = plan(time_zone: "America/Santiago", starts_at: [ Time.utc(2031, 2, 10, 12) ])
     gap_day = ActiveSupport::TimeZone["America/Santiago"].parse("2026-09-06 01:00")
@@ -559,7 +559,7 @@ class EventTest < ActiveSupport::TestCase
 
     @guest.update_columns(reply_voided_at: Time.current)
     assert_empty @event.mutually_available_start_times, "voided guests are outside the denominator and the guard"
-    error = assert_raises(ArgumentError) { @event.finalize!(starts_at: [ Time.utc(2030, 1, 15, 10) ]) }
+    error = assert_raises(Refusal) { @event.finalize!(starts_at: [ Time.utc(2030, 1, 15, 10) ]) }
     assert_equal "Wait for at least one reply before confirming", error.message
     assert_not @event.reload.status?
   end
@@ -701,15 +701,9 @@ class EventTest < ActiveSupport::TestCase
     assert_equal [ Time.utc(2031, 2, 10, 4, 30), Time.utc(2031, 2, 10, 5) ], fresh.time_slots.order(:start_time).pluck(:start_time)
   end
 
-  test "revise_offer! validates against the new grid and refuses blank input before the lock" do
-    error = assert_raises(ArgumentError) { @event.revise_offer!(starts_at: [ hour(15, 10), Time.utc(2030, 1, 15, 10, 30) ]) }
+  test "revise_offer! validates against the new grid" do
+    error = assert_raises(Refusal) { @event.revise_offer!(starts_at: [ hour(15, 10), Time.utc(2030, 1, 15, 10, 30) ]) }
     assert_equal "Select time slots on the event's 60-minute grid", error.message
-
-    locking_queries = capture_locking_queries do
-      assert_raises(ArgumentError) { @event.revise_offer!(starts_at: []) }
-      assert_raises(ArgumentError) { @event.revise_offer!(starts_at: [ nil ]) }
-    end
-    assert_empty locking_queries
     assert_equal 0, @event.reload.revision
   end
 
@@ -739,7 +733,7 @@ class EventTest < ActiveSupport::TestCase
 
   test "revise_offer! is refused on a finalized event with the closed message" do
     finalized = events(:finalized)
-    error = assert_raises(Event::ClosedError) { finalized.revise_offer!(starts_at: [ hour(15, 12) ]) }
+    error = assert_raises(Event::Closed) { finalized.revise_offer!(starts_at: [ hour(15, 12) ]) }
     assert_equal "Availability is closed for this event", error.message
     assert_equal [ hour(15, 10) ], finalized.time_slots.where(participant_id: participants(:finalized_organizer).id).pluck(:start_time)
   end
@@ -769,20 +763,8 @@ class EventTest < ActiveSupport::TestCase
     assert @guest.reload.counting?
   end
 
-  test "replacing availability is atomic and validates its input" do
-    original = @event.time_slots.where(participant_id: @organizer.id).order(:start_time).pluck(:start_time)
-
-    assert_raises(ArgumentError) do
-      @event.replace_time_slots!(participant: @organizer, starts_at: [ Time.utc(2030, 2, 1, 9), nil ])
-    end
-    assert_raises(ArgumentError) { @event.replace_time_slots!(participant: @organizer, starts_at: []) }
-    assert_raises(ArgumentError) { @event.replace_time_slots!(participant: participants(:other_organizer), starts_at: original) }
-
-    assert_equal original, @event.time_slots.where(participant_id: @organizer.id).order(:start_time).pluck(:start_time)
-  end
-
   test "guests may only pick offered instants and duplicates collapse" do
-    error = assert_raises(ArgumentError) do
+    error = assert_raises(Refusal) do
       @event.replace_time_slots!(participant: @guest, starts_at: [ Time.utc(2030, 1, 20, 9) ])
     end
     assert_equal "Select only time slots offered by the organizer", error.message
@@ -800,13 +782,13 @@ class EventTest < ActiveSupport::TestCase
   end
 
   test "finalize! needs a reply, consensus and one continuous window of whole slots" do
-    error = assert_raises(ArgumentError) { @event.finalize!(starts_at: [ Time.utc(2030, 1, 15, 11) ]) }
+    error = assert_raises(Refusal) { @event.finalize!(starts_at: [ Time.utc(2030, 1, 15, 11) ]) }
     assert_equal "Select only time slots available to every participant", error.message
 
     hours = [ 10, 11, 12 ].map { |hour| Time.utc(2030, 1, 15, hour) }
     @event.replace_time_slots!(participant: @organizer, starts_at: hours)
     @event.replace_time_slots!(participant: @guest, starts_at: hours)
-    error = assert_raises(ArgumentError) { @event.finalize!(starts_at: [ hours[0], hours[2] ]) }
+    error = assert_raises(Refusal) { @event.finalize!(starts_at: [ hours[0], hours[2] ]) }
     assert_equal "Select one continuous meeting window", error.message
 
     @event.finalize!(starts_at: hours.first(2))
@@ -816,7 +798,7 @@ class EventTest < ActiveSupport::TestCase
 
   test "finalize! refuses an event nobody has replied to" do
     event = plan
-    error = assert_raises(ArgumentError) { event.finalize!(starts_at: [ Time.utc(2031, 2, 10, 9) ]) }
+    error = assert_raises(Refusal) { event.finalize!(starts_at: [ Time.utc(2031, 2, 10, 9) ]) }
     assert_equal "Wait for at least one reply before confirming", error.message
   end
 
@@ -826,7 +808,7 @@ class EventTest < ActiveSupport::TestCase
     event.replace_time_slots!(participant: guest, starts_at: [ 0, 15, 30, 60 ].map { |m| Time.utc(2031, 2, 10, 10) + m.minutes })
     guest.update!(responded_at: Time.current)
 
-    assert_raises(ArgumentError) { event.finalize!(starts_at: [ Time.utc(2031, 2, 10, 10), Time.utc(2031, 2, 10, 11) ]) }
+    assert_raises(Refusal) { event.finalize!(starts_at: [ Time.utc(2031, 2, 10, 10), Time.utc(2031, 2, 10, 11) ]) }
     event.finalize!(starts_at: [ 0, 15, 30 ].map { |m| Time.utc(2031, 2, 10, 10) + m.minutes })
     assert_equal Time.utc(2031, 2, 10, 10, 45), event.end_time
   end
@@ -848,7 +830,7 @@ class EventTest < ActiveSupport::TestCase
     @event.finalize!(starts_at: [ Time.utc(2030, 1, 15, 10) ])
 
     locking_queries = capture_locking_queries do
-      error = assert_raises(Event::ClosedError) do
+      error = assert_raises(Event::Closed) do
         stale_event.replace_time_slots!(participant: @guest, starts_at: [ Time.utc(2030, 1, 15, 11) ])
       end
       assert_equal "Availability is closed for this event", error.message
@@ -867,7 +849,7 @@ class EventTest < ActiveSupport::TestCase
     first_request.finalize!(starts_at: [ Time.utc(2030, 1, 15, 10) ])
 
     locking_queries = capture_locking_queries do
-      assert_raises(Event::ClosedError) { stale_request.finalize!(starts_at: [ second_time ]) }
+      assert_raises(Event::Closed) { stale_request.finalize!(starts_at: [ second_time ]) }
     end
 
     assert_equal 1, locking_queries.size

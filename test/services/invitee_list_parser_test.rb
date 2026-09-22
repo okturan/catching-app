@@ -11,17 +11,17 @@ class InviteeListParserTest < ActiveSupport::TestCase
   end
 
   test "names an invalid address" do
-    error = assert_raises(ArgumentError) { InviteeListParser.call("bob@example.com, not-an-address", organizer_email: "a@b.example") }
+    error = assert_raises(Refusal) { InviteeListParser.call("bob@example.com, not-an-address", organizer_email: "a@b.example") }
 
     assert_equal "not-an-address is not a valid email address", error.message
   end
 
   test "caps the list at fifty and the body at four kilobytes" do
     fifty_one = 51.times.map { |i| "guest#{i}@example.com" }.join("\n")
-    error = assert_raises(ArgumentError) { InviteeListParser.call(fifty_one, organizer_email: "a@b.example") }
+    error = assert_raises(Refusal) { InviteeListParser.call(fifty_one, organizer_email: "a@b.example") }
     assert_equal "Invite at most 50 people", error.message
 
-    assert_raises(ArgumentError) { InviteeListParser.call("x" * 4097, organizer_email: "a@b.example") }
+    assert_raises(Refusal) { InviteeListParser.call("x" * 4097, organizer_email: "a@b.example") }
     assert_equal [], InviteeListParser.call("", organizer_email: "a@b.example")
   end
 end

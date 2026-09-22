@@ -7,8 +7,6 @@ module Deliveries
 
   def invitation!(event:, guest:, organizer:, request_ip:)
     ensure_not_cancelled!(event)
-    raise ArgumentError, "#{guest.email} left this event" if guest.left?
-
     MailDelivery::Caps.check_invitation!(event: event, organizer: organizer, recipient_email: guest.email, request_ip: request_ip)
     raw_token = guest.token_digest ? guest.issue_pending_token! : guest.issue_live_token!
     delivery = record!(event: event, participant: guest, kind: :invitation, recipient_email: guest.email,
@@ -55,23 +53,28 @@ module Deliveries
     mark_notified(event)
   end
 
+  # How far a change notice reached, in the words the organizer reads.
+  Report = Data.define(:sent, :skipped) do
+    def reached_anyone? = (sent + skipped).positive?
+
+    def to_s
+      [ "#{sent} #{"guest".pluralize(sent)} emailed.",
+        ("#{skipped} skipped (recently notified). Try again after 10 minutes." if skipped.positive?) ].compact.join(" ")
+    end
+  end
+
   # One coalesced change notice, only when the organizer asks (the details
   # checkbox, the offer checkbox or Tell the guests). Recipients are active
   # linked guests; an offer notice goes only to guests who already replied,
-  # and skips declined guests when nothing was added. Every recipient passes
-  # the notice caps or is skipped and counted; the link follows the claim
-  # rule (a fresh pending token for an unclaimed guest, none for a claimed
-  # one). The organizer never receives one. Returns { sent:, skipped: }.
-  NOTICE_REASONS = %i[details offer all].freeze
-
+  # and skips declined guests when nothing was added. A recipient over the
+  # notice caps is skipped and counted. The organizer never receives one.
   def event_updated!(event:, organizer:, request_ip:, reason:, changes: nil)
     ensure_not_cancelled!(event)
-    raise ArgumentError, "Open your organizer link before emailing guests" if organizer.link_opened_at.blank?
-    raise ArgumentError, "Unknown notice reason #{reason.inspect}" unless NOTICE_REASONS.include?(reason.to_s.to_sym)
+    raise Refusal, "Open your organizer link before emailing guests" if organizer.link_opened_at.blank?
 
     sent = 0
     skipped = 0
-    notice_recipients(event, reason.to_s.to_sym).find_each do |guest|
+    notice_recipients(event, reason).find_each do |guest|
       begin
         MailDelivery::Caps.check_update_notice!(event: event, organizer: organizer, recipient_email: guest.email, request_ip: request_ip)
       rescue MailDelivery::CapExceeded
@@ -86,7 +89,7 @@ module Deliveries
       sent += 1
     end
     mark_notified(event) if sent.positive?
-    { sent: sent, skipped: skipped }
+    Report.new(sent:, skipped:)
   end
 
   def notice_recipients(event, reason)
@@ -99,8 +102,6 @@ module Deliveries
 
   def reveal_link!(event:, guest:, organizer:, request_ip:)
     ensure_not_cancelled!(event)
-    raise ArgumentError, "#{guest.email} left this event" if guest.left?
-
     raw_token = guest.token_digest ? guest.issue_pending_token! : guest.issue_live_token!
     record!(event: event, participant: guest, kind: :link_shown, recipient_email: guest.email,
       sender_email: MailDelivery.canonical(organizer.email), request_ip: request_ip)
@@ -164,6 +165,6 @@ module Deliveries
   end
 
   def ensure_not_cancelled!(event)
-    raise Event::ClosedError, "This event was cancelled" if event.cancelled?
+    raise Event::Closed, "This event was cancelled" if event.cancelled?
   end
 end

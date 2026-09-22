@@ -1,7 +1,6 @@
 module Participations
   # The organizer calls the event off: one locked write, then one last mail
-  # to everyone with a link, the organizer included as a receipt. No opened
-  # organizer link is required, since without one nobody else has a link.
+  # to everyone with a link, the organizer included as a receipt.
   class CancellationsController < ParticipationScopedController
     before_action :require_organizer!
 
@@ -9,13 +8,8 @@ module Participations
       @event.cancel!
       told = Deliveries.cancelled!(event: @event)
 
-      redirect_to scoped_path, notice: "Event cancelled. #{told_sentence(told)}", status: :see_other
-    end
-
-    private
-
-    def told_sentence(count)
-      count == 1 ? "1 person was told." : "#{count} people were told."
+      redirect_to scoped_path, status: :see_other,
+        notice: "Event cancelled. #{helpers.pluralize(told, "person", plural: "people")} #{told == 1 ? "was" : "were"} told."
     end
   end
 end
