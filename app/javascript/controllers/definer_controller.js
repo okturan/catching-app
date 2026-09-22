@@ -2,9 +2,9 @@ import { Controller } from "@hotwired/stimulus";
 import { DateTime } from "luxon";
 
 import { removalWarning } from "../lib/definer";
-import { allowedDurations } from "../lib/durations";
 import { renderDefinerTable } from "../lib/grid_table";
-import { attachPainting, paintModeControl, remapZone, rescale, seedTabindex, summary } from "../lib/paint";
+import { attachPainting, seedTabindex } from "../lib/painting";
+import { remapZone, rescale, summary } from "../lib/selection";
 import { localDateRangeIsAllowed, localDayColumns } from "../lib/time_grid";
 import { countsByInstant, parseSlotList, populateTimeZoneSelect, slotISO, toDateTimes } from "../lib/zones";
 
@@ -16,7 +16,7 @@ const SELECTABLE = ".slot.selectable[data-date]";
 // times the offer value holds the current offer and picked-counts the picks
 // guests hold on it, so the summary can name what a removal would drop.
 export default class extends Controller {
-  static targets = ["grid", "slots", "zone", "step", "begin", "end", "rangeNote", "duration", "durationNote", "summary", "paintMode"];
+  static targets = ["grid", "slots", "zone", "step", "begin", "end", "rangeNote", "summary"];
   static values = { offer: Array, pickedCounts: Object };
 
   connect() {
@@ -32,14 +32,9 @@ export default class extends Controller {
     this.selection = new Set(parseSlotList(this.slotsTarget.value).map(slotISO));
     this.note = "";
 
-    this.mode = paintModeControl(this.paintModeTarget, {
-      onChange: (mode) => this.gridTarget.classList.toggle("mode-paint", mode === "paint"),
-      signal,
-    });
     attachPainting(this.gridTarget, {
       selectable: SELECTABLE,
       selection: this.selection,
-      getMode: () => this.mode.get(),
       onStroke: () => {
         this.note = "";
         this.serialize();
@@ -48,7 +43,6 @@ export default class extends Controller {
       signal,
     });
 
-    this.syncDurationOptions({ quietly: true });
     this.seedDateRange();
     this.draw();
   }
@@ -65,14 +59,15 @@ export default class extends Controller {
     this.draw(`Moved to ${this.zone} wall clock`);
   }
 
-  // A new step rescales the painted runs onto the new grid.
+  // A new step rescales the painted runs onto the new grid, and says so for
+  // the planned length to re-fit.
   restep() {
     const next = Number(this.stepTarget.value);
     this.replaceSelection(rescale(this.selection, this.slotMinutes, next, this.zone));
     this.slotMinutes = next;
     this.gridTarget.dataset.slotMinutes = String(next);
-    this.syncDurationOptions();
     this.draw();
+    this.dispatch("restepped", { detail: { slotMinutes: next } });
   }
 
   redraw() {
@@ -188,33 +183,6 @@ export default class extends Controller {
       const today = DateTime.now().setZone(this.zone).startOf("day");
       this.beginTarget.value = today.toISODate();
       this.endTarget.value = today.plus({ days: 2 }).toISODate();
-    }
-  }
-
-  // The planned length must be a whole number of slots: lengths that stop
-  // fitting the step are disabled, and a chosen one that stopped fitting
-  // falls back to "Not set" while the status line says which length went.
-  syncDurationOptions({ quietly = false } = {}) {
-    if (!this.hasDurationTarget) return;
-    const select = this.durationTarget;
-    const options = [...select.options].filter((option) => option.value !== "");
-    const fits = new Set(allowedDurations(this.slotMinutes, options.map((option) => option.value)).allowed);
-    options.forEach((option) => {
-      option.disabled = !fits.has(option.value);
-    });
-
-    const chosen = select.options[select.selectedIndex];
-    const note = quietly || !this.hasDurationNoteTarget ? null : this.durationNoteTarget;
-    if (chosen && chosen.disabled) {
-      select.value = "";
-      // The server's error on this field described the length that just went;
-      // clear its marks so the page does not argue with itself.
-      select.classList.remove("is-invalid");
-      select.removeAttribute("aria-invalid");
-      this.element.querySelector("#event_duration_minutes_error")?.remove();
-      if (note) note.textContent = `Planned length cleared: ${chosen.textContent} is not a whole number of ${this.slotMinutes}-minute slots.`;
-    } else if (note) {
-      note.textContent = "";
     }
   }
 }

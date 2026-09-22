@@ -1,6 +1,6 @@
-<div class="time-grid-panel time-grid-show-wrapper">
+<div class="time-grid-panel time-grid-show-wrapper" data-controller="paint-mode">
   <div class="time-grid-scroll">
-    <table id="time-grid-show" class="time-grid" role="grid" aria-label="Availability" data-availability-target="grid"
+    <table id="time-grid-show" class="time-grid" role="grid" aria-label="Availability" data-availability-target="grid" data-paint-mode-target="grid"
       data-role="<%= role %>"
       data-slot-minutes="<%= event.slot_minutes %>"
       data-event-time-zone="<%= event.time_zone %>"
@@ -27,9 +27,9 @@
     <% end %>
     <% dead_end = action == :save && every_offer_past %>
     <span id="selection-summary" aria-live="polite" data-availability-target="summary"><%= dead_end ? "All the offered times have passed." : "No times selected" %></span>
-    <fieldset id="paint-mode" class="paint-mode" role="radiogroup" aria-label="Touch mode" data-availability-target="paintMode">
-      <label><input type="radio" name="paint-mode" value="scroll" checked><span>Scroll</span></label>
-      <label><input type="radio" name="paint-mode" value="paint"><span>Paint</span></label>
+    <fieldset id="paint-mode" class="paint-mode" role="radiogroup" aria-label="Touch mode" data-paint-mode-target="switch">
+      <label><input type="radio" name="paint-mode" value="scroll" checked data-action="paint-mode#choose"><span>Scroll</span></label>
+      <label><input type="radio" name="paint-mode" value="paint" data-action="paint-mode#choose"><span>Paint</span></label>
     </fieldset>
     <% case action %>
     <% when :save %>

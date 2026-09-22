@@ -9,7 +9,7 @@ import {
   rescale,
   strokeMode,
   summary,
-} from "../../app/javascript/lib/paint.js";
+} from "../../app/javascript/lib/selection.js";
 
 const iso = (value, zone) => DateTime.fromISO(value, { zone }).toUTC().toISO();
 

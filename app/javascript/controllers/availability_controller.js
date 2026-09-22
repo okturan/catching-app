@@ -2,8 +2,9 @@ import { Controller } from "@hotwired/stimulus";
 import { DateTime } from "luxon";
 
 import { renderOfferedTable } from "../lib/grid_table";
-import { attachPainting, paintModeControl, seedTabindex, summary } from "../lib/paint";
-import { filterStash } from "../lib/stash";
+import { attachPainting, seedTabindex } from "../lib/painting";
+import { summary } from "../lib/selection";
+import { stashSelection, takeStash } from "../lib/stash";
 import { offeredGrid } from "../lib/time_grid";
 import { zonedLabel } from "../lib/zoned_label";
 import { countsByInstant, populateTimeZoneSelect, slotISO, toDateTimes } from "../lib/zones";
@@ -16,7 +17,7 @@ const SELECTABLE = ".slot.selectable[data-date]";
 // values carry the offer, the viewer's own picks, how many others hold each
 // time, the shared times and the set window.
 export default class extends Controller {
-  static targets = ["grid", "zone", "hideSwitch", "summary", "localWindow", "paintMode", "slots"];
+  static targets = ["grid", "zone", "hideSwitch", "summary", "localWindow", "slots"];
   static values = { offered: Array, mine: Array, counts: Object, consensus: Array, setWindow: Array };
 
   connect() {
@@ -39,15 +40,10 @@ export default class extends Controller {
     this.selection = this.restoredSelection();
     this.zone = populateTimeZoneSelect(this.zoneTarget, this.zoneTarget.dataset.selected);
 
-    this.mode = paintModeControl(this.paintModeTarget, {
-      onChange: (mode) => this.gridTarget.classList.toggle("mode-paint", mode === "paint"),
-      signal,
-    });
     if (!this.finalized && this.role !== "viewer") {
       attachPainting(this.gridTarget, {
         selectable: SELECTABLE,
         selection: this.selection,
-        getMode: () => this.mode.get(),
         onStroke: () => this.serialize(),
         scrollContainer: this.gridTarget.closest(".time-grid-scroll"),
         signal,
@@ -80,11 +76,7 @@ export default class extends Controller {
     if (!this.hasSlotsTarget || form !== this.slotsTarget.form) return;
 
     this.serialize();
-    try {
-      window.sessionStorage.setItem(this.stashKey, [...this.selection].join(","));
-    } catch (_error) {
-      // Storage may be unavailable.
-    }
+    stashSelection(this.stashKey, this.selection);
   }
 
   // A page restored from the back-forward cache shows a stale grid.
@@ -128,18 +120,10 @@ export default class extends Controller {
     });
   }
 
-  // A stashed selection from a refused save wins over the saved picks, but
-  // only cells the organizer still offers come back, so a save refused for a
-  // removed time cannot be repeated by the re-apply.
+  // A stashed selection from a refused save wins over the saved picks.
   restoredSelection() {
-    try {
-      const stashed = window.sessionStorage.getItem(this.stashKey);
-      window.sessionStorage.removeItem(this.stashKey);
-      const restored = stashed ? filterStash(stashed.split(","), this.offeredKeys) : [];
-      if (restored.length > 0) return new Set(restored);
-    } catch (_error) {
-      // Storage may be unavailable.
-    }
+    const restored = takeStash(this.stashKey, this.offeredKeys);
+    if (restored.length > 0) return new Set(restored);
     if (this.role !== "guest") return new Set();
     return new Set(toDateTimes(this.mineValue).map(slotISO).filter((iso) => this.offeredKeys.has(iso)));
   }

@@ -5,7 +5,7 @@ require "test_helper"
 # times of an existing one) share the partials, so a rename on one page
 # cannot silently break the other.
 class DefinerContractTest < ActionDispatch::IntegrationTest
-  TARGETS = %w[grid slots zone step begin end rangeNote summary paintMode].freeze
+  TARGETS = %w[grid slots zone step begin end rangeNote summary].freeze
 
   test "events/new keeps the definer contract" do
     get new_event_path
@@ -15,8 +15,10 @@ class DefinerContractTest < ActionDispatch::IntegrationTest
     assert_select "form select#event_slot_minutes option[selected][value='30']"
     assert_select "[data-definer-offer-value]", count: 0
     assert_select "[data-definer-picked-counts-value]", count: 0
-    assert_select "select#event_duration_minutes[data-definer-target=duration]"
-    assert_select "#duration-note[data-definer-target=durationNote]"
+    assert_select "form[data-controller='definer duration'][data-duration-step-value='30']" do
+      assert_select "select#event_duration_minutes[data-duration-target=select]"
+      assert_select "#duration-note[data-duration-target=note]"
+    end
     assert_select "#event-begin[min]", count: 0
     assert_select "#grid-frozen-note", count: 0
   end
@@ -35,7 +37,7 @@ class DefinerContractTest < ActionDispatch::IntegrationTest
   private
 
   def assert_definer_contract
-    assert_select "form[data-controller=definer][data-action='definer#submit']" do
+    assert_select "form[data-controller~=definer][data-action~='definer#submit']" do
       TARGETS.each { |target| assert_select "[data-definer-target=#{target}]", { count: 1 }, "the #{target} target is missing or duplicated" }
     end
     assert_select "select#event_slot_minutes[data-action='definer#restep']"
@@ -50,7 +52,10 @@ class DefinerContractTest < ActionDispatch::IntegrationTest
     assert_select "form input#event-end[type=date]:not([name])"
     assert_select "form #range-tooltip[role=status]"
     assert_select "#selection-summary[aria-live=polite]"
-    assert_select "fieldset#paint-mode[role=radiogroup] input[type=radio][name=paint-mode]", count: 2
+    assert_select ".time-grid-panel[data-controller=paint-mode]" do
+      assert_select "table#time-grid-define[data-paint-mode-target=grid]"
+      assert_select "fieldset#paint-mode[role=radiogroup][data-paint-mode-target=switch] input[type=radio][name=paint-mode][data-action='paint-mode#choose']", count: 2
+    end
     assert_select "form form", count: 0
   end
 end
