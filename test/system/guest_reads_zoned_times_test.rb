@@ -3,8 +3,8 @@ require "application_system_test_case"
 class GuestReadsZonedTimesTest < ApplicationSystemTestCase
   setup do
     @event = events(:finalized)
-    @event.activities.create!(name: "Pizza first", duration: 30, position: 0)
-    @event.activities.create!(name: "The movie", duration: 120, position: 1)
+    @event.plan_items.create!(name: "Pizza first", duration_minutes: 30, position: 0)
+    @event.plan_items.create!(name: "The movie", duration_minutes: 120, position: 1)
     participants(:finalized_guest).update!(time_zone: "Europe/Berlin")
   end
 

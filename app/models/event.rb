@@ -27,7 +27,7 @@ class Event < ApplicationRecord
   has_many :participants, dependent: :destroy, inverse_of: :event
   has_one :organizer, -> { organizer }, class_name: "Participant", inverse_of: :event
   has_many :guests, -> { guest }, class_name: "Participant", inverse_of: :event
-  has_many :activities, -> { order(:position, :id) }, dependent: :destroy, inverse_of: :event
+  has_many :plan_items, -> { order(:position, :id) }, dependent: :destroy, inverse_of: :event
   has_many :time_slots, dependent: :delete_all, inverse_of: :event
   has_many :mail_deliveries, dependent: :delete_all, inverse_of: :event
 
@@ -120,7 +120,7 @@ class Event < ApplicationRecord
   # anyone; the organizer tells the guests afterwards.
   def add_plan_item!(attributes)
     revise_plan! do
-      activities.create!(attributes.to_h.merge(position: (activities.maximum(:position) || -1) + 1))
+      plan_items.create!(attributes.to_h.merge(position: (plan_items.maximum(:position) || -1) + 1))
     end
   end
 
@@ -138,7 +138,7 @@ class Event < ApplicationRecord
   def move_plan_item!(item, position)
     with_lock do
       ensure_not_cancelled!
-      items = activities.reload.to_a
+      items = plan_items.reload.to_a
       renumber_plan!(items)
       from = items.index(item) or raise ActiveRecord::RecordNotFound
       target = position.clamp(0, items.size - 1)
@@ -156,15 +156,15 @@ class Event < ApplicationRecord
   # passes the start it was handed (from:) so a retried job never reads the row.
   def plan_timeline(from: nil)
     cursor = from || (start_time unless cancelled?)
-    activities.map do |activity|
+    plan_items.map do |item|
       start = cursor
-      cursor = cursor && activity.duration ? cursor + activity.duration.minutes : nil
-      [ activity, start ]
+      cursor = cursor && item.duration_minutes ? cursor + item.duration_minutes.minutes : nil
+      [ item, start ]
     end
   end
 
   def plan_minutes
-    activities.sum { |activity| activity.duration.to_i }
+    plan_items.sum { it.duration_minutes.to_i }
   end
 
   def window_minutes
@@ -380,8 +380,8 @@ class Event < ApplicationRecord
   end
 
   def renumber_plan!(items)
-    items.each_with_index do |activity, index|
-      activity.update_columns(position: index) unless activity.position == index
+    items.each_with_index do |item, index|
+      item.update_columns(position: index) unless item.position == index
     end
   end
 

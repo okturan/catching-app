@@ -92,9 +92,9 @@ class CalendarFile
   def description
     paragraphs = []
     paragraphs << event.description if page? && event.description.present?
-    plan_lines = event.activities.each_with_index.map do |activity, index|
-      length = activity.duration ? " (#{duration_label(activity.duration)})" : ""
-      "#{index + 1}. #{text(activity.name)}#{length}"
+    plan_lines = event.plan_items.each_with_index.map do |item, index|
+      length = item.duration_minutes ? " (#{duration_label(item.duration_minutes)})" : ""
+      "#{index + 1}. #{text(item.name)}#{length}"
     end
     paragraphs << plan_lines.join("\n") if plan_lines.any?
     paragraphs << CREDIT

@@ -32,8 +32,8 @@ Rails.application.routes.draw do
       resource :cancellation, only: :create # organizer: terminal, read-only afterwards
       resource :reopening, only: :create # organizer, finalized: Reopen the time
       resource :calendar, only: :show, path: "calendar.ics", format: false # any participant, finalized
-      resources :activities, only: %i[create update destroy] do # organizer: the plan
-        resource :move, only: :create, controller: :activity_moves # organizer: move[position]
+      resources :plan_items, path: "plan", only: %i[create update destroy] do # organizer
+        resource :move, only: :create, controller: :plan_item_moves # organizer: move[position]
       end
     end
   end

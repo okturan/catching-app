@@ -147,8 +147,8 @@ class EventTest < ActiveSupport::TestCase
   end
 
   test "plan_timeline derives starts from a window handed to it, whatever the row says" do
-    pizza = @event.activities.first
-    movie = @event.activities.create!(name: "Movie", duration: 120, position: 1)
+    pizza = @event.plan_items.first
+    movie = @event.plan_items.create!(name: "Movie", duration_minutes: 120, position: 1)
 
     assert_equal [ nil, nil ], @event.plan_timeline.map(&:last), "pending: nothing derived"
     assert_equal [ [ pizza, Time.utc(2030, 1, 15, 10) ], [ movie, Time.utc(2030, 1, 15, 11, 30) ] ],
@@ -211,23 +211,23 @@ class EventTest < ActiveSupport::TestCase
   test "plan writes are locked, refused once cancelled and each bumps the revision once" do
     @event.update_columns(revision: 3, notified_revision: 3)
 
-    item = @event.add_plan_item!(name: " Pizza ", duration: 30)
+    item = @event.add_plan_item!(name: " Pizza ", duration_minutes: 30)
     assert_equal [ "Pizza", 1 ], [ item.name, item.position ]
-    @event.update_plan_item!(item, duration: 45)
+    @event.update_plan_item!(item, duration_minutes: 45)
     @event.move_plan_item!(item, 0)
     @event.remove_plan_item!(item)
 
     assert_equal 7, @event.reload.revision
-    assert_equal [ "Board games" ], @event.activities.pluck(:name)
+    assert_equal [ "Board games" ], @event.plan_items.pluck(:name)
 
     @event.update_columns(cancelled_at: Time.current)
     error = assert_raises(Event::Closed) { @event.add_plan_item!(name: "Late") }
     assert_equal "This event was cancelled", error.message
-    assert_raises(Event::Closed) { @event.update_plan_item!(activities(:planning_activity), name: "Late") }
-    assert_raises(Event::Closed) { @event.move_plan_item!(activities(:planning_activity), 0) }
-    assert_raises(Event::Closed) { @event.remove_plan_item!(activities(:planning_activity)) }
+    assert_raises(Event::Closed) { @event.update_plan_item!(plan_items(:planning_plan_item), name: "Late") }
+    assert_raises(Event::Closed) { @event.move_plan_item!(plan_items(:planning_plan_item), 0) }
+    assert_raises(Event::Closed) { @event.remove_plan_item!(plan_items(:planning_plan_item)) }
     assert_equal 7, @event.reload.revision
-    assert_equal [ "Board games" ], @event.activities.reload.pluck(:name)
+    assert_equal [ "Board games" ], @event.plan_items.reload.pluck(:name)
   end
 
   test "the first plan item starts at zero and a refused item bumps nothing" do
@@ -236,52 +236,52 @@ class EventTest < ActiveSupport::TestCase
     first = event.add_plan_item!(name: "Pizza")
     assert_equal 0, first.position
     assert_raises(ActiveRecord::RecordInvalid) { event.add_plan_item!(name: "") }
-    assert_raises(ActiveRecord::RecordInvalid) { event.update_plan_item!(first, duration: 1441) }
+    assert_raises(ActiveRecord::RecordInvalid) { event.update_plan_item!(first, duration_minutes: 1441) }
 
     assert_equal 1, event.reload.revision
-    assert_equal [ "Pizza" ], event.activities.pluck(:name)
-    assert_nil first.reload.duration
+    assert_equal [ "Pizza" ], event.plan_items.pluck(:name)
+    assert_nil first.reload.duration_minutes
   end
 
   test "move_plan_item! renumbers ties densely, clamps the target and is a no-op at the ends" do
     event = events(:other_event)
-    a, b, c = %w[A B C].map { |name| event.activities.create!(name: name, position: 0) }
+    a, b, c = %w[A B C].map { |name| event.plan_items.create!(name: name, position: 0) }
 
     event.move_plan_item!(a, 1)
-    assert_equal [ b, a, c ], event.activities.reload.to_a
-    assert_equal [ 0, 1, 2 ], event.activities.pluck(:position)
+    assert_equal [ b, a, c ], event.plan_items.reload.to_a
+    assert_equal [ 0, 1, 2 ], event.plan_items.pluck(:position)
     assert_equal 1, event.reload.revision
 
     event.move_plan_item!(c, 0)
-    assert_equal [ c, b, a ], event.activities.reload.to_a
+    assert_equal [ c, b, a ], event.plan_items.reload.to_a
     event.move_plan_item!(c, 99)
-    assert_equal [ b, a, c ], event.activities.reload.to_a
-    assert_equal [ 0, 1, 2 ], event.activities.pluck(:position)
+    assert_equal [ b, a, c ], event.plan_items.reload.to_a
+    assert_equal [ 0, 1, 2 ], event.plan_items.pluck(:position)
     assert_equal 3, event.reload.revision
 
     event.move_plan_item!(b, -1)
     event.move_plan_item!(c, 5)
-    assert_equal [ b, a, c ], event.activities.reload.to_a
+    assert_equal [ b, a, c ], event.plan_items.reload.to_a
     assert_equal 3, event.reload.revision
 
-    assert_raises(ActiveRecord::RecordNotFound) { event.move_plan_item!(activities(:planning_activity), 0) }
+    assert_raises(ActiveRecord::RecordNotFound) { event.move_plan_item!(plan_items(:planning_plan_item), 0) }
     assert_equal 3, event.reload.revision
   end
 
   test "plan_timeline derives starts once set and not cancelled, and stops after an item without a length" do
     finalized = events(:finalized)
-    pizza = finalized.activities.create!(name: "Pizza", duration: 30, position: 1)
-    dune = finalized.activities.create!(name: "Dune", duration: 155, position: 2)
+    pizza = finalized.plan_items.create!(name: "Pizza", duration_minutes: 30, position: 1)
+    dune = finalized.plan_items.create!(name: "Dune", duration_minutes: 155, position: 2)
 
     assert_equal [ [ pizza, Time.utc(2030, 1, 15, 10) ], [ dune, Time.utc(2030, 1, 15, 10, 30) ] ], finalized.plan_timeline
     assert_equal 185, finalized.plan_minutes
     assert_equal 60, finalized.window_minutes
 
-    arrive = finalized.activities.create!(name: "Arrive", position: 0)
-    finalized.activities.reset
+    arrive = finalized.plan_items.create!(name: "Arrive", position: 0)
+    finalized.plan_items.reset
     assert_equal [ [ arrive, Time.utc(2030, 1, 15, 10) ], [ pizza, nil ], [ dune, nil ] ], finalized.plan_timeline
 
-    assert_equal [ [ activities(:planning_activity), nil ] ], @event.plan_timeline
+    assert_equal [ [ plan_items(:planning_plan_item), nil ] ], @event.plan_timeline
     assert_nil @event.window_minutes
 
     finalized.update_columns(cancelled_at: Time.current)
@@ -291,7 +291,7 @@ class EventTest < ActiveSupport::TestCase
   test "cancel! stamps the event once, bumps the revision and deletes nothing" do
     @event.update_columns(revision: 3, notified_revision: 3)
     MailDelivery.create!(event: @event, participant: @guest, kind: :invitation, recipient_email: @guest.email)
-    counts = -> { [ Event.count, Participant.count, TimeSlot.count, Activity.count, MailDelivery.count ] }
+    counts = -> { [ Event.count, Participant.count, TimeSlot.count, PlanItem.count, MailDelivery.count ] }
     before = counts.call
 
     @event.cancel!
@@ -364,7 +364,7 @@ class EventTest < ActiveSupport::TestCase
     @event.reload
     assert_equal "Planning session", @event.name
     assert_equal 1, @event.revision
-    assert_equal [ "Board games" ], @event.activities.pluck(:name)
+    assert_equal [ "Board games" ], @event.plan_items.pluck(:name)
   end
 
   test "reopen! withdraws the window, keeps every row and returns what was set" do

@@ -147,8 +147,8 @@ module Participations
     end
 
     test "the plan editor gives every item its own form and labelled controls, and no form nests" do
-      board = activities(:planning_activity)
-      dune = @event.activities.create!(name: "Dune", duration: 155, position: 1, description: "Part one")
+      board = plan_items(:planning_plan_item)
+      dune = @event.plan_items.create!(name: "Dune", duration_minutes: 155, position: 1, description: "Part one")
 
       get edit_participation_details_path(@organizer_token)
 
@@ -159,57 +159,57 @@ module Participations
         assert_select "li.plan-item:nth-child(1) .plan-item-head", text: /1\. Board games · 1 h 30 min/
         assert_select "li.plan-item:nth-child(2) .plan-item-head", text: /2\. Dune · 2 h 35 min/
         assert_select "form.plan-item-form", count: 2
-        assert_select "form.plan-item-form[action=?][method=post][aria-label=?]", participation_activity_path(@organizer_token, board), "Edit Board games" do
+        assert_select "form.plan-item-form[action=?][method=post][aria-label=?]", participation_plan_item_path(@organizer_token, board), "Edit Board games" do
           assert_select "input[name='_method'][value=patch]"
-          assert_select "input[name='activity[name]'][value=?][maxlength='80'][required]", "Board games"
-          assert_select "label[for=?]", "plan_#{board.id}_activity_name", text: "Name"
-          assert_select "select[name='activity[duration]']" do
+          assert_select "input[name='plan_item[name]'][value=?][maxlength='80'][required]", "Board games"
+          assert_select "label[for=?]", "plan_#{board.id}_plan_item_name", text: "Name"
+          assert_select "select[name='plan_item[duration_minutes]']" do
             assert_select "option[value='']", "No length"
             assert_select "option[value='90'][selected]", "1 h 30 min"
             assert_select "option", count: 10
           end
-          assert_select "input[name='activity[description]'][value=?][maxlength='500']", "Play a cooperative game"
+          assert_select "input[name='plan_item[description]'][value=?][maxlength='500']", "Play a cooperative game"
           assert_select "input[type=submit][value=Save][aria-label=?]", "Save Board games"
         end
-        assert_select "form.plan-item-form[action=?]", participation_activity_path(@organizer_token, dune) do
-          assert_select "select[name='activity[duration]'] option[value='155'][selected]", "2 h 35 min"
-          assert_select "select[name='activity[duration]'] option", count: 11
+        assert_select "form.plan-item-form[action=?]", participation_plan_item_path(@organizer_token, dune) do
+          assert_select "select[name='plan_item[duration_minutes]'] option[value='155'][selected]", "2 h 35 min"
+          assert_select "select[name='plan_item[duration_minutes]'] option", count: 11
         end
         assert_select "button[aria-label=?]", "Move Board games up", text: "Up"
         assert_select "button[aria-label=?]", "Move Board games down", text: "Down"
         assert_select "button[aria-label=?]", "Remove Board games", text: "Remove"
-        assert_select "form[action=?]", participation_activity_move_path(@organizer_token, board), count: 2
-        assert_select "form[action=?] input[name='move[position]'][value='-1']", participation_activity_move_path(@organizer_token, board)
-        assert_select "form[action=?] input[name='move[position]'][value='1']", participation_activity_move_path(@organizer_token, board)
-        assert_select "form[action=?] input[name='move[position]'][value='0']", participation_activity_move_path(@organizer_token, dune)
-        assert_select "form[action=?][data-turbo-confirm=?]", participation_activity_path(@organizer_token, board), "Remove Board games from the plan?" do
+        assert_select "form[action=?]", participation_plan_item_move_path(@organizer_token, board), count: 2
+        assert_select "form[action=?] input[name='move[position]'][value='-1']", participation_plan_item_move_path(@organizer_token, board)
+        assert_select "form[action=?] input[name='move[position]'][value='1']", participation_plan_item_move_path(@organizer_token, board)
+        assert_select "form[action=?] input[name='move[position]'][value='0']", participation_plan_item_move_path(@organizer_token, dune)
+        assert_select "form[action=?][data-turbo-confirm=?]", participation_plan_item_path(@organizer_token, board), "Remove Board games from the plan?" do
           assert_select "input[name='_method'][value=delete]"
           assert_select "button[type=submit]", text: "Remove"
         end
-        assert_select "form#plan-add-form[action=?][method=post]", participation_activities_path(@organizer_token) do
+        assert_select "form#plan-add-form[action=?][method=post]", participation_plan_items_path(@organizer_token) do
           assert_select "input[name='_method']", count: 0
-          assert_select "label[for=activity_name]", text: "Add to the plan"
-          assert_select "input#activity_name[name='activity[name]'][required][maxlength='80']"
-          assert_select "label[for=activity_duration]", text: "Length"
-          assert_select "select#activity_duration[name='activity[duration]']" do
+          assert_select "label[for=plan_item_name]", text: "Add to the plan"
+          assert_select "input#plan_item_name[name='plan_item[name]'][required][maxlength='80']"
+          assert_select "label[for=plan_item_duration_minutes]", text: "Length"
+          assert_select "select#plan_item_duration_minutes[name='plan_item[duration_minutes]']" do
             assert_select "option[value='']", "No length"
             assert_select "option[value='15']", "15 min"
             assert_select "option[value='240']", "4 h"
             assert_select "option", count: 10
           end
-          assert_select "label[for=activity_description]", text: "Description"
-          assert_select "input#activity_description[name='activity[description]'][maxlength='500']"
+          assert_select "label[for=plan_item_description]", text: "Description"
+          assert_select "input#plan_item_description[name='plan_item[description]'][maxlength='500']"
           assert_select "input[type=submit][value=?]", "Add to the plan"
         end
         assert_select "time[data-zoned-instant]", count: 0
         assert_select ".plan-note", count: 0
       end
       assert_select "form form", count: 0
-      assert_select "form#details-form input[name^='activity']", count: 0
+      assert_select "form#details-form input[name^='plan_item']", count: 0
     end
 
     test "an empty plan says so and the editor still offers the add row" do
-      @event.activities.delete_all
+      @event.plan_items.delete_all
 
       get edit_participation_details_path(@organizer_token)
 
@@ -221,8 +221,8 @@ module Participations
     test "once the time is set the editor shows derived starts and says when the plan outruns the window" do
       finalized = events(:finalized)
       finalized.update_columns(end_time: Time.utc(2030, 1, 15, 12))
-      pizza = finalized.activities.create!(name: "Pizza", duration: 30, position: 0)
-      movie = finalized.activities.create!(name: "The movie", duration: 120, position: 1)
+      pizza = finalized.plan_items.create!(name: "Pizza", duration_minutes: 30, position: 0)
+      movie = finalized.plan_items.create!(name: "The movie", duration_minutes: 120, position: 1)
       token = raw_token(:finalized_organizer)
 
       get edit_participation_details_path(token)
@@ -232,7 +232,7 @@ module Participations
       assert_select "li#plan-item-#{pizza.id} .plan-item-head time.time[data-zoned-instant][datetime=?]", "2030-01-15T10:00:00Z", text: "10:00 (UTC)"
       assert_select "li#plan-item-#{movie.id} .plan-item-head time.time[data-zoned-instant][datetime=?]", "2030-01-15T10:30:00Z", text: "10:30 (UTC)"
 
-      movie.update!(duration: 60)
+      movie.update!(duration_minutes: 60)
       get edit_participation_details_path(token)
       assert_select ".plan-note", count: 0
       assert_no_match "The plan runs", response.body

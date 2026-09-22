@@ -2,7 +2,7 @@ require "application_system_test_case"
 
 class OrganizerEditsPlanTest < ApplicationSystemTestCase
   test "the organizer builds and reorders the plan and a guest reads it in order" do
-    events(:planning).activities.delete_all
+    events(:planning).plan_items.delete_all
 
     visit participation_path(raw_token(:planning_organizer))
     click_link "Edit details"
@@ -29,7 +29,7 @@ class OrganizerEditsPlanTest < ApplicationSystemTestCase
     assert_selector ".plan-item:nth-child(2) .plan-item-head", text: "2. Pizza first · 30 min"
 
     within ".plan-item:nth-child(2) form.plan-item-form" do
-      find("input[name='activity[name]']").set("Pizza and salad")
+      find("input[name='plan_item[name]']").set("Pizza and salad")
       click_button "Save"
     end
     assert_selector ".plan-item:nth-child(2) .plan-item-head", text: "2. Pizza and salad · 30 min"

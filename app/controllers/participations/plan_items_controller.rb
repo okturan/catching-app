@@ -2,32 +2,32 @@ module Participations
   # The organizer's plan editor: add, change and remove one item. Items are
   # found through the event, so another event's item is a 404 like any
   # other bad link.
-  class ActivitiesController < ParticipationScopedController
+  class PlanItemsController < ParticipationScopedController
     include PlanWrites
 
     def create
-      @event.add_plan_item!(activity_params)
+      @event.add_plan_item!(plan_item_params)
       plan_updated
     end
 
     def update
-      @event.update_plan_item!(activity, activity_params)
+      @event.update_plan_item!(plan_item, plan_item_params)
       plan_updated
     end
 
     def destroy
-      @event.remove_plan_item!(activity)
+      @event.remove_plan_item!(plan_item)
       plan_updated
     end
 
     private
 
-    def activity
-      @event.activities.find(params[:id])
+    def plan_item
+      @event.plan_items.find(params[:id])
     end
 
-    def activity_params
-      params.expect(activity: %i[name duration description])
+    def plan_item_params
+      params.expect(plan_item: %i[name duration_minutes description])
     end
   end
 end

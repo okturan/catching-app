@@ -66,50 +66,50 @@
         <p class="plan-empty">Nothing planned yet. Guests read the plan on their card, in order.</p>
       <% else %>
         <ol class="plan-items">
-          <% timeline.each_with_index do |(activity, start), index| %>
-            <li class="plan-item" id="plan-item-<%= activity.id %>">
+          <% timeline.each_with_index do |(item, start), index| %>
+            <li class="plan-item" id="plan-item-<%= item.id %>">
               <div class="plan-item-head">
-                <span><%= index + 1 %>. <%= plan_item_label(activity) %></span>
+                <span><%= index + 1 %>. <%= plan_item_label(item) %></span>
                 <% if start %><%= zoned_time(start, @event.time_zone) %><% end %>
               </div>
-              <%= form_with model: activity, url: scoped_path(:activity, activity), method: :patch, namespace: "plan_#{activity.id}",
-                class: "plan-item-form", html: { aria: { label: "Edit #{activity.name}" } } do |form| %>
+              <%= form_with model: item, url: scoped_path(:plan_item, item), method: :patch, namespace: "plan_#{item.id}",
+                class: "plan-item-form", html: { aria: { label: "Edit #{item.name}" } } do |form| %>
                 <div class="plan-field-name">
                   <%= form.label :name, "Name", class: "visually-hidden" %>
                   <%= form.text_field :name, class: "form-control form-control-sm", maxlength: 80, required: true %>
                 </div>
                 <div>
-                  <%= form.label :duration, "Length", class: "visually-hidden" %>
-                  <%= form.select :duration, plan_duration_options(activity.duration), { include_blank: "No length" }, class: "form-select form-select-sm" %>
+                  <%= form.label :duration_minutes, "Length", class: "visually-hidden" %>
+                  <%= form.select :duration_minutes, plan_duration_options(item.duration_minutes), { include_blank: "No length" }, class: "form-select form-select-sm" %>
                 </div>
                 <div>
                   <%= form.label :description, "Description", class: "visually-hidden" %>
                   <%= form.text_field :description, class: "form-control form-control-sm", maxlength: 500, placeholder: "One line, optional" %>
                 </div>
-                <%= form.submit "Save", class: "btn btn-outline-primary btn-sm", aria: { label: "Save #{activity.name}" } %>
+                <%= form.submit "Save", class: "btn btn-outline-primary btn-sm", aria: { label: "Save #{item.name}" } %>
               <% end %>
               <div class="plan-controls">
-                <%= button_to "Up", scoped_path(:activity_move, activity), method: :post, params: { move: { position: index - 1 } },
-                  class: "btn btn-outline-secondary btn-sm", aria: { label: "Move #{activity.name} up" } %>
-                <%= button_to "Down", scoped_path(:activity_move, activity), method: :post, params: { move: { position: index + 1 } },
-                  class: "btn btn-outline-secondary btn-sm", aria: { label: "Move #{activity.name} down" } %>
-                <%= button_to "Remove", scoped_path(:activity, activity), method: :delete, class: "btn btn-outline-danger btn-sm",
-                  aria: { label: "Remove #{activity.name}" }, form: { data: { turbo_confirm: "Remove #{activity.name} from the plan?" } } %>
+                <%= button_to "Up", scoped_path(:plan_item_move, item), method: :post, params: { move: { position: index - 1 } },
+                  class: "btn btn-outline-secondary btn-sm", aria: { label: "Move #{item.name} up" } %>
+                <%= button_to "Down", scoped_path(:plan_item_move, item), method: :post, params: { move: { position: index + 1 } },
+                  class: "btn btn-outline-secondary btn-sm", aria: { label: "Move #{item.name} down" } %>
+                <%= button_to "Remove", scoped_path(:plan_item, item), method: :delete, class: "btn btn-outline-danger btn-sm",
+                  aria: { label: "Remove #{item.name}" }, form: { data: { turbo_confirm: "Remove #{item.name} from the plan?" } } %>
               </div>
             </li>
           <% end %>
         </ol>
       <% end %>
 
-      <%= form_with url: scoped_path(:activities), method: :post, scope: :activity, id: "plan-add-form", class: "plan-add-form" do |form| %>
+      <%= form_with url: scoped_path(:plan_items), method: :post, scope: :plan_item, id: "plan-add-form", class: "plan-add-form" do |form| %>
         <div>
           <%= form.label :name, "Add to the plan", class: "form-label" %>
           <%= form.text_field :name, class: "form-control", maxlength: 80, required: true, placeholder: "Pizza first" %>
         </div>
         <div class="plan-add-row">
           <div>
-            <%= form.label :duration, "Length", class: "form-label" %>
-            <%= form.select :duration, plan_duration_options(nil), { include_blank: "No length" }, class: "form-select" %>
+            <%= form.label :duration_minutes, "Length", class: "form-label" %>
+            <%= form.select :duration_minutes, plan_duration_options(nil), { include_blank: "No length" }, class: "form-select" %>
           </div>
           <div>
             <%= form.label :description, "Description", class: "form-label" %>

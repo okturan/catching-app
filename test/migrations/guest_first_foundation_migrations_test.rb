@@ -9,6 +9,7 @@ require "test_helper"
   20260906000002_revamp_activities_into_plan
   20260906000003_extend_mail_delivery_kinds
   20260922000001_derive_finalized_from_the_window
+  20260922000002_rename_activities_to_plan_items
 ].each { |file| require Rails.root.join("db/migrate/#{file}") }
 
 # Runs the foundation and planning migrations down and up inside the test
@@ -18,12 +19,13 @@ require "test_helper"
 class GuestFirstFoundationMigrationsTest < ActiveSupport::TestCase
   MIGRATIONS = [
     CreateParticipants, AddSchedulingGridToEvents, ReparentTimeSlotsToParticipants, DropUserOwnership, DropDeadUserColumns,
-    AddPlanningStateToEventsAndParticipants, RevampActivitiesIntoPlan, ExtendMailDeliveryKinds, DeriveFinalizedFromTheWindow
+    AddPlanningStateToEventsAndParticipants, RevampActivitiesIntoPlan, ExtendMailDeliveryKinds, DeriveFinalizedFromTheWindow,
+    RenameActivitiesToPlanItems
   ].freeze
-  MODELS = [ Participant, MailDelivery, TimeSlot, Event, User, Activity ].freeze
+  MODELS = [ Participant, MailDelivery, TimeSlot, Event, User, PlanItem ].freeze
 
   test "the migrations round-trip and reproduce db/schema.rb" do
-    connection.execute("TRUNCATE TABLE mail_deliveries, time_slots, participants, activities, events, users RESTART IDENTITY CASCADE")
+    connection.execute("TRUNCATE TABLE mail_deliveries, time_slots, participants, plan_items, events, users RESTART IDENTITY CASCADE")
 
     ActiveRecord::Migration.suppress_messages do
       MIGRATIONS.reverse_each { |migration| migration.new.migrate(:down) }
@@ -51,8 +53,8 @@ class GuestFirstFoundationMigrationsTest < ActiveSupport::TestCase
     assert_not connection.column_exists?(:users, :phone_number)
     assert connection.check_constraints(:events).any? { |check| check.name == "events_offer_revision_counts" }
     assert connection.check_constraints(:participants).any? { |check| check.name == "participants_voided_is_open_reply" }
-    assert connection.check_constraints(:activities).any? { |check| check.name == "activities_duration_bounded" }
-    assert_equal :cascade, connection.foreign_keys(:activities).find { |key| key.to_table == "events" }.on_delete
+    assert connection.check_constraints(:plan_items).any? { |check| check.name == "plan_items_duration_positive" }
+    assert_equal :cascade, connection.foreign_keys(:plan_items).find { |key| key.to_table == "events" }.on_delete
 
     dump = StringIO.new
     ActiveRecord::SchemaDumper.dump(ActiveRecord::Base.connection_pool, dump)
@@ -63,7 +65,7 @@ class GuestFirstFoundationMigrationsTest < ActiveSupport::TestCase
   end
 
   test "the backfill maps organizers, invitees and orphans" do
-    connection.execute("TRUNCATE TABLE mail_deliveries, time_slots, participants, activities, events, users RESTART IDENTITY CASCADE")
+    connection.execute("TRUNCATE TABLE mail_deliveries, time_slots, participants, plan_items, events, users RESTART IDENTITY CASCADE")
 
     ActiveRecord::Migration.suppress_messages do
       MIGRATIONS.reverse_each { |migration| migration.new.migrate(:down) }

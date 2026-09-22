@@ -1,5 +1,6 @@
 require "test_helper"
 require Rails.root.join("db/migrate/20260906000002_revamp_activities_into_plan")
+require Rails.root.join("db/migrate/20260922000002_rename_activities_to_plan_items")
 
 # The truncating round-trip test never sees a row. This one rolls the plan
 # migration back over an item with no duration and no description, checks the
@@ -8,6 +9,7 @@ require Rails.root.join("db/migrate/20260906000002_revamp_activities_into_plan")
 class RevampActivitiesIntoPlanTest < ActiveSupport::TestCase
   test "down backfills open items before restoring NOT NULL and up renumbers positions densely" do
     event = events(:planning)
+    ActiveRecord::Migration.suppress_messages { RenameActivitiesToPlanItems.new.migrate(:down) }
     connection.execute(<<~SQL.squish)
       INSERT INTO activities (event_id, name, duration, description, position, created_at, updated_at)
       VALUES (#{event.id}, 'Open ended', NULL, NULL, 7, NOW(), NOW())
@@ -29,8 +31,9 @@ class RevampActivitiesIntoPlanTest < ActiveSupport::TestCase
 
     positions = connection.select_values("SELECT position FROM activities WHERE event_id = #{event.id} ORDER BY id")
     assert_equal [ 0, 1 ], positions, "the fixture item and the inserted one are numbered from zero in id order"
+    ActiveRecord::Migration.suppress_messages { RenameActivitiesToPlanItems.new.migrate(:up) }
   ensure
-    Activity.reset_column_information
+    PlanItem.reset_column_information
   end
 
   private

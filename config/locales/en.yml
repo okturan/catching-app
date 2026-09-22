@@ -9,3 +9,5 @@ en:
         place_url: Link
         duration_minutes: Planned length
         slot_minutes: Slot length
+      plan_item:
+        duration_minutes: Length

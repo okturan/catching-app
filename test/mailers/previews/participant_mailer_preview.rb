@@ -80,12 +80,12 @@ class ParticipantMailerPreview < ActionMailer::Preview
   # memory when it has none.
   def sample_event
     @sample_event ||= begin
-      event = Event.includes(:activities).order(:id).first or raise "seed an event first"
+      event = Event.includes(:plan_items).order(:id).first or raise "seed an event first"
       event.place = "Ege's place" if event.place.blank?
       event.duration_minutes ||= 150
-      if event.activities.empty?
-        event.activities.build(name: "Pizza first", duration: 30, position: 0)
-        event.activities.build(name: "The movie", duration: 120, position: 1)
+      if event.plan_items.empty?
+        event.plan_items.build(name: "Pizza first", duration_minutes: 30, position: 0)
+        event.plan_items.build(name: "The movie", duration_minutes: 120, position: 1)
       end
       event
     end

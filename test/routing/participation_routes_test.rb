@@ -23,10 +23,10 @@ class ParticipationRoutesTest < ActionDispatch::IntegrationTest
     assert_routing({ path: "/p/#{TOKEN}/cancellation", method: :post }, controller: "participations/cancellations", action: "create", token: TOKEN)
     assert_routing({ path: "/p/#{TOKEN}/reopening", method: :post }, controller: "participations/reopenings", action: "create", token: TOKEN)
     assert_routing({ path: "/p/#{TOKEN}/calendar.ics", method: :get }, controller: "participations/calendars", action: "show", token: TOKEN)
-    assert_routing({ path: "/p/#{TOKEN}/activities", method: :post }, controller: "participations/activities", action: "create", token: TOKEN)
-    assert_routing({ path: "/p/#{TOKEN}/activities/7", method: :patch }, controller: "participations/activities", action: "update", token: TOKEN, id: "7")
-    assert_routing({ path: "/p/#{TOKEN}/activities/7", method: :delete }, controller: "participations/activities", action: "destroy", token: TOKEN, id: "7")
-    assert_routing({ path: "/p/#{TOKEN}/activities/7/move", method: :post }, controller: "participations/activity_moves", action: "create", token: TOKEN, activity_id: "7")
+    assert_routing({ path: "/p/#{TOKEN}/plan", method: :post }, controller: "participations/plan_items", action: "create", token: TOKEN)
+    assert_routing({ path: "/p/#{TOKEN}/plan/7", method: :patch }, controller: "participations/plan_items", action: "update", token: TOKEN, id: "7")
+    assert_routing({ path: "/p/#{TOKEN}/plan/7", method: :delete }, controller: "participations/plan_items", action: "destroy", token: TOKEN, id: "7")
+    assert_routing({ path: "/p/#{TOKEN}/plan/7/move", method: :post }, controller: "participations/plan_item_moves", action: "create", token: TOKEN, plan_item_id: "7")
 
     assert_equal "/p/#{TOKEN}", participation_path(TOKEN)
     assert_equal "/p/#{TOKEN}/participants/7/resend", participation_participant_resend_path(TOKEN, 7)
@@ -39,9 +39,9 @@ class ParticipationRoutesTest < ActionDispatch::IntegrationTest
     assert_equal "/p/#{TOKEN}/cancellation", participation_cancellation_path(TOKEN)
     assert_equal "/p/#{TOKEN}/reopening", participation_reopening_path(TOKEN)
     assert_equal "/p/#{TOKEN}/calendar.ics", participation_calendar_path(TOKEN)
-    assert_equal "/p/#{TOKEN}/activities", participation_activities_path(TOKEN)
-    assert_equal "/p/#{TOKEN}/activities/7", participation_activity_path(TOKEN, 7)
-    assert_equal "/p/#{TOKEN}/activities/7/move", participation_activity_move_path(TOKEN, 7)
+    assert_equal "/p/#{TOKEN}/plan", participation_plan_items_path(TOKEN)
+    assert_equal "/p/#{TOKEN}/plan/7", participation_plan_item_path(TOKEN, 7)
+    assert_equal "/p/#{TOKEN}/plan/7/move", participation_plan_item_move_path(TOKEN, 7)
   end
 
   test "mangled and short tokens still reach the controller" do
@@ -63,9 +63,9 @@ class ParticipationRoutesTest < ActionDispatch::IntegrationTest
     assert_routing({ path: "/participations/3/cancellation", method: :post }, controller: "participations/cancellations", action: "create", participation_id: "3")
     assert_routing({ path: "/participations/3/reopening", method: :post }, controller: "participations/reopenings", action: "create", participation_id: "3")
     assert_routing({ path: "/participations/3/calendar.ics", method: :get }, controller: "participations/calendars", action: "show", participation_id: "3")
-    assert_routing({ path: "/participations/3/activities", method: :post }, controller: "participations/activities", action: "create", participation_id: "3")
-    assert_routing({ path: "/participations/3/activities/7", method: :delete }, controller: "participations/activities", action: "destroy", participation_id: "3", id: "7")
-    assert_routing({ path: "/participations/3/activities/7/move", method: :post }, controller: "participations/activity_moves", action: "create", participation_id: "3", activity_id: "7")
+    assert_routing({ path: "/participations/3/plan", method: :post }, controller: "participations/plan_items", action: "create", participation_id: "3")
+    assert_routing({ path: "/participations/3/plan/7", method: :delete }, controller: "participations/plan_items", action: "destroy", participation_id: "3", id: "7")
+    assert_routing({ path: "/participations/3/plan/7/move", method: :post }, controller: "participations/plan_item_moves", action: "create", participation_id: "3", plan_item_id: "7")
 
     assert_equal "/participations/3", my_participation_path(3)
     assert_equal "/participations/3/invitations", my_participation_invitations_path(3)
@@ -76,7 +76,7 @@ class ParticipationRoutesTest < ActionDispatch::IntegrationTest
     assert_equal "/participations/3/cancellation", my_participation_cancellation_path(3)
     assert_equal "/participations/3/reopening", my_participation_reopening_path(3)
     assert_equal "/participations/3/calendar.ics", my_participation_calendar_path(3)
-    assert_equal "/participations/3/activities/7/move", my_participation_activity_move_path(3, 7)
+    assert_equal "/participations/3/plan/7/move", my_participation_plan_item_move_path(3, 7)
     assert_raises(NoMethodError) { my_participation_claim_path(3) }
   end
 
@@ -85,8 +85,8 @@ class ParticipationRoutesTest < ActionDispatch::IntegrationTest
     assert_raises(ActionController::RoutingError) { Rails.application.routes.recognize_path("/events/1/time_slots", method: :post) }
   end
 
-  test "the account-only activities routes are gone" do
-    [ [ "/events/1/activities", :get ], [ "/events/1/activities", :post ], [ "/events/1/activities/new", :get ], [ "/events/1/activities/2", :get ] ].each do |path, method|
+  test "the account-only plan_items routes are gone" do
+    [ [ "/events/1/plan", :get ], [ "/events/1/plan", :post ], [ "/events/1/plan/new", :get ], [ "/events/1/plan/2", :get ] ].each do |path, method|
       assert_raises(ActionController::RoutingError, "#{method.upcase} #{path} still routes") do
         Rails.application.routes.recognize_path(path, method: method)
       end

@@ -22,7 +22,7 @@ class ParticipantMailerPreviewTest < ActiveSupport::TestCase
 
   test "the samples show a place, a plan, the voided guest and the calendar files without writing anything" do
     event = Event.order(:id).first
-    before = [ Event.count, Participant.count, Activity.count, MailDelivery.count, event.attributes ]
+    before = [ Event.count, Participant.count, PlanItem.count, MailDelivery.count, event.attributes ]
 
     finalized = ParticipantMailerPreview.call("finalized").text_part.body.to_s
     assert_includes finalized, "Where: "
@@ -42,6 +42,6 @@ class ParticipantMailerPreviewTest < ActiveSupport::TestCase
     assert_empty ParticipantMailerPreview.call("cancelled_while_pending").attachments
     assert_includes ParticipantMailerPreview.call("reopened").attachments.first.body.decoded, "STATUS:CANCELLED"
 
-    assert_equal before, [ Event.count, Participant.count, Activity.count, MailDelivery.count, event.reload.attributes ]
+    assert_equal before, [ Event.count, Participant.count, PlanItem.count, MailDelivery.count, event.reload.attributes ]
   end
 end

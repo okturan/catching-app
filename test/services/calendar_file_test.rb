@@ -3,8 +3,8 @@ require "test_helper"
 class CalendarFileTest < ActiveSupport::TestCase
   setup do
     @event = events(:finalized)
-    @event.activities.create!(name: "Pizza", duration: 30, position: 0, description: "Margherita https://evil.example/menu")
-    @event.activities.create!(name: "The movie", position: 1)
+    @event.plan_items.create!(name: "Pizza", duration_minutes: 30, position: 0, description: "Margherita https://evil.example/menu")
+    @event.plan_items.create!(name: "The movie", position: 1)
     @event.update_columns(place: "Ege's place", revision: 3)
     @event.reload
   end
@@ -153,7 +153,7 @@ class CalendarFileTest < ActiveSupport::TestCase
   test "mail mode carries no link, no description and organizer text through mail_safe" do
     @event.update_columns(name: "Pizza night http://evil.example", place: "Zoom https://zoom.us/j/1",
       place_url: "https://zoom.us/j/9?pwd=secret", description: "Bring https://evil.example")
-    @event.activities.first.update_columns(name: "Trailers https://evil.example/t")
+    @event.plan_items.first.update_columns(name: "Trailers https://evil.example/t")
 
     body = render(mode: :mail)
 
@@ -178,8 +178,8 @@ class CalendarFileTest < ActiveSupport::TestCase
   end
 
   test "the mail-mode file stays under 8 KB at every maximum" do
-    @event.activities.delete_all
-    20.times { |i| @event.activities.create!(name: "#{i}".ljust(80, "x"), duration: 240, position: i) }
+    @event.plan_items.delete_all
+    20.times { |i| @event.plan_items.create!(name: "#{i}".ljust(80, "x"), duration_minutes: 240, position: i) }
     @event.update_columns(name: "n" * 120, place: "p" * 200, description: "d" * 2000)
     @event.reload
 

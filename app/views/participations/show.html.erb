@@ -70,11 +70,11 @@
             <dt>Plan</dt>
             <dd>
               <ol class="event-plan">
-                <% @plan.each do |activity, start| %>
+                <% @plan.each do |item, start| %>
                   <li>
-                    <span class="event-plan-item"><%= plan_item_label(activity) %></span>
+                    <span class="event-plan-item"><%= plan_item_label(item) %></span>
                     <% if start %><%= zoned_time(start, @event.time_zone) %><% end %>
-                    <% if activity.description.present? %><span class="event-plan-note"><%= activity.description %></span><% end %>
+                    <% if item.description.present? %><span class="event-plan-note"><%= item.description %></span><% end %>
                   </li>
                 <% end %>
               </ol>

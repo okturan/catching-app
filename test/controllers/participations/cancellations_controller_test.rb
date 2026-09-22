@@ -95,10 +95,10 @@ module Participations
     test "after cancellation every write answers 303 with one alert and changes nothing" do
       @event.cancel!
       guest = participants(:planning_guest)
-      item = activities(:planning_activity)
+      item = plan_items(:planning_plan_item)
       snapshot = lambda do
         [ @event.reload.attributes, @event.participants.order(:id).map(&:attributes), @event.time_slots.order(:id).map(&:attributes),
-          @event.activities.order(:id).map(&:attributes), MailDelivery.count ]
+          @event.plan_items.order(:id).map(&:attributes), MailDelivery.count ]
       end
       before = snapshot.call
 
@@ -109,10 +109,10 @@ module Participations
         "remove" => -> { delete participation_participant_path(@organizer_token, guest) },
         "finalize" => -> { post participation_finalization_path(@organizer_token), params: { time_slots: { time_slot_array: "2030-01-15T10:00:00Z" } } },
         "details" => -> { patch participation_details_path(@organizer_token), params: { event: { name: "Renamed" } } },
-        "activity create" => -> { post participation_activities_path(@organizer_token), params: { activity: { name: "Late" } } },
-        "activity update" => -> { patch participation_activity_path(@organizer_token, item), params: { activity: { name: "Late" } } },
-        "activity destroy" => -> { delete participation_activity_path(@organizer_token, item) },
-        "activity move" => -> { post participation_activity_move_path(@organizer_token, item), params: { move: { position: 0 } } },
+        "plan item create" => -> { post participation_plan_items_path(@organizer_token), params: { plan_item: { name: "Late" } } },
+        "plan item update" => -> { patch participation_plan_item_path(@organizer_token, item), params: { plan_item: { name: "Late" } } },
+        "plan item destroy" => -> { delete participation_plan_item_path(@organizer_token, item) },
+        "plan item move" => -> { post participation_plan_item_move_path(@organizer_token, item), params: { move: { position: 0 } } },
         "reopen" => -> { post participation_reopening_path(@organizer_token) },
         "cancel" => -> { post participation_cancellation_path(@organizer_token) }
       }

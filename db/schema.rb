@@ -10,22 +10,9 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_22_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_22_000002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
-
-  create_table "activities", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.text "description"
-    t.integer "duration"
-    t.bigint "event_id", null: false
-    t.string "name", null: false
-    t.integer "position", default: 0, null: false
-    t.datetime "updated_at", null: false
-    t.index ["event_id", "position"], name: "index_activities_on_event_id_and_position"
-    t.check_constraint "\"position\" >= 0", name: "activities_position_non_negative"
-    t.check_constraint "duration IS NULL OR duration > 0 AND duration <= 1440", name: "activities_duration_bounded"
-  end
 
   create_table "events", force: :cascade do |t|
     t.datetime "cancelled_at"
@@ -115,6 +102,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_000001) do
     t.check_constraint "token_digest IS NULL OR char_length(token_digest::text) = 64", name: "participants_token_digest_length"
   end
 
+  create_table "plan_items", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.integer "duration_minutes"
+    t.bigint "event_id", null: false
+    t.string "name", null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_id", "position"], name: "index_plan_items_on_event_id_and_position"
+    t.check_constraint "\"position\" >= 0", name: "plan_items_position_non_negative"
+    t.check_constraint "duration_minutes IS NULL OR duration_minutes > 0", name: "plan_items_duration_positive"
+  end
+
   create_table "time_slots", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "event_id", null: false
@@ -140,11 +140,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_000001) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
-  add_foreign_key "activities", "events", on_delete: :cascade
   add_foreign_key "mail_deliveries", "events", on_delete: :cascade
   add_foreign_key "mail_deliveries", "participants", on_delete: :nullify
   add_foreign_key "participants", "events", on_delete: :cascade
   add_foreign_key "participants", "users", on_delete: :nullify
+  add_foreign_key "plan_items", "events", on_delete: :cascade
   add_foreign_key "time_slots", "events", on_delete: :cascade
   add_foreign_key "time_slots", "participants", column: ["participant_id", "event_id"], primary_key: ["id", "event_id"], name: "fk_time_slots_participant_in_event", on_delete: :cascade
 end

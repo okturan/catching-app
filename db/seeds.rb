@@ -22,24 +22,22 @@ else
     event = Event.plan!(
       attributes: { name: "Movie night", description: "Pick a time to watch a movie together", slot_minutes: 60, time_zone: "UTC" },
       organizer: { email: organizer_user.email, name: organizer_user.full_name, user: organizer_user },
-      starts_at: [ 18, 19, 20 ].map { |hour| tomorrow + hour.hours },
-      invitee_emails: users.first(2).map(&:email)
+      starts_at: [ 18, 19, 20 ].map { tomorrow + it.hours }
     )
-    organizer = event.organizer
-    organizer.update_columns(link_opened_at: Time.current)
-    puts "Organizer link: /p/#{organizer.issue_live_token!}"
-    event.guests.each do |guest|
-      guest.update!(user: User.find_by(email: guest.email))
+    event.organizer.update_columns(link_opened_at: Time.current)
+    puts "Organizer link: /p/#{event.organizer.issue_live_token!}"
+    users.first(2).each do |user|
+      guest = event.participants.guest.create!(email: user.email, user:)
       puts "Guest link for #{guest.email}: /p/#{guest.issue_live_token!}"
     end
   end
 
   [
-    { name: "Pizza first", duration: 30, position: 0 },
-    { name: "The movie", duration: 120, position: 1 }
+    { name: "Pizza first", duration_minutes: 30, position: 0 },
+    { name: "The movie", duration_minutes: 120, position: 1 }
   ].each do |attributes|
-    event.activities.find_or_create_by!(attributes)
+    event.plan_items.find_or_create_by!(attributes)
   end
 
-  puts "Seeded #{User.count} users, #{Event.count} event, and a plan of #{Activity.count} items."
+  puts "Seeded #{User.count} users, #{Event.count} event, and a plan of #{PlanItem.count} items."
 end

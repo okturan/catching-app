@@ -75,7 +75,7 @@ class ParticipantMailer < ApplicationMailer
     @renamed = @changes["name"]
     @place = mail_safe(@event.place).presence
     @duration = @event.duration_minutes && duration_label(@event.duration_minutes)
-    @plan = @event.activities.map { |activity| plan_item_line(activity) }
+    @plan = @event.plan_items.map { plan_item_line(it) }
     @situation = offer_situation if @reason == :offer
     @reason_line = reason_line
     @link = guest_link
@@ -156,8 +156,8 @@ class ParticipantMailer < ApplicationMailer
   # when that differs. Names pass through mail_safe; descriptions stay home.
   def plan_lines(start_time, zone)
     both_zones = zone_named(zone).name != zone_named(@event.time_zone).name
-    @event.plan_timeline(from: start_time).map do |activity, start|
-      line = plan_item_line(activity)
+    @event.plan_timeline(from: start_time).map do |item, start|
+      line = plan_item_line(item)
       next line unless start
 
       line += " at #{clock_in(zone, start)}"
@@ -168,9 +168,9 @@ class ParticipantMailer < ApplicationMailer
 
   # "Pizza (30 min)": the name through mail_safe and the length, never the
   # description.
-  def plan_item_line(activity)
-    line = mail_safe(activity.name)
-    line += " (#{duration_label(activity.duration)})" if activity.duration
+  def plan_item_line(item)
+    line = mail_safe(item.name)
+    line += " (#{duration_label(item.duration_minutes)})" if item.duration_minutes
     line
   end
 

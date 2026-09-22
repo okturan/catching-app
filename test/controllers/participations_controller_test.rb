@@ -24,7 +24,7 @@ class ParticipationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "the card answers where and how long only when the organizer set them" do
-    @event.activities.delete_all
+    @event.plan_items.delete_all
     get participation_path(@guest_token)
     assert_select "dl.event-facts", count: 0
     assert_select "a.plate-button-sm", text: "Edit details", count: 0
@@ -75,8 +75,8 @@ class ParticipationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "every participant reads the plan in order on the card, with no times while pending" do
-    @event.activities.create!(name: "Dune", duration: 155, position: 1, description: "Part one only")
-    @event.activities.create!(name: "Credits", position: 2)
+    @event.plan_items.create!(name: "Dune", duration_minutes: 155, position: 1, description: "Part one only")
+    @event.plan_items.create!(name: "Credits", position: 2)
 
     get participation_path(@guest_token)
 
@@ -90,7 +90,7 @@ class ParticipationsControllerTest < ActionDispatch::IntegrationTest
     end
     assert_equal [ "Board games · 1 h 30 min", "Dune · 2 h 35 min", "Credits" ],
       css_select("ol.event-plan li .event-plan-item").map(&:text)
-    assert_select "a[href*=activities]", count: 0
+    assert_select "a[href*=plan_items]", count: 0
 
     get participation_path(@organizer_token)
     assert_select "ol.event-plan li", count: 3
@@ -108,8 +108,8 @@ class ParticipationsControllerTest < ActionDispatch::IntegrationTest
   test "derived starts appear once the time is set, in the event zone, and stop after an item without a length" do
     finalized = events(:finalized)
     finalized.update_columns(time_zone: "Europe/Berlin", start_time: Time.utc(2030, 1, 15, 19), end_time: Time.utc(2030, 1, 15, 22))
-    pizza = finalized.activities.create!(name: "Pizza", duration: 30, position: 0)
-    dune = finalized.activities.create!(name: "Dune", duration: 155, position: 1)
+    pizza = finalized.plan_items.create!(name: "Pizza", duration_minutes: 30, position: 0)
+    dune = finalized.plan_items.create!(name: "Dune", duration_minutes: 155, position: 1)
     token = raw_token(:finalized_guest)
 
     get participation_path(token)
@@ -119,7 +119,7 @@ class ParticipationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "ol.event-plan li:nth-child(1) time.time[data-zoned-instant][datetime=?]", "2030-01-15T19:00:00Z", text: "20:00 (Europe/Berlin)"
     assert_select "ol.event-plan li:nth-child(2) time.time[data-zoned-instant][datetime=?]", "2030-01-15T19:30:00Z", text: "20:30 (Europe/Berlin)"
 
-    finalized.activities.create!(name: "Arrive", position: 0)
+    finalized.plan_items.create!(name: "Arrive", position: 0)
     pizza.update!(position: 1)
     dune.update!(position: 2)
     get participation_path(token)
@@ -615,7 +615,7 @@ class ParticipationsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select "form#availability-form[action=?]", my_participation_path(@guest)
     assert_select "a", text: /activit/i, count: 0
-    assert_no_match "/events/#{@event.id}/activities", response.body
+    assert_no_match "/events/#{@event.id}/plan_items", response.body
 
     patch my_participation_path(@guest), params: { time_slots: { time_slot_array: "2030-01-15T11:00:00Z" } }
     assert_redirected_to my_participation_path(@guest)

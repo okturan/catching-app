@@ -85,7 +85,7 @@ class ParticipantMailerTest < ActionMailer::TestCase
   test "event_updated names the reason, the rename, the facts and the plan, and carries no organizer URL" do
     @event.update!(name: "Dune night", description: "Visit https://evil.example", place: "Ege's place https://maps.example/x",
       place_url: "https://zoom.us/j/1", duration_minutes: 120)
-    @event.activities.create!(name: "Pizza https://evil.example", duration: 30, position: 1, description: "Margherita https://evil.example/m")
+    @event.plan_items.create!(name: "Pizza https://evil.example", duration_minutes: 30, position: 1, description: "Margherita https://evil.example/m")
     @organizer.update!(name: "Ege")
 
     mail = notice_mail(@guest, reason: :details, changes: { "name" => [ "Film night https://evil.example", "Dune night" ], "place" => [ nil, "Ege's place" ] })
@@ -171,8 +171,8 @@ class ParticipantMailerTest < ActionMailer::TestCase
     finalized = events(:finalized)
     finalized.update_columns(slot_minutes: 30)
     finalized.update!(place: "Ege's place", place_url: "https://maps.example/x", duration_minutes: 90)
-    finalized.activities.create!(name: "Pizza https://evil.example", duration: 30, position: 0, description: "Margherita https://evil.example/m")
-    finalized.activities.create!(name: "The movie", position: 1)
+    finalized.plan_items.create!(name: "Pizza https://evil.example", duration_minutes: 30, position: 0, description: "Margherita https://evil.example/m")
+    finalized.plan_items.create!(name: "The movie", position: 1)
     guest = participants(:finalized_guest)
     guest.update!(time_zone: "Europe/Berlin")
 

@@ -84,10 +84,10 @@ module EventsHelper
   end
 
   # "Pizza · 30 min", or the name alone when the item has no length.
-  def plan_item_label(activity)
-    return activity.name if activity.duration.nil?
+  def plan_item_label(item)
+    return item.name if item.duration_minutes.nil?
 
-    "#{activity.name} · #{duration_label(activity.duration)}"
+    "#{item.name} · #{duration_label(item.duration_minutes)}"
   end
 
   # The one place a place link is rendered: an anchor on a value the model

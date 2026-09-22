@@ -5,7 +5,7 @@ class GuestPaintsOnTouchTest < MobileSystemTestCase
     event = events(:planning)
     event.update!(place: "Ege's place, Kadıköy, a very long unbroken description of where we meet that runs past the card width",
       place_url: "https://maps.example/place/some/very/long/path/that/does/not/wrap", duration_minutes: 120)
-    event.activities.create!(name: "Averyveryverylongplanitemnamewithoutanyspacesatalltostretchthecardpastitswidth", duration: 45, position: 1,
+    event.plan_items.create!(name: "Averyveryverylongplanitemnamewithoutanyspacesatalltostretchthecardpastitswidth", duration_minutes: 45, position: 1,
       description: "A second line that is also rather long and should wrap inside the card instead of widening the page")
 
     visit participation_path(raw_token(:planning_guest))
