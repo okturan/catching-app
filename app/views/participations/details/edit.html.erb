@@ -16,36 +16,14 @@
     <% end %>
 
     <%= form_with model: @event, url: scoped_path(:details), method: :patch, id: "details-form" do |form| %>
-      <% if @event.errors[:base].any? %>
-        <div class="alert alert-danger position-static" role="alert"><%= @event.errors[:base].to_sentence %></div>
-      <% end %>
+      <%= form.error_summary %>
 
-      <div class="mb-3">
-        <%= form.label :name, "Name", class: "form-label" %>
-        <%= form.text_field :name, class: class_names("form-control", "is-invalid" => @event.errors[:name].any?), maxlength: 120, required: true %>
-        <% if @event.errors[:name].any? %><div class="invalid-feedback d-block"><%= @event.errors[:name].to_sentence %></div><% end %>
-      </div>
-      <div class="mb-3">
-        <%= form.label :description, "Description (optional)", class: "form-label" %>
-        <%= form.text_area :description, class: class_names("form-control", "is-invalid" => @event.errors[:description].any?), rows: 4, maxlength: 2000 %>
-        <% if @event.errors[:description].any? %><div class="invalid-feedback d-block"><%= @event.errors[:description].to_sentence %></div><% end %>
-      </div>
-      <div class="mb-3">
-        <%= form.label :place, "Place", class: "form-label" %>
-        <%= form.text_field :place, class: class_names("form-control", "is-invalid" => @event.errors[:place].any?), maxlength: 200, placeholder: "Ege's place, Kadıköy — or 'Zoom'" %>
-        <% if @event.errors[:place].any? %><div class="invalid-feedback d-block"><%= @event.errors[:place].to_sentence %></div><% end %>
-      </div>
-      <div class="mb-3">
-        <%= form.label :place_url, "Link", class: "form-label" %>
-        <%= form.url_field :place_url, class: class_names("form-control", "is-invalid" => @event.errors[:place_url].any?), maxlength: 2000, placeholder: "Link to join or a map link" %>
-        <% if @event.errors[:place_url].any? %><div class="invalid-feedback d-block"><%= @event.errors[:place_url].to_sentence %></div><% end %>
-      </div>
-      <div class="mb-4">
-        <%= form.label :duration_minutes, "Planned length", class: "form-label" %>
-        <%= form.select :duration_minutes, duration_select_options(@event.slot_minutes, @event.duration_minutes),
-          { include_blank: "Not set" }, class: class_names("form-select", "is-invalid" => @event.errors[:duration_minutes].any?) %>
-        <% if @event.errors[:duration_minutes].any? %><div class="invalid-feedback d-block"><%= @event.errors[:duration_minutes].to_sentence %></div><% end %>
-      </div>
+      <%= form.field :name, required: true, maxlength: 120 %>
+      <%= form.field :description, as: :text_area, optional: true, rows: 4, maxlength: 2000 %>
+      <%= form.field :place, optional: true, maxlength: 200, placeholder: "Ege's place, Kadıköy — or 'Zoom'" %>
+      <%= form.field :place_url, as: :url_field, optional: true, maxlength: 2000, placeholder: "Link to join or a map link" %>
+      <%= form.field :duration_minutes, as: :select, optional: true, include_blank: "Not set",
+            choices: duration_select_options(@event.slot_minutes, @event.duration_minutes) %>
       <% if notice_offered? %>
         <div class="form-check mb-4">
           <%= check_box_tag "notice[send]", "1", @event.finalized?, id: "notice_send", class: "form-check-input" %>

@@ -17,6 +17,9 @@ module CatchingApp
 
     config.autoload_lib(ignore: %w[assets tasks templates])
 
+    # ApplicationFormBuilder marks a field's errors itself; Rails wraps nothing.
+    config.action_view.field_error_proc = ->(html_tag, _instance) { html_tag }
+
     config.generators do |generate|
       generate.assets false
       generate.helper false

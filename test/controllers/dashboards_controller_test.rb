@@ -49,6 +49,16 @@ class DashboardsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?] .event-face-state", my_participation_path(participants(:finalized_guest)), text: /cancelled/, count: 0
   end
 
+  test "a failed sign-in or sign-up answers 422, so Turbo renders it" do
+    post user_session_path, params: { user: { email: "owner@example.com", password: "wrong" } }
+    assert_response :unprocessable_entity
+
+    post user_registration_path, params: { user: { first_name: "", last_name: "", email: "", password: "" } }
+    assert_response :unprocessable_entity
+    assert_select "#error-summary a[href='#user_first_name']", text: "First name can't be blank"
+    assert_select "#user_first_name[autofocus]", count: 0
+  end
+
   test "sign-in lands on the dashboard" do
     post user_session_path, params: { user: { email: "owner@example.com", password: "correct horse battery staple" } }
 

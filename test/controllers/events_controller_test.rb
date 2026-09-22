@@ -157,7 +157,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_select "#error-summary li a[href='#organizer_name']", text: "Your name can't be blank"
     assert_select "#error-summary li a[href='#organizer_email']", text: "Your email is invalid"
     assert_select "input#organizer_email.is-invalid[aria-invalid=true][aria-describedby=?]", "organizer_email_help organizer_email_error"
-    assert_select "#organizer_email_error", text: "is invalid"
+    assert_select "#organizer_email_error", text: "Your email is invalid"
   end
 
   test "creation caps refuse with one generic message for known and unknown addresses" do

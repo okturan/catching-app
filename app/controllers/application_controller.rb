@@ -3,6 +3,8 @@ class ApplicationController < ActionController::Base
   allow_browser versions: { safari: 15.4, chrome: 99, firefox: 93, opera: 85, ie: false },
     block: -> { render "errors/unsupported_browser", status: :not_acceptable }
 
+  default_form_builder ApplicationFormBuilder
+
   before_action :authenticate_user!
   before_action :configure_permitted_parameters, if: :devise_controller?
 

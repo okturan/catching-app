@@ -3,53 +3,17 @@ module EventsHelper
   DURATION_TAIL = [ 300, 360, 480, 720, 1440 ].freeze
   PLAN_DURATIONS = [ 15, 30, 45, 60, 90, 120, 150, 180, 240 ].freeze
 
-  # Where each error on the planning form points. Base errors are the grid's:
-  # every refusal this form can meet is about the painted selection.
-  ERROR_TARGETS = {
-    name: "event_name",
-    description: "event_description",
-    place: "event_place",
-    place_url: "event_place_url",
-    duration_minutes: "event_duration_minutes",
-    slot_minutes: "event_slot_minutes",
-    time_zone: "timezone-picker-new"
-  }.freeze
-
-  # The two organizer fields are hand-rolled, not a form builder's, so their
-  # messages carry the field's own label the way full_message would.
-  ORGANIZER_ERROR_TARGETS = {
-    name: [ "organizer_name", "Your name" ],
-    email: [ "organizer_email", "Your email" ]
-  }.freeze
-
-  # One [message, control id] per error for the summary, in the page's order:
-  # the grid first, then the fields, then the organizer. Attribute errors are
-  # listed too, and must stay listed: event[time_zone] is a hand-rolled
-  # select_tag with no inline error, so the summary is the only place its
+  # The planning form's summary, in the page's order: the grid's refusals
+  # (base errors, since every refusal this form meets is about the painted
+  # selection), then the fields, then the organizer's "Your name" and "Your
+  # email". The zone is listed too and must stay listed: its picker is drawn
+  # by hand without an inline error, so the summary is the only place its
   # message is ever said.
-  def planning_error_links(event, organizer_errors)
-    links = event.errors[:base].map { |message| [ message, "time-grid-define" ] }
-    event.errors.each do |error|
-      next if error.attribute == :base
-
-      links << [ event.errors.full_message(error.attribute, error.message), ERROR_TARGETS[error.attribute] ]
-    end
-    organizer_errors.each do |attribute, message|
-      id, label = ORGANIZER_ERROR_TARGETS.fetch(attribute)
-      links << [ "#{label} #{message}", id ]
-    end
-    links
-  end
-
-  # SimpleForm 5.4.1 links neither its hint nor its error to the control, so
-  # every field on the planning form says so itself: the hint always, the
-  # error id and aria-invalid only once the server has rendered one.
-  def planning_field_aria(event, attribute, hint_id, error_id, required: false)
-    invalid = event.errors[attribute].any?
-    aria = { describedby: [ hint_id, (error_id if invalid) ].compact.join(" ") }
-    aria[:required] = true if required
-    aria[:invalid] = true if invalid
-    aria
+  def planning_error_links(event, organizer)
+    grid, fields = event.errors.partition { it.attribute == :base }
+    grid.map { [ it.message, "time-grid-define" ] } +
+      fields.map { [ it.full_message, it.attribute == :time_zone ? "timezone-picker-new" : "event_#{it.attribute}" ] } +
+      organizer.errors.map { [ "Your #{it.attribute} #{it.message}", "organizer_#{it.attribute}" ] }
   end
 
   # Every quarter hour up to four hours, then a few long stretches.

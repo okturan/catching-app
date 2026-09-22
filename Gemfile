@@ -18,7 +18,6 @@ gem "turbo-rails"
 
 # Application dependencies
 gem "devise"
-gem "simple_form"
 gem "tzinfo-data", platforms: %i[windows jruby]
 
 group :development, :test do

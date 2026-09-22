@@ -1,4 +1,4 @@
-# Application translations. Devise and Simple Form keep their own files here.
+# Application translations. Devise keeps its own file here.
 en:
   meta:
     title: We have some catching app to do!

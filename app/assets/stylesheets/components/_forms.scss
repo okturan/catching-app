@@ -21,6 +21,14 @@
   }
 }
 
+// Inside a single-column face the 422 summary is an edge, not a second face.
+.form-inputs .error-summary {
+  box-shadow: none;
+  margin-bottom: 1rem;
+
+  h2 { font-size: 1.2rem; margin-bottom: 0.5rem; }
+}
+
 .form-actions {
   width: min(440px, 100%);
   margin: 0 auto 1rem;

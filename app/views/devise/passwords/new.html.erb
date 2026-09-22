@@ -1,17 +1,13 @@
 <h2>Forgot your password?</h2>
 
-<%= simple_form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :post }) do |f| %>
-  <%= f.error_notification %>
-
+<%= form_with model: resource, scope: resource_name, url: password_path(resource_name), method: :post do |form| %>
   <div class="form-inputs">
-    <%= f.input :email,
-                required: true,
-                autofocus: true,
-                input_html: { autocomplete: "email" } %>
+    <%= form.error_summary %>
+    <%= form.field :email, as: :email_field, required: true, autofocus: true, autocomplete: "email" %>
   </div>
 
   <div class="form-actions">
-    <%= f.button :submit, "Send me reset password instructions" %>
+    <%= form.submit "Send me reset password instructions", class: "btn btn-primary" %>
   </div>
 <% end %>
 

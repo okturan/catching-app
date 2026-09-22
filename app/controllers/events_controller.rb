@@ -10,28 +10,25 @@ class EventsController < ApplicationController
     # No zone yet: the column's UTC default would win over the browser's own
     # zone in the picker and paint every visitor the wrong hours.
     @event = Event.new(time_zone: nil)
-    @organizer = organizer_attributes
-    @organizer_errors = {}
+    @organizer = Participant.organizer.new(organizer_attributes)
   end
 
   # Anyone with an email address can plan. Nothing goes to guests until the
   # organizer opens the emailed link.
   def create
-    @organizer = organizer_attributes
-    MailDelivery::Caps.check_event_creation!(organizer_email: @organizer[:email], request_ip: request.remote_ip)
+    @organizer = Participant.organizer.new(organizer_attributes)
+    MailDelivery::Caps.check_event_creation!(organizer_email: @organizer.email, request_ip: request.remote_ip)
 
-    @event = Event.plan!(attributes: event_params, organizer: @organizer.merge(user: current_user),
+    @event = Event.plan!(attributes: event_params, organizer: { name: @organizer.name, email: @organizer.email, user: current_user },
       starts_at: parsed_time_slots(slot_minutes: requested_slot_minutes))
     Deliveries.organizer_link!(event: @event, organizer: @event.organizer, request_ip: request.remote_ip)
 
-    flash[:organizer_email] = @organizer[:email]
+    flash[:organizer_email] = @organizer.email
     redirect_to pending_events_path, notice: "Event created."
   rescue MailDelivery::CapExceeded => refusal
     redirect_to new_event_path, alert: refusal.message, status: :see_other
-  rescue ActiveRecord::RecordInvalid => invalid
-    # Re-validating the event reproduces its own errors; the organizer's
-    # have no record on this page, so they are carried across by hand.
-    render_form_again(organizer: invalid.record.is_a?(Participant) ? invalid.record : nil)
+  rescue ActiveRecord::RecordInvalid
+    render_form_again
   rescue Refusal => refusal
     render_form_again(base: refusal.message)
   end
@@ -42,11 +39,14 @@ class EventsController < ApplicationController
 
   private
 
-  def render_form_again(organizer: nil, base: nil)
+  # Every mistake at once: the event and its organizer are validated afresh,
+  # and a refusal about the grid joins them as the event's base error.
+  def render_form_again(base: nil)
     @event = Event.new(event_params)
     @event.validate
     @event.errors.add(:base, base) if base
-    @organizer_errors = organizer ? { name: organizer.errors[:name].first, email: organizer.errors[:email].first }.compact : {}
+    @organizer = @event.participants.organizer.new(organizer_attributes)
+    @organizer.validate
     render :new, status: :unprocessable_entity
   end
 
@@ -64,8 +64,7 @@ class EventsController < ApplicationController
     if user_signed_in?
       { email: current_user.email, name: current_user.full_name }
     else
-      posted = params.fetch(:organizer, {}).permit(:name, :email)
-      { email: Participant.normalize_value_for(:email, posted[:email].to_s), name: Participant.normalize_value_for(:name, posted[:name].to_s) }
+      params.fetch(:organizer, {}).permit(:name, :email)
     end
   end
 end

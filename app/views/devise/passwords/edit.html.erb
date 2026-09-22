@@ -1,26 +1,17 @@
 <h2>Change your password</h2>
 
-<%= simple_form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :put }) do |f| %>
-  <%= f.error_notification %>
-
-  <%= f.input :reset_password_token, as: :hidden %>
-  <%= f.full_error :reset_password_token %>
+<%= form_with model: resource, scope: resource_name, url: password_path(resource_name), method: :put do |form| %>
+  <%= form.hidden_field :reset_password_token %>
 
   <div class="form-inputs">
-    <%= f.input :password,
-                label: "New password",
-                required: true,
-                autofocus: true,
-                hint: ("#{@minimum_password_length} characters minimum" if @minimum_password_length),
-                input_html: { autocomplete: "new-password" } %>
-    <%= f.input :password_confirmation,
-                label: "Confirm your new password",
-                required: true,
-                input_html: { autocomplete: "new-password" } %>
+    <%= form.error_summary %>
+    <%= form.field :password, as: :password_field, label: "New password", required: true, autofocus: true, autocomplete: "new-password",
+          hint: ("#{@minimum_password_length} characters minimum" if @minimum_password_length) %>
+    <%= form.field :password_confirmation, as: :password_field, label: "Confirm your new password", required: true, autocomplete: "new-password" %>
   </div>
 
   <div class="form-actions">
-    <%= f.button :submit, "Change my password" %>
+    <%= form.submit "Change my password", class: "btn btn-primary" %>
   </div>
 <% end %>
 

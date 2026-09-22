@@ -118,7 +118,8 @@ module Participations
 
       assert_response :unprocessable_entity
       assert_select "input[name='event[place_url]'].is-invalid[value=?]", "ftp://files.example"
-      assert_select ".invalid-feedback", text: "must be a web address starting with http:// or https://"
+      assert_select "#event_place_url_error.invalid-feedback", text: "Link must be a web address starting with http:// or https://"
+      assert_select "#error-summary a[href='#event_place_url']", text: "Link must be a web address starting with http:// or https://"
       assert_select "form form", count: 0
       @event.reload
       assert_nil @event.place_url
@@ -126,8 +127,8 @@ module Participations
 
       patch participation_details_path(@organizer_token), params: { event: { name: "", description: "x", duration_minutes: "45" } }
       assert_response :unprocessable_entity
-      assert_select ".invalid-feedback", text: "can't be blank"
-      assert_select ".invalid-feedback", text: "must be a whole number of 60-minute slots"
+      assert_select ".invalid-feedback", text: "Name can't be blank"
+      assert_select ".invalid-feedback", text: "Planned length must be a whole number of 60-minute slots"
       assert_equal "Planning session", @event.reload.name
     end
 
