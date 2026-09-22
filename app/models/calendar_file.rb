@@ -6,13 +6,11 @@
 # nor any URL travels, so a mail never carries an organizer-supplied link.
 # Neither mode carries a capability token or an ORGANIZER property.
 #
-# The window is passed by the mailers so a job retried after
-# a reopen still renders what was set; the page passes nothing and the
-# event's own window is used. STATUS follows the event unless the caller
-# says otherwise (the reopened mail withdraws a window that is not cancelled).
+# The window is passed by the mailers so a job retried after a reopen still
+# renders what was set; the page passes nothing and the event's own window
+# is used. STATUS follows the event unless the caller says otherwise (the
+# reopened mail withdraws a window that is not cancelled).
 class CalendarFile
-  include MailTextHelper
-
   STATUSES = { confirmed: "CONFIRMED", cancelled: "CANCELLED" }.freeze
   PRODID = "-//Catching App//EN".freeze
   ALARM_TRIGGER = "-PT15M".freeze
@@ -21,7 +19,7 @@ class CalendarFile
   CRLF = "\r\n".freeze
   ESCAPES = { "\\" => "\\\\", ";" => "\\;", "," => "\\,", "\n" => "\\n" }.freeze
 
-  attr_reader :event, :mode, :window, :status
+  attr_reader :event, :mode, :window, :status, :sequence
 
   def initialize(event, mode:, window: nil, status: nil, sequence: nil)
     @event = event
@@ -56,12 +54,12 @@ class CalendarFile
       "BEGIN:VEVENT",
       "UID:#{uid}",
       "DTSTAMP:#{utc(Time.current)}",
-      "SEQUENCE:#{@sequence}",
+      "SEQUENCE:#{sequence}",
       "DTSTART:#{utc(start_time)}",
       "DTEND:#{utc(end_time)}",
       "SUMMARY:#{escape(name)}",
-      (place.present? ? "LOCATION:#{escape(place)}" : nil),
-      (page? && event.place_url.present? ? "URL:#{event.place_url}" : nil),
+      ("LOCATION:#{escape(place)}" if place.present?),
+      ("URL:#{event.place_url}" if page? && event.place_url.present?),
       "STATUS:#{STATUSES.fetch(status)}",
       "DESCRIPTION:#{escape(description)}",
       "BEGIN:VALARM",
@@ -102,7 +100,7 @@ class CalendarFile
   # Organizer text reaches a mail only through mail_safe; the page shows the
   # same words the reader already sees.
   def text(value)
-    page? ? value.to_s : mail_safe(value)
+    page? ? value.to_s : MailTextHelper.mail_safe(value)
   end
 
   def host

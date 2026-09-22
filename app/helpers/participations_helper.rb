@@ -11,30 +11,23 @@ module ParticipationsHelper
     delivered: "sent"
   }.freeze
 
-  # Delivery and reply state of a guest for the organizer table. A voided
-  # guest replied, but an offer revision took every pick away.
-  def guest_state(guest, deliveries)
-    return :left if guest.left?
-    return :declined if guest.declined_at.present?
-    return :needs_reply if guest.voided?
-    return :replied if guest.responded_at.present?
-    return :not_sent if guest.token_digest.nil?
-
-    last = (deliveries[guest.id] || []).last
-    last ? last.state : :queued
-  end
-
-  def guest_state_label(guest, deliveries, slot_count: nil)
-    state = guest_state(guest, deliveries)
+  # A guest's line in the organizer table: their reply first, then the fate
+  # of their last invitation. A voided guest replied, but an offer revision
+  # took every pick away.
+  def guest_state_label(guest, invitations, slot_count:)
+    last_invitation = invitations[guest.id]&.last
+    state = guest_state(guest, last_invitation)
     label = STATE_LABELS.fetch(state)
-    if state == :replied && slot_count
-      detail = pluralize(slot_count, "slot")
-      detail += ", before the last change" if guest.replied_before_revision?
-      label = "#{label} (#{detail})"
+
+    case state
+    when :replied
+      details = [ pluralize(slot_count, "slot"), ("before the last change" if guest.replied_before_revision?) ]
+      "#{label} (#{details.compact.join(", ")})"
+    when :delivered
+      safe_join([ label, " on ", zoned_time(last_invitation.delivered_at, guest.event.time_zone, format: :date_time) ])
+    else
+      label
     end
-    last = (deliveries[guest.id] || []).last
-    label = "#{label} on #{l(last.delivered_at, format: :short)}" if state == :delivered && last&.delivered_at
-    label
   end
 
   # "Tue 15 Jan 20:00–21:00 (Europe/Berlin)", the way the page's JavaScript
@@ -42,5 +35,17 @@ module ParticipationsHelper
   def event_window(event)
     start_time, end_time = [ event.start_time, event.end_time ].map { it.in_time_zone(event.time_zone) }
     "#{start_time.to_fs(:day)} #{start_time.to_fs(:time)}–#{end_time.to_fs(:time)} (#{event.time_zone})"
+  end
+
+  private
+
+  def guest_state(guest, last_invitation)
+    return :left if guest.left?
+    return :declined if guest.declined_at?
+    return :needs_reply if guest.voided?
+    return :replied if guest.responded_at?
+    return :not_sent unless guest.token_digest?
+
+    last_invitation ? last_invitation.state : :queued
   end
 end

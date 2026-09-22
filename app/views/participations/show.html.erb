@@ -38,7 +38,7 @@
 
     <% if @participant.organizer? %>
       <%= render "participations/show/guests", event: @event, organizer: @participant, guests: @guests,
-            deliveries: @deliveries, counts: @counts, slot_counts: @slot_counts %>
+            invitations: @invitations, counts: @counts, slot_counts: @slot_counts %>
       <%= render "participations/show/ends", event: @event unless @event.cancelled? %>
     <% end %>
   </div>

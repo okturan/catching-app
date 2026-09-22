@@ -1,10 +1,12 @@
 # Mail text: organizer words without a clickable link, and every time with
 # its zone named.
 module MailTextHelper
-  # Organizer-supplied text never carries a clickable URL into a mail.
+  # Organizer-supplied text never carries a clickable URL into a mail. Also
+  # MailTextHelper.mail_safe, for the calendar file a mail attaches.
   def mail_safe(text)
     text.to_s.gsub(%r{[a-z][a-z0-9+.\-]*://}i, "").squish
   end
+  module_function :mail_safe
 
   # "Tue 15 Jan 2030 20:00–21:00 (Europe/Berlin)"
   def window_in(zone, start_time, end_time)

@@ -26,7 +26,7 @@
             <%= guest.email %>
             <% if guest.name.present? %><br><small><%= guest.name %></small><% end %>
           </td>
-          <td><%= guest_state_label(guest, deliveries, slot_count: slot_counts[guest.id].to_i) %></td>
+          <td><%= guest_state_label(guest, invitations, slot_count: slot_counts[guest.id].to_i) %></td>
           <td class="text-nowrap">
             <% if !guest.left? && event.open? && organizer.link_opened_at? %>
               <%= button_to "Resend", scoped_path(:participant_resend, guest), method: :post, class: "btn btn-link btn-sm p-0 me-2" %>
