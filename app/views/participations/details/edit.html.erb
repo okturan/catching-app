@@ -2,6 +2,9 @@
   <meta name="robots" content="noindex">
   <meta name="turbo-cache-control" content="no-cache">
 <% end %>
+<%# Every plan edit redirects back here: morph the page in place and keep the
+    organizer where they were in the plan, instead of scrolling to the top. %>
+<% turbo_refreshes_with method: :morph, scroll: :preserve %>
 <% content_for :canonical_url, root_url %>
 <% content_for :meta_title, "Edit details · #{@event.name} · Catching App" %>
 

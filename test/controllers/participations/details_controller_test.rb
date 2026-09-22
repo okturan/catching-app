@@ -325,5 +325,14 @@ module Participations
       get edit_my_participation_details_path(@organizer)
       assert_redirected_to new_session_path
     end
+
+    # A plan edit redirects back to this page; Turbo morphs it in place and
+    # keeps the organizer where they were instead of scrolling to the top.
+    test "the details page refreshes by morphing and keeps its scroll" do
+      get edit_participation_details_path(@organizer_token)
+
+      assert_select "meta[name='turbo-refresh-method'][content=morph]"
+      assert_select "meta[name='turbo-refresh-scroll'][content=preserve]"
+    end
   end
 end
