@@ -390,7 +390,7 @@ class EventTest < ActiveSupport::TestCase
     assert guest.reload.counting?
     assert_equal [ Time.utc(2030, 1, 15, 10) ], finalized.mutually_available_start_times
     assert_nil finalized.window_minutes
-    assert finalized.plan_timeline.all? { |_activity, start| start.nil? }, "derived starts need a set time"
+    assert finalized.plan_timeline.all? { |_item, start| start.nil? }, "derived starts need a set time"
   end
 
   test "reopen! refuses a pending event, a cancelled one and a third time with the exact messages" do

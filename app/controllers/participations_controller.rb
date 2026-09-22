@@ -14,15 +14,14 @@ class ParticipationsController < ParticipationScopedController
   def update
     @participant.reply!(parsed_time_slots(slot_minutes: @event.slot_minutes), params.fetch(:participant, {}).permit(:name, :time_zone))
 
-    redirect_to scoped_path, notice: "Availability saved."
+    redirect_to scoped_path, notice: "Availability saved.", status: :see_other
   end
 
   # Guest leaves for good.
   def destroy
-    name = @event.name
     @participant.leave!
 
-    redirect_to root_path, notice: "You left #{name}.", status: :see_other
+    redirect_to root_path, notice: "You left #{@event.name}.", status: :see_other
   end
 
   private

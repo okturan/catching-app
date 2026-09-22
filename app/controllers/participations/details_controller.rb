@@ -16,7 +16,7 @@ module Participations
     rescue ActiveRecord::RecordInvalid
       render :edit, status: :unprocessable_entity
     else
-      report = notify_guests(:details, changes: changes.to_h) if notice_requested? && changes.any?
+      report = notify_guests(:details, changes:) if notice_requested? && changes.any?
       redirect_to scoped_path, notice: [ "Details saved.", report ].compact.join(" "), status: :see_other
     end
 

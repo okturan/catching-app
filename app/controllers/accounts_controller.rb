@@ -9,7 +9,7 @@ class AccountsController < ApplicationController
     @user = Current.user
 
     if @user.update(account_params)
-      redirect_to edit_account_path, notice: "Your account was updated."
+      redirect_to edit_account_path, notice: "Your account was updated.", status: :see_other
     else
       render :edit, status: :unprocessable_entity
     end

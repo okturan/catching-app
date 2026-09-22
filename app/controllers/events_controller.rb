@@ -24,7 +24,7 @@ class EventsController < ApplicationController
     Deliveries.organizer_link!(event: @event, organizer: @event.organizer, request_ip: request.remote_ip)
 
     flash[:organizer_email] = @organizer.email
-    redirect_to pending_events_path, notice: "Event created."
+    redirect_to pending_events_path, notice: "Event created.", status: :see_other
   rescue MailDelivery::CapExceeded => refusal
     redirect_to new_event_path, alert: refusal.message, status: :see_other
   rescue ActiveRecord::RecordInvalid

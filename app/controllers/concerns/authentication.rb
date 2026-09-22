@@ -35,10 +35,11 @@ module Authentication
     Session.find_by(id: cookies.signed[:session_id]) if cookies.signed[:session_id]
   end
 
-  # Back to where the visitor was going once they have signed in.
+  # Back to where the visitor was going once they have signed in. A 303, so
+  # a signed-out DELETE is not repeated against the sign-in page.
   def request_authentication
     session[:return_to_after_authenticating] = request.url
-    redirect_to new_session_path
+    redirect_to new_session_path, status: :see_other
   end
 
   def after_authentication_url

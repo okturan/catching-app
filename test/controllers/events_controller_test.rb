@@ -145,8 +145,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
       assert_select "a[href='#event_place_url']", text: "Link must be a web address starting with http:// or https://"
       assert_select "a[href='#event_duration_minutes']", text: "Planned length must be a whole number of 30-minute slots"
     end
-    # The rescue no longer appends the exception on top of the record's own
-    # errors, so the summary and the field's own message are the only copies.
+    # The summary and the field's own message are the only copies.
     assert_equal 2, response.body.scan("must be a web address starting with http:// or https://").size
     assert_select "#event_place_url[aria-invalid=true][aria-describedby=?]", "event_place_url_help event_place_url_error"
 

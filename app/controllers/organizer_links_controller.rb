@@ -1,19 +1,18 @@
 # Lost-link recovery. The response is constant whatever the address is.
 class OrganizerLinksController < ApplicationController
-  allow_unauthenticated_access
-
-  rate_limit to: 5, within: 1.hour, only: :create
-
   NOTICE = "If that address organizes an event, we sent it a new link.".freeze
+
+  allow_unauthenticated_access
+  rate_limit to: 5, within: 1.hour, only: :create
 
   def new
   end
 
   def create
-    email = params.dig(:organizer_link, :email).to_s.strip.downcase
+    email = Participant.normalize_value_for(:email, params.dig(:organizer_link, :email).to_s)
     if email.match?(Participant::EMAIL_FORMAT) && MailDelivery::Caps.organizer_link_allowed?(email)
-      Participant.organizer.active.where(email: email).joins(:event).merge(Event.not_cancelled).find_each do |organizer|
-        Deliveries.organizer_link!(event: organizer.event, organizer: organizer, request_ip: request.remote_ip, pending: true)
+      Participant.organizer.active.where(email:).joins(:event).merge(Event.not_cancelled).includes(:event).each do |organizer|
+        Deliveries.organizer_link!(event: organizer.event, organizer:, request_ip: request.remote_ip, pending: true)
       end
     end
 

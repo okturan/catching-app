@@ -17,7 +17,7 @@ module Participations
       end
 
       if claimed == 1
-        redirect_to my_participation_path(@participant), notice: "Saved to your account."
+        redirect_to my_participation_path(@participant), notice: "Saved to your account.", status: :see_other
       else
         @participant.reload
         explain_failed_claim
@@ -36,7 +36,7 @@ module Participations
 
     def explain_failed_claim
       if claimed_by_current_user?
-        redirect_to my_participation_path(@participant), notice: "This event is already in your account."
+        redirect_to my_participation_path(@participant), notice: "This event is already in your account.", status: :see_other
       elsif @participant.left?
         flash.now[:alert] = "This link can no longer be claimed"
         render :show, status: :unprocessable_entity

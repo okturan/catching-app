@@ -7,7 +7,7 @@ module Participations
       guest = target_guest(params[:id])
       @event.with_lock { guest.destroy! }
 
-      redirect_to scoped_path, notice: "#{guest.email} removed."
+      redirect_to scoped_path, notice: "#{guest.email} removed.", status: :see_other
     end
   end
 end

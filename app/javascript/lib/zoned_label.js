@@ -1,7 +1,8 @@
 import { DateTime } from "luxon";
 
-// The two shapes a zoned instant takes, matching EventsHelper::ZONED_FORMATS:
-// a clock reading, or a full date with the clock (data-zoned-format="date-time").
+// The two shapes a zoned instant takes, matching Rails' :time and the
+// :date_time of config/initializers/time_formats.rb: a clock reading, or a
+// full date with the clock (data-zoned-format="date-time").
 const FORMATS = {
   time: "HH:mm",
   "date-time": "ccc d LLL yyyy HH:mm",

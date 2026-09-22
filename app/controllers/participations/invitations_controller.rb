@@ -9,7 +9,7 @@ module Participations
       guests = @event.participants.unsent.order(:created_at).to_a
       guests.each { Deliveries.invitation!(event: @event, guest: it, organizer: @participant, request_ip: request.remote_ip) }
 
-      redirect_to scoped_path, notice: [
+      redirect_to scoped_path, status: :see_other, notice: [
         ("#{added.size} added." if added.any?),
         "#{helpers.pluralize(guests.size, "invitation")} sent.",
         ("#{already.to_sentence} already on this event." if already.any?)

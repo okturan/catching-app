@@ -6,7 +6,7 @@ module Participations
       guest = target_guest(params[:participant_id])
       Deliveries.invitation!(event: @event, guest:, organizer: @participant, request_ip: request.remote_ip)
 
-      redirect_to scoped_path, notice: "Invitation sent again to #{guest.email}."
+      redirect_to scoped_path, notice: "Invitation sent again to #{guest.email}.", status: :see_other
     end
   end
 end

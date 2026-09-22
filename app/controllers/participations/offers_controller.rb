@@ -73,7 +73,6 @@ module Participations
       @past_count = offered.size - future.size
       @current_offer = future.map(&:iso8601)
       @hydrated = echo || @current_offer.join(",")
-      @not_before = cutoff.utc.iso8601
       @begin_min = Time.current.in_time_zone(@event.time_zone).to_date.iso8601
       @guest_picked_counts = @event.time_slots.where(participant: @event.guests.counting).group(:start_time).count
         .transform_keys(&:iso8601)

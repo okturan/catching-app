@@ -28,7 +28,7 @@ class ParticipationScopedController < ApplicationController
     redirect_to scoped_path, alert: invalid.record.errors.full_messages.to_sentence, status: :see_other
   end
 
-  helper_method :token_request?, :scoped_path, :viewer_role
+  helper_method :token_request?, :scoped_path
 
   private
 

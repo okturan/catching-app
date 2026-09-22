@@ -85,8 +85,8 @@ class ParticipationRoutesTest < ActionDispatch::IntegrationTest
     assert_raises(ActionController::RoutingError) { Rails.application.routes.recognize_path("/events/1/time_slots", method: :post) }
   end
 
-  test "the account-only plan_items routes are gone" do
-    [ [ "/events/1/plan", :get ], [ "/events/1/plan", :post ], [ "/events/1/plan/new", :get ], [ "/events/1/plan/2", :get ] ].each do |path, method|
+  test "the account-only activities routes are gone" do
+    [ [ "/events/1/activities", :get ], [ "/events/1/activities", :post ], [ "/events/1/activities/new", :get ], [ "/events/1/activities/2", :get ] ].each do |path, method|
       assert_raises(ActionController::RoutingError, "#{method.upcase} #{path} still routes") do
         Rails.application.routes.recognize_path(path, method: method)
       end

@@ -36,6 +36,15 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert Session.exists?(elsewhere.id)
   end
 
+  # Turbo sends Sign out as a real DELETE, and a browser repeats that method
+  # on a 302; only a 303 lands on the sign-in page.
+  test "signing out after the session is gone answers 303" do
+    delete session_path
+
+    assert_response :see_other
+    assert_redirected_to new_session_path
+  end
+
   test "sign-in attempts are rate limited" do
     with_rate_limit_count(11) do
       post session_path, params: { email: "owner@example.com", password: PASSWORD }

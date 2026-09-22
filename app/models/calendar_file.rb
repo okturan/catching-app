@@ -6,7 +6,7 @@
 # nor any URL travels, so a mail never carries an organizer-supplied link.
 # Neither mode carries a capability token or an ORGANIZER property.
 #
-# The window is passed by the mailers (amendment 2) so a job retried after
+# The window is passed by the mailers so a job retried after
 # a reopen still renders what was set; the page passes nothing and the
 # event's own window is used. STATUS follows the event unless the caller
 # says otherwise (the reopened mail withdraws a window that is not cancelled).
