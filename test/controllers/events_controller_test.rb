@@ -11,7 +11,6 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     {
       event: { name: "Project kickoff", description: "Find a kickoff time", slot_minutes: 30, time_zone: "Europe/Berlin" },
       organizer: { name: "Ann Organizer", email: "Ann@example.com" },
-      invitations: { emails: "Bob@example.com\ncy@example.com, ann@example.com" },
       time_slots: { time_slot_array: @slots.map(&:iso8601).join(",") }
     }.deep_merge(overrides)
   end
@@ -50,7 +49,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "an anonymous organizer plans an event and gets only the organizer link" do
-    assert_difference({ "Event.count" => 1, "Participant.count" => 3, "TimeSlot.count" => 2, "MailDelivery.organizer_link.count" => 1 }) do
+    assert_difference({ "Event.count" => 1, "Participant.count" => 1, "TimeSlot.count" => 2, "MailDelivery.organizer_link.count" => 1 }) do
       assert_enqueued_emails 1 do
         post events_path, params: valid_params
       end
@@ -64,8 +63,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_nil organizer.user
     assert_nil organizer.link_opened_at
     assert organizer.token_digest.present?
-    assert_equal %w[bob@example.com cy@example.com], event.guests.order(:email).pluck(:email)
-    assert event.guests.all? { |guest| guest.token_digest.nil? }
+    assert_empty event.guests
     assert_equal 0, MailDelivery.invitation.count
     assert_equal @slots.map(&:utc), event.time_slots.where(participant_id: organizer.id).order(:start_time).pluck(:start_time)
 
@@ -123,7 +121,7 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     assert_match "Time slots must use ISO 8601 timestamps", response.body
   end
 
-  test "empty availability, unknown zones, bad addresses and a missing organizer are validation errors" do
+  test "empty availability, unknown zones and a missing organizer are validation errors" do
     post events_path, params: valid_params(time_slots: { time_slot_array: "" })
     assert_response :unprocessable_entity
     assert_match "Select at least one time slot", response.body
@@ -131,10 +129,6 @@ class EventsControllerTest < ActionDispatch::IntegrationTest
     post events_path, params: valid_params(event: { time_zone: "Mars/Olympus" })
     assert_response :unprocessable_entity
     assert_match "is not a known time zone", response.body
-
-    post events_path, params: valid_params(invitations: { emails: "nope" })
-    assert_response :unprocessable_entity
-    assert_match "nope is not a valid email address", response.body
 
     post events_path, params: valid_params(organizer: { name: "", email: "not-an-address" })
     assert_response :unprocessable_entity

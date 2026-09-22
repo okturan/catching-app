@@ -91,7 +91,7 @@ class CalendarFile
   # Mail mode: the plan and the credit only.
   def description
     paragraphs = []
-    paragraphs << event.description.to_s.strip if page? && event.description.present?
+    paragraphs << event.description if page? && event.description.present?
     plan_lines = event.activities.each_with_index.map do |activity, index|
       length = activity.duration ? " (#{duration_label(activity.duration)})" : ""
       "#{index + 1}. #{text(activity.name)}#{length}"
@@ -108,7 +108,7 @@ class CalendarFile
   end
 
   def host
-    Rails.application.config.action_mailer.default_url_options&.dig(:host) || "catching.app"
+    Rails.application.config.action_mailer.default_url_options.fetch(:host)
   end
 
   def utc(instant)

@@ -16,7 +16,7 @@ module ParticipationsHelper
   def guest_state(guest, deliveries)
     return :left if guest.left?
     return :declined if guest.declined_at.present?
-    return :needs_reply if guest.reply_voided_at.present?
+    return :needs_reply if guest.voided?
     return :replied if guest.responded_at.present?
     return :not_sent if guest.token_digest.nil?
 

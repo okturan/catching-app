@@ -633,9 +633,8 @@ class ParticipationsControllerTest < ActionDispatch::IntegrationTest
     event = Event.plan!(
       attributes: { name: "Fresh", description: "new", slot_minutes: 30, time_zone: "UTC" },
       organizer: { email: users(:owner).email, name: users(:owner).full_name, user: users(:owner) },
-      starts_at: [ Time.utc(2031, 5, 1, 9) ],
-      invitee_emails: [ "someone@example.com" ]
-    )
+      starts_at: [ Time.utc(2031, 5, 1, 9) ]
+    ).tap { it.participants.guest.create!(email: "someone@example.com") }
     organizer = event.organizer
     live = organizer.issue_live_token!
 

@@ -12,7 +12,6 @@ class EventSchedulingWorkflowTest < ActionDispatch::IntegrationTest
     post events_path, params: {
       event: { name: "Catch up", description: "Schedule a call", slot_minutes: 30, time_zone: "Europe/Berlin" },
       organizer: { name: "Ann", email: "ann@example.com" },
-      invitations: { emails: "guest@example.com" },
       time_slots: { time_slot_array: [ first_time, second_time ].map(&:iso8601).join(",") }
     }
     assert_redirected_to pending_events_path
@@ -26,7 +25,7 @@ class EventSchedulingWorkflowTest < ActionDispatch::IntegrationTest
     assert organizer.reload.link_opened_at.present?
     assert MailDelivery.organizer_link.last.delivered_at.present?
 
-    post "#{organizer_link}/invitations"
+    post "#{organizer_link}/invitations", params: { invitations: { emails: "guest@example.com" } }
     assert_redirected_to organizer_link
     perform_enqueued_jobs
     guest_link = link_from(ActionMailer::Base.deliveries.last, to: "guest@example.com")

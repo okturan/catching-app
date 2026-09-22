@@ -36,7 +36,7 @@ class Participant < ApplicationRecord
 
     # Strips mail-client suffixes such as a trailing "." or ")".
     def canonical_token(raw_token)
-      raw_token.to_s.sub(/[^A-Za-z0-9]+\z/, "")
+      raw_token.sub(/[^A-Za-z0-9]+\z/, "")
     end
 
     # Resolves a raw token without a query when it cannot be a token. A pending
@@ -59,14 +59,6 @@ class Participant < ApplicationRecord
         canonical_token: canonical
       )
     end
-
-    def find_by_token(raw_token)
-      resolve_token(raw_token)&.participant
-    end
-
-    def find_by_token!(raw_token)
-      find_by_token(raw_token) or raise ActiveRecord::RecordNotFound.new("participant not found", name)
-    end
   end
 
   def counting?
@@ -86,11 +78,9 @@ class Participant < ApplicationRecord
     user_id.present?
   end
 
-  # The name as another participant should see it.
-  def display_name(viewer_role: :guest)
-    return name if name.present?
-
-    viewer_role.to_s == "organizer" ? email : "Guest"
+  # The name other participants see: an address is never shown to guests.
+  def display_name
+    name || "Guest"
   end
 
   def issue_live_token!
@@ -125,10 +115,6 @@ class Participant < ApplicationRecord
     promoted = self.class.where(id: id, pending_token_digest: pending_digest).update_all(changes)
     reload
     promoted == 1
-  end
-
-  def revoke_tokens!
-    update!(token_digest: nil, pending_token_digest: nil, pending_token_expires_at: nil)
   end
 
   # The guest's kill switch: slots gone, both credentials gone, claim gone.

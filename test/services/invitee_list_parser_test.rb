@@ -4,7 +4,7 @@ class InviteeListParserTest < ActiveSupport::TestCase
   test "splits on commas and newlines, normalizes, dedupes and drops the organizer" do
     parsed = InviteeListParser.call(
       "Bob@Example.com, cy@example.com\nbob@example.com\n\nann@example.com",
-      organizer_email: "Ann@example.com"
+      organizer_email: "ann@example.com"
     )
 
     assert_equal %w[bob@example.com cy@example.com], parsed

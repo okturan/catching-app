@@ -23,9 +23,8 @@ module Participations
       event = Event.plan!(
         attributes: { name: "Fresh", description: "new", slot_minutes: 30, time_zone: "Europe/Berlin" }.merge(attributes),
         organizer: { email: users(:owner).email, name: users(:owner).full_name, user: users(:owner) },
-        starts_at: [ Time.utc(2031, 5, 1, 9), Time.utc(2031, 5, 1, 9, 30) ],
-        invitee_emails: [ "someone@example.com" ]
-      )
+        starts_at: [ Time.utc(2031, 5, 1, 9), Time.utc(2031, 5, 1, 9, 30) ]
+      ).tap { it.participants.guest.create!(email: "someone@example.com") }
       event.organizer.update_columns(link_opened_at: Time.current)
       [ event, event.organizer.issue_live_token! ]
     end

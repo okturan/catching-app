@@ -96,11 +96,9 @@ module MailDelivery::Caps
   def check_event_creation!(organizer_email:, request_ip:)
     day = 24.hours.ago
     canonical = MailDelivery.canonical(organizer_email)
-    recent = Participant.organizer.where(created_at: day..).pluck(:email, :link_opened_at)
-      .select { |email, _opened| MailDelivery.canonical(email) == canonical }
-    opened, unopened = recent.partition { |_email, opened_at| opened_at.present? }
-
-    raise MailDelivery::CapExceeded, CREATION_MESSAGE if opened.size >= OPENED_EVENTS_PER_ORGANIZER_PER_DAY
+    opened = Participant.organizer.where(created_at: day..).where.not(link_opened_at: nil).pluck(:email)
+      .count { MailDelivery.canonical(it) == canonical }
+    raise MailDelivery::CapExceeded, CREATION_MESSAGE if opened >= OPENED_EVENTS_PER_ORGANIZER_PER_DAY
 
     if request_ip.present?
       unopened_links = MailDelivery.organizer_link.since(day).where(request_ip: request_ip)
@@ -110,7 +108,6 @@ module MailDelivery::Caps
         raise MailDelivery::CapExceeded, CREATION_MESSAGE
       end
     end
-    unopened
   end
 
   def organizer_has_finalized?(organizer)

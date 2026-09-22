@@ -69,9 +69,8 @@ module Participations
       event = Event.plan!(
         attributes: { name: "Fresh", description: "new", slot_minutes: 60, time_zone: "UTC" },
         organizer: { email: "ann@example.com", name: "Ann", user: nil },
-        starts_at: [ Time.utc(2031, 5, 1, 9) ],
-        invitee_emails: [ "someone@example.com" ]
-      )
+        starts_at: [ Time.utc(2031, 5, 1, 9) ]
+      ).tap { it.participants.guest.create!(email: "someone@example.com") }
       token = event.organizer.issue_live_token!
 
       post participation_cancellation_path(token)

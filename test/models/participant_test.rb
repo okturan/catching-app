@@ -8,13 +8,12 @@ class ParticipantTest < ActiveSupport::TestCase
 
     assert_match Participant::TOKEN_FORMAT, raw
     assert_equal Digest::SHA256.hexdigest(raw), guest.reload.token_digest
-    assert_equal guest, Participant.find_by_token(raw)
-    assert_nil Participant.find_by_token(raw.reverse)
+    assert_equal guest, Participant.resolve_token(raw).participant
+    assert_nil Participant.resolve_token(raw.reverse)
   end
 
   test "a malformed token runs zero queries" do
-    assert_queries_count(0) { assert_nil Participant.find_by_token("short") }
-    assert_queries_count(0) { assert_nil Participant.find_by_token(nil) }
+    assert_queries_count(0) { assert_nil Participant.resolve_token("short") }
   end
 
   test "trailing punctuation from a mail client is stripped and reported" do
@@ -34,7 +33,7 @@ class ParticipantTest < ActiveSupport::TestCase
 
     assert resolution.via_pending
     assert_equal guest, resolution.participant
-    assert_equal guest, Participant.find_by_token(old_raw)
+    assert_equal guest, Participant.resolve_token(old_raw).participant
     assert_nil guest.reload.pending_token_expires_at
     assert_equal users(:invitee).id, guest.user_id
 
@@ -43,7 +42,7 @@ class ParticipantTest < ActiveSupport::TestCase
     assert_equal Participant.digest(pending_raw), guest.token_digest
     assert_nil guest.pending_token_digest
     assert_nil guest.user_id, "promotion by someone other than the claimant clears the claim"
-    assert_nil Participant.find_by_token(old_raw)
+    assert_nil Participant.resolve_token(old_raw)
   end
 
   test "promotion by the claiming account keeps the claim" do
@@ -59,9 +58,9 @@ class ParticipantTest < ActiveSupport::TestCase
     organizer = participants(:planning_organizer)
     pending_raw = organizer.issue_pending_token!(expires_in: 24.hours)
 
-    assert_equal organizer, Participant.find_by_token(pending_raw)
+    assert_equal organizer, Participant.resolve_token(pending_raw).participant
     travel 25.hours do
-      assert_nil Participant.find_by_token(pending_raw)
+      assert_nil Participant.resolve_token(pending_raw)
     end
   end
 
@@ -110,9 +109,8 @@ class ParticipantTest < ActiveSupport::TestCase
   test "display name never leaks an email to other guests" do
     guest = participants(:planning_pending)
 
-    assert_equal "Guest", guest.display_name(viewer_role: :guest)
-    assert_equal "pending@example.com", guest.display_name(viewer_role: :organizer)
-    assert_equal "Ian Invitee", participants(:planning_guest).display_name(viewer_role: :guest)
+    assert_equal "Guest", guest.display_name
+    assert_equal "Ian Invitee", participants(:planning_guest).display_name
   end
 
   test "one email per event and one organizer per event" do
@@ -209,7 +207,7 @@ class ParticipantTest < ActiveSupport::TestCase
     assert guest.declined_at.present?
     assert_nil guest.user_id
     assert_nil guest.token_digest
-    assert_nil Participant.find_by_token(raw_token(:planning_guest))
+    assert_nil Participant.resolve_token(raw_token(:planning_guest))
   end
 
   test "a voided guest leaves without a check violation" do

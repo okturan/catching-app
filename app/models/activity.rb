@@ -17,7 +17,7 @@ class Activity < ApplicationRecord
   private
 
   def plan_size
-    return unless event && event.activities.count >= MAX_PER_EVENT
+    return unless event.activities.count >= MAX_PER_EVENT
 
     errors.add(:base, "The plan can have at most #{MAX_PER_EVENT} items")
   end

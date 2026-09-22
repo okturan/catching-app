@@ -9,9 +9,8 @@ class EventContentionTest < ActiveSupport::TestCase
     @event = Event.plan!(
       attributes: { name: "Contention", description: "lock test", slot_minutes: 60, time_zone: "UTC" },
       organizer: { email: "lock-organizer@example.com", name: "Lock", user: nil },
-      starts_at: [ Time.utc(2031, 3, 1, 10) ],
-      invitee_emails: [ "lock-guest@example.com" ]
-    )
+      starts_at: [ Time.utc(2031, 3, 1, 10) ]
+    ).tap { it.participants.guest.create!(email: "lock-guest@example.com") }
     @guest = @event.guests.first
     @event.replace_time_slots!(participant: @guest, starts_at: [ Time.utc(2031, 3, 1, 10) ])
     @guest.update!(responded_at: Time.current)

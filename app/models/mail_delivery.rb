@@ -16,9 +16,6 @@ class MailDelivery < ApplicationRecord
 
   validates :recipient_email, presence: true
 
-  scope :delivered, -> { where.not(delivered_at: nil) }
-  scope :failed, -> { where.not(failed_at: nil) }
-  scope :queued, -> { where(delivered_at: nil, failed_at: nil) }
   scope :since, ->(time) { where(created_at: time..) }
 
   # Cap key: plus-tags stripped; dots removed for Gmail. Plus-addressing must

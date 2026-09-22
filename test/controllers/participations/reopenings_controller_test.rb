@@ -111,7 +111,7 @@ module Participations
       get participation_path(second_token)
       assert_select "#availability-form"
       assert_select ".grid-notice", { count: 0 }, "a guest who never replied sees no note"
-      assert_equal second, Participant.find_by_token(second_token)
+      assert_equal second, Participant.resolve_token(second_token).participant
     end
 
     test "the organizer reopens through the session family and the guest who replied reads the note" do

@@ -85,7 +85,7 @@ module Deliveries
       raw_token = guest.claimed? ? nil : guest.issue_pending_token!
       delivery = record!(event: event, participant: guest, kind: :event_updated, recipient_email: guest.email,
         sender_email: MailDelivery.canonical(organizer.email), request_ip: request_ip)
-      enqueue(delivery, raw_token, reason: reason.to_s, changes: changes&.to_h)
+      enqueue(delivery, raw_token, reason:, changes:)
       sent += 1
     end
     mark_notified(event) if sent.positive?
@@ -118,7 +118,7 @@ module Deliveries
     told = 0
     event.participants.active.linked.find_each do |participant|
       delivery = record!(event: event, participant: participant, kind: :cancelled, recipient_email: participant.email,
-        sender_email: organizer && MailDelivery.canonical(organizer.email))
+        sender_email: MailDelivery.canonical(organizer.email))
       enqueue(delivery, nil, window: window, sequence: event.revision)
       told += 1
     end
@@ -140,7 +140,7 @@ module Deliveries
     event.guests.active.linked.find_each do |guest|
       raw_token = guest.claimed? ? nil : guest.issue_pending_token!
       delivery = record!(event: event, participant: guest, kind: :reopened, recipient_email: guest.email,
-        sender_email: organizer && MailDelivery.canonical(organizer.email))
+        sender_email: MailDelivery.canonical(organizer.email))
       enqueue(delivery, raw_token, previous_window: previous_window, sequence: event.revision)
       told += 1
     end

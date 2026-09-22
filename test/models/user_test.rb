@@ -35,10 +35,8 @@ class UserTest < ActiveSupport::TestCase
     assert_includes user.errors[:password], "is too short (minimum is 15 characters)"
   end
 
-  test "reaches events through participations and lets go of them on deletion" do
+  test "lets go of its participations on deletion" do
     owner = users(:owner)
-
-    assert_equal [ events(:finalized), events(:planning) ].sort_by(&:id), owner.events.order(:id).to_a
 
     owner.destroy!
 

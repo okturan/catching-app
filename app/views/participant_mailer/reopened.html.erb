@@ -1,6 +1,6 @@
 <p><strong><%= mail_safe(@event.name) %></strong> is no longer set for <%= @recipient_window %>.</p>
 <% if @recipient_window != @event_window %><p>In the event's zone: <%= @event_window %></p><% end %>
-<p><%= mail_safe(@organizer&.name) %> withdrew this time and is planning again.</p>
+<p><%= mail_safe(@organizer.name) %> withdrew this time and is planning again.</p>
 <% if @link %>
 <p>Your link:</p>
 <p><%= link_to @link, @link %></p>

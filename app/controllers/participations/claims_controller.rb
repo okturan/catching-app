@@ -24,7 +24,7 @@ module Participations
       end
     rescue ActiveRecord::RecordNotUnique
       other = current_user.participants.find_by(event_id: @event.id)
-      flash.now[:alert] = "You already take part in this event as #{other&.email}"
+      flash.now[:alert] = "You already take part in this event as #{other.email}"
       render :show, status: :unprocessable_entity
     end
 

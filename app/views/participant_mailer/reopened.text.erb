@@ -3,7 +3,7 @@
 In the event's zone: <%= @event_window %>
 <% end %>
 
-<%= mail_safe(@organizer&.name) %> withdrew this time and is planning again.
+<%= mail_safe(@organizer.name) %> withdrew this time and is planning again.
 <% if @link %>
 
 Your link:

@@ -48,7 +48,7 @@
           <span id="final-window-local"></span>
         </div>
       <% else %>
-        <div class="event-when is-pending">Time to be confirmed by <%= @organizer&.display_name(viewer_role: :guest) %></div>
+        <div class="event-when is-pending">Time to be confirmed by <%= @organizer.display_name %></div>
       <% end %>
       <% if @participant.organizer? && !@event.cancelled? && @event.reopen_count.positive? %>
         <p class="event-reopened">
@@ -91,10 +91,10 @@
           <strong><%= @counts[:stale] %></strong> replied before the last change<% end %><% if @counts[:voided].positive? %>,
           <strong><%= @counts[:voided] %></strong> <%= @counts[:voided] == 1 ? "needs" : "need" %> a new reply<% end %>
         <% else %>
-          Organized by <strong><%= @organizer&.display_name(viewer_role: :guest) %></strong>. Also invited:
+          Organized by <strong><%= @organizer.display_name %></strong>. Also invited:
           <ul>
             <% @guests.active.each do |guest| %>
-              <li><%= guest.display_name(viewer_role: :guest) %></li>
+              <li><%= guest.display_name %></li>
             <% end %>
           </ul>
         <% end %>

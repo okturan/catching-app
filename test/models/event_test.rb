@@ -11,9 +11,8 @@ class EventTest < ActiveSupport::TestCase
     Event.plan!(
       attributes: { name: "Kickoff", description: "Find a time", slot_minutes: 60, time_zone: "UTC" }.merge(attributes),
       organizer: { email: "ann@example.com", name: "Ann", user: nil },
-      starts_at: starts_at,
-      invitee_emails: invitees
-    )
+      starts_at:
+    ).tap { |event| invitees.each { event.participants.guest.create!(email: it) } }
   end
 
   test "requires a name, a known zone and an allowed slot length" do
@@ -298,11 +297,10 @@ class EventTest < ActiveSupport::TestCase
     assert_in_delta Time.current, @event.cancelled_at, 5.seconds
     assert_equal 4, @event.revision
     assert_not @event.open?
-    assert @event.closed?
     assert_not @event.status?
     assert_equal before, counts.call
-    assert_equal @guest, Participant.find_by_token(raw_token(:planning_guest))
-    assert_equal @organizer, Participant.find_by_token(raw_token(:planning_organizer))
+    assert_equal @guest, Participant.resolve_token(raw_token(:planning_guest)).participant
+    assert_equal @organizer, Participant.resolve_token(raw_token(:planning_organizer)).participant
     assert_equal users(:invitee).id, @guest.reload.user_id
 
     error = assert_raises(Event::Closed) { @event.cancel! }
@@ -318,34 +316,15 @@ class EventTest < ActiveSupport::TestCase
     finalized.reload
     assert finalized.cancelled?
     assert finalized.status?
-    assert finalized.closed?
     assert_not finalized.open?
     assert_equal Time.utc(2030, 1, 15, 10), finalized.start_time
     assert_equal Time.utc(2030, 1, 15, 11), finalized.end_time
     assert_equal 1, finalized.revision
   end
 
-  test "cancelled_at cannot be changed or cleared once set" do
-    @event.cancel!
-    stamped = @event.reload.cancelled_at
-
-    @event.cancelled_at = 1.day.ago
-    assert_not @event.valid?
-    assert_equal [ "cannot be changed once cancelled" ], @event.errors[:cancelled_at]
-
-    @event.cancelled_at = nil
-    assert_not @event.valid?
-    assert_equal [ "cannot be changed once cancelled" ], @event.errors[:cancelled_at]
-
-    assert_raises(ActiveRecord::RecordInvalid) { @event.update!(cancelled_at: nil) }
-    assert_equal stamped, @event.reload.cancelled_at
-  end
-
   test "open, finalized and cancelled are three states and not_cancelled reads two of them" do
     assert @event.open?
-    assert_not @event.closed?
     assert_not events(:finalized).open?
-    assert events(:finalized).closed?
     assert_includes Event.not_cancelled, @event
     assert_includes Event.not_cancelled, events(:finalized)
 
@@ -487,17 +466,16 @@ class EventTest < ActiveSupport::TestCase
     end
   end
 
-  test "plan! creates the event, organizer, offer and guests atomically" do
+  test "plan! creates the event, its organizer and the offer together" do
     event = nil
-    assert_difference({ "Event.count" => 1, "Participant.count" => 3, "TimeSlot.count" => 2 }) do
-      event = plan(invitees: [ "bob@example.com", "cy@example.com", "ann@example.com", "bob@example.com" ])
+    assert_difference({ "Event.count" => 1, "Participant.count" => 1, "TimeSlot.count" => 2 }) do
+      event = plan(invitees: [])
     end
 
     assert_equal "ann@example.com", event.organizer.email
     assert event.organizer.responded_at.present?
     assert_nil event.organizer.link_opened_at
-    assert_equal %w[bob@example.com cy@example.com], event.guests.order(:email).pluck(:email)
-    assert event.guests.all? { |guest| guest.token_digest.nil? }
+    assert_empty event.guests
   end
 
   test "plan! rolls back everything when the offer is invalid" do
@@ -524,15 +502,6 @@ class EventTest < ActiveSupport::TestCase
     lord_howe = plan(time_zone: "Australia/Lord_Howe", starts_at: [ Time.utc(2031, 2, 10, 12) ])
     after_shift = ActiveSupport::TimeZone["Australia/Lord_Howe"].parse("2026-04-05 03:30")
     assert_nothing_raised { lord_howe.ensure_aligned!([ after_shift ]) }
-  end
-
-  test "accessible scopes go through participations" do
-    assert_includes Event.for_user(users(:owner)), @event
-    assert_includes Event.for_user(users(:invitee)), @event
-    assert_not_includes Event.for_user(users(:invitee)), events(:other_event)
-    assert_empty Event.for_user(users(:outsider))
-    assert_includes Event.organized_by(users(:owner)), @event
-    assert_not_includes Event.organized_by(users(:invitee)), @event
   end
 
   test "consensus counts responders only and needs a guest" do

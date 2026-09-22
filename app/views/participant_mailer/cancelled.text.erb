@@ -1,4 +1,4 @@
-<%= mail_safe(@organizer&.name) %> cancelled <%= mail_safe(@event.name) %>.
+<%= mail_safe(@organizer.name) %> cancelled <%= mail_safe(@event.name) %>.
 <% if @recipient_window %>
 It was set for <%= @recipient_window %>.
 <% if @recipient_window != @event_window %>

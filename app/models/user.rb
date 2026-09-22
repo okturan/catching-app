@@ -3,7 +3,6 @@ class User < ApplicationRecord
     :recoverable, :rememberable, :validatable
 
   has_many :participants, dependent: :nullify, inverse_of: :user
-  has_many :events, through: :participants
 
   validates :first_name, :last_name, presence: true
 

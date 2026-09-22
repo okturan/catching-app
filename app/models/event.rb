@@ -53,35 +53,17 @@ class Event < ApplicationRecord
   validate :duration_is_whole_slots
   validate :end_time_follows_start_time
   validate :grid_is_frozen_after_replies, on: :update
-  validate :cancellation_is_final, on: :update
 
-  scope :for_user, ->(user) {
-    joins(:participants).merge(Participant.active).where(participants: { user_id: user.id }).distinct
-  }
-  scope :organized_by, ->(user) {
-    joins(:participants).merge(Participant.active.organizer).where(participants: { user_id: user.id }).distinct
-  }
   scope :not_cancelled, -> { where(cancelled_at: nil) }
 
-  # The only creation path: event, organizer, offer and guest rows in one
-  # transaction. Invitee emails are already parsed and normalized.
-  def self.plan!(attributes:, organizer:, starts_at:, invitee_emails: [])
+  # The only creation path: the event, its organizer and the offer, in one
+  # transaction. Guests are invited from the organizer's page later.
+  def self.plan!(attributes:, organizer:, starts_at:)
     transaction do
-      event = create!(attributes)
-      organizer_row = event.participants.create!(
-        role: :organizer,
-        email: organizer.fetch(:email),
-        name: organizer.fetch(:name),
-        user: organizer[:user],
-        responded_at: Time.current
-      )
-      event.replace_time_slots!(participant: organizer_row, starts_at: starts_at)
-      invitee_emails.uniq.each do |email|
-        next if email == organizer_row.email
-
-        event.participants.create!(role: :guest, email: email)
+      create!(attributes).tap do |event|
+        event.participants.organizer.create!(**organizer, responded_at: Time.current)
+        event.replace_time_slots!(participant: event.organizer, starts_at:)
       end
-      event
     end
   end
 
@@ -98,10 +80,6 @@ class Event < ApplicationRecord
 
   def open?
     !status? && !cancelled?
-  end
-
-  def closed?
-    status? || cancelled?
   end
 
   # Slot length and zone relabel every cell, so they freeze at the first reply.
@@ -185,7 +163,7 @@ class Event < ApplicationRecord
   end
 
   def window_minutes
-    return nil unless status? && start_time && end_time
+    return unless status?
 
     ((end_time - start_time) / 60).to_i
   end
@@ -305,9 +283,7 @@ class Event < ApplicationRecord
   # the parser's cut-off: nothing can be painted or set until the offer
   # changes.
   def every_offer_past?
-    return false unless organizer
-
-    offer = time_slots.where(participant_id: organizer.id)
+    offer = time_slots.where(participant: organizer)
     offer.exists? && offer.where(start_time: TimeSlotParser::PAST_GRACE.ago..).none?
   end
 
@@ -470,12 +446,6 @@ class Event < ApplicationRecord
     return if start_time.blank? || end_time.blank? || end_time > start_time
 
     errors.add(:end_time, "must be after the start time")
-  end
-
-  def cancellation_is_final
-    return unless cancelled_at_changed? && cancelled_at_was.present?
-
-    errors.add(:cancelled_at, "cannot be changed once cancelled")
   end
 
   def grid_is_frozen_after_replies

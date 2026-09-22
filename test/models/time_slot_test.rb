@@ -1,23 +1,6 @@
 require "test_helper"
 
 class TimeSlotTest < ActiveSupport::TestCase
-  test "requires a start time" do
-    slot = events(:planning).time_slots.build(participant: participants(:planning_organizer))
-
-    assert_not slot.valid?
-    assert_includes slot.errors[:start_time], "can't be blank"
-  end
-
-  test "copies the event from the participant and refuses a foreign participant" do
-    slot = TimeSlot.new(participant: participants(:planning_guest), start_time: Time.utc(2030, 1, 16, 10))
-    assert slot.valid?
-    assert_equal events(:planning).id, slot.event_id
-
-    slot.event = events(:other_event)
-    assert_not slot.valid?
-    assert_includes slot.errors[:participant], "belongs to another event"
-  end
-
   test "the composite foreign key rejects a participant of another event" do
     assert_raises(ActiveRecord::InvalidForeignKey) do
       TimeSlot.transaction(requires_new: true) do

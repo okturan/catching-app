@@ -59,7 +59,7 @@ class ParticipantMailer < ApplicationMailer
     date = start_time.in_time_zone(zone_named(zone)).strftime("%a %-d %b")
     mail(
       to: @delivery.recipient_email,
-      reply_to: @event.organizer&.email,
+      reply_to: @event.organizer.email,
       subject: subject_for("#{mail_safe(@event.name)} is set for #{date}")
     )
   end
@@ -70,19 +70,19 @@ class ParticipantMailer < ApplicationMailer
   # notice describes the event as it is when the job runs.
   def event_updated
     @organizer = @event.organizer
-    @reason = params.fetch(:reason).to_s
-    @changes = (params[:changes] || {}).to_h.stringify_keys
+    @reason = params.fetch(:reason)
+    @changes = params[:changes].to_h
     @renamed = @changes["name"]
     @place = mail_safe(@event.place).presence
     @duration = @event.duration_minutes && duration_label(@event.duration_minutes)
     @plan = @event.activities.map { |activity| plan_item_line(activity) }
-    @situation = offer_situation if @reason == "offer"
+    @situation = offer_situation if @reason == :offer
     @reason_line = reason_line
     @link = guest_link
     mail(
       to: @delivery.recipient_email,
-      reply_to: @organizer&.email,
-      subject: subject_for("#{mail_safe(@organizer&.name)} changed #{mail_safe(@event.name)}")
+      reply_to: @organizer.email,
+      subject: subject_for("#{mail_safe(@organizer.name)} changed #{mail_safe(@event.name)}")
     )
   end
 
@@ -100,7 +100,7 @@ class ParticipantMailer < ApplicationMailer
     end
     mail(
       to: @delivery.recipient_email,
-      reply_to: @organizer&.email,
+      reply_to: @organizer.email,
       subject: subject_for("#{mail_safe(@event.name)} is cancelled")
     )
   end
@@ -120,7 +120,7 @@ class ParticipantMailer < ApplicationMailer
     date = start_time.in_time_zone(zone_named(zone)).strftime("%a %-d %b")
     mail(
       to: @delivery.recipient_email,
-      reply_to: @organizer&.email,
+      reply_to: @organizer.email,
       subject: subject_for("#{mail_safe(@event.name)} is no longer set for #{date}")
     )
   end
@@ -181,7 +181,7 @@ class ParticipantMailer < ApplicationMailer
   def offer_situation
     return nil if @participant.nil?
 
-    if @participant.reply_voided_at.present?
+    if @participant.voided?
       "None of the times you picked are offered any more. Please pick again."
     elsif @participant.declined_at.present?
       "You said none of the times worked. New times were added."
@@ -193,11 +193,11 @@ class ParticipantMailer < ApplicationMailer
 
   # The one reason line at the top of a notice.
   def reason_line
-    organizer = mail_safe(@organizer&.name)
+    organizer = mail_safe(@organizer.name)
     event = mail_safe(@event.name)
     case @reason
-    when "details" then "#{organizer} changed the details of #{event}."
-    when "offer" then "#{organizer} changed the offered times for #{event}."
+    when :details then "#{organizer} changed the details of #{event}."
+    when :offer then "#{organizer} changed the offered times for #{event}."
     else "#{organizer} changed #{event}. Here is what is set now."
     end
   end

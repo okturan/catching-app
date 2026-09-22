@@ -41,8 +41,6 @@ module ParticipationPage
   end
 
   def slot_instants(participant)
-    return [] unless participant
-
     @event.time_slots.where(participant_id: participant.id).order(:start_time).pluck(:start_time)
   end
 
@@ -54,7 +52,7 @@ module ParticipationPage
   # replied, and once the guest has saved again.
   def revision_notice
     return nil unless @event.open? && @participant.guest? && @participant.responded_at.present?
-    return :voided if @participant.reply_voided_at.present?
+    return :voided if @participant.voided?
 
     reopened = @event.reopened_at.present? && @participant.responded_at < @event.reopened_at
     revised = @event.offer_revised_at.present? && @participant.responded_at < @event.offer_revised_at

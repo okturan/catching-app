@@ -32,7 +32,7 @@
               <% if participation.organizer? %>
                 <%= pluralize(event.guests.active.count, "guest") %>
               <% else %>
-                by <%= event.organizer&.display_name(viewer_role: :guest) %> ·
+                by <%= event.organizer.display_name %> ·
                 <% if participation.declined_at.present? %>
                   you said none of these times work
                 <% elsif participation.responded_at.present? %>

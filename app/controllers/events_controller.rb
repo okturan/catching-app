@@ -18,15 +18,10 @@ class EventsController < ApplicationController
   # organizer opens the emailed link.
   def create
     @organizer = organizer_attributes
-    invitees = InviteeListParser.call(params.dig(:invitations, :emails), organizer_email: @organizer[:email])
     MailDelivery::Caps.check_event_creation!(organizer_email: @organizer[:email], request_ip: request.remote_ip)
 
-    @event = Event.plan!(
-      attributes: event_params,
-      organizer: @organizer.merge(user: current_user),
-      starts_at: parsed_time_slots(slot_minutes: requested_slot_minutes),
-      invitee_emails: invitees
-    )
+    @event = Event.plan!(attributes: event_params, organizer: @organizer.merge(user: current_user),
+      starts_at: parsed_time_slots(slot_minutes: requested_slot_minutes))
     Deliveries.organizer_link!(event: @event, organizer: @event.organizer, request_ip: request.remote_ip)
 
     flash[:organizer_email] = @organizer[:email]
