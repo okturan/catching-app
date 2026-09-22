@@ -53,7 +53,7 @@ Run the complete local gate:
 bin/ci
 ```
 
-The gate installs deterministic dependencies, lints Ruby, audits Ruby and JavaScript dependencies, runs Brakeman, checks eager loading, builds assets, and runs the Rails test suite. Individual commands are also available:
+The gate installs deterministic dependencies, lints Ruby, audits Ruby and JavaScript dependencies, runs Brakeman, checks eager loading, builds assets and runs the JavaScript tests, then runs the Rails and system test suites. Individual commands are also available:
 
 ```bash
 bin/rails test
@@ -66,7 +66,7 @@ npm run check
 npm audit --audit-level=high
 ```
 
-GitHub Actions runs the same categories of checks with PostgreSQL 18 and also builds the production image. Dependabot tracks Bundler, npm, and Actions updates.
+GitHub Actions runs the same categories of checks with PostgreSQL 18 and also builds the production image.
 
 ## Production container
 
