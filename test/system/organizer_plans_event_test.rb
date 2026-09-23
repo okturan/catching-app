@@ -47,7 +47,7 @@ class OrganizerPlansEventTest < ApplicationSystemTestCase
     link = mail.text_part.body.to_s[%r{http://[^\s]+/p/[A-Za-z0-9]{32}}]
     visit URI.parse(link).request_uri
 
-    assert_text "No replies yet"
+    assert_text "Nobody is invited yet."
     assert_selector "input[type=submit][value='Send invitations']"
     assert_selector "dl.event-facts dd", text: "1 h 30 min"
     assert_selector "dl.event-facts a.quiet-link[href='https://zoom.us/j/1']", text: "zoom.us"
@@ -56,6 +56,7 @@ class OrganizerPlansEventTest < ApplicationSystemTestCase
     fill_in "Invite more people (one address per line or comma-separated)", with: "bob@example.com"
     click_button "Send invitations"
     assert_text "1 added. 1 invitation sent."
+    assert_text "No replies yet. Invitations sent to 1 person."
     assert_equal 1, event.guests.count
     assert_equal [ "Ege's place, Kadıköy", "https://zoom.us/j/1", 90 ], [ event.place, event.place_url, event.duration_minutes ]
 

@@ -43,6 +43,8 @@
       <button type="submit" form="finalize-form" class="btn-meeting px-5">Set in stone</button>
     <% when :awaiting_answers %>
       <span class="text-muted">No one has answered the current times yet.</span>
+    <% when :invite_guests %>
+      <span class="text-muted">Nobody is invited yet.</span>
     <% when :awaiting_replies %>
       <span class="text-muted">No replies yet. Invitations sent to <%= pluralize(counts[:invited], "person", plural: "people") %>.</span>
     <% end %>

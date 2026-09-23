@@ -57,6 +57,7 @@ module EventPage
     return :save if @participant.guest?
     return :change_the_times if @every_offer_past
     return :set_in_stone if @counts[:replied].positive?
+    return :invite_guests if @counts[:invited].zero?
 
     @counts[:voided].positive? ? :awaiting_answers : :awaiting_replies
   end
