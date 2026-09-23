@@ -6,7 +6,7 @@ import { attachPainting, seedTabindex } from "../lib/painting";
 import { summary } from "../lib/selection";
 import { stashSelection, takeStash } from "../lib/stash";
 import { offeredGrid } from "../lib/time_grid";
-import { zonedLabel } from "../lib/zoned_label";
+import { rewriteZonedInstants } from "../lib/zoned_label";
 import { countsByInstant, currentZoneName, populateTimeZoneSelect, slotISO, toDateTimes } from "../lib/zones";
 
 const SELECTABLE = ".slot.selectable[data-date]";
@@ -98,7 +98,8 @@ export default class extends Controller {
     seedTabindex(this.gridTarget, SELECTABLE);
     this.gridTarget.classList.toggle("hide-unoffered", this.hasHideSwitchTarget && this.hideSwitchTarget.checked);
     this.renderLocalWindow();
-    this.rewriteZonedInstants();
+    // Server-rendered instants arrive in the event's zone.
+    rewriteZonedInstants(this.element, this.zone);
 
     if (this.everyOfferPast()) {
       this.retireSave();
@@ -156,13 +157,5 @@ export default class extends Controller {
     if (this.localWindowTarget.hidden) return;
     const [start, end] = toDateTimes(this.setWindowValue).map((instant) => instant.setZone(this.zone));
     this.localWindowTarget.textContent = `${start.toFormat("ccc d LLL HH:mm")}–${end.toFormat("HH:mm")} (${this.zone})`;
-  }
-
-  // Server-rendered instants arrive in the event's zone.
-  rewriteZonedInstants() {
-    this.element.querySelectorAll("time[data-zoned-instant]").forEach((element) => {
-      const label = zonedLabel(element.getAttribute("datetime"), this.zone, { format: element.dataset.zonedFormat || "time" });
-      if (label) element.textContent = label;
-    });
   }
 }

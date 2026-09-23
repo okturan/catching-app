@@ -20,4 +20,12 @@ const zonedLabel = (iso, zone, { format = "time" } = {}) => {
   return `${local.toFormat(FORMATS[format] || FORMATS.time)} (${local.zoneName})`;
 };
 
-export { zonedLabel };
+// Rewrites every server-rendered instant under root into one zone.
+const rewriteZonedInstants = (root, zone) => {
+  root.querySelectorAll("time[data-zoned-instant]").forEach((element) => {
+    const label = zonedLabel(element.getAttribute("datetime"), zone, { format: element.dataset.zonedFormat || "time" });
+    if (label) element.textContent = label;
+  });
+};
+
+export { rewriteZonedInstants, zonedLabel };
