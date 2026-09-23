@@ -132,7 +132,9 @@
     font-weight: 700;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 -1px 0 rgba(0, 0, 0, 0.35), 0 2px 4px rgba(20, 20, 20, 0.25);
+    // The face-coloured ring closes the border-spacing, so cells scrolling
+    // under the sticky plates do not show between them.
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 -1px 0 rgba(0, 0, 0, 0.35), 0 2px 4px rgba(20, 20, 20, 0.25), 0 0 0 2px $face;
 
     small {
       display: block;
@@ -143,11 +145,12 @@
     }
   }
 
+  // Opaque, so row labels scroll under the corner instead of beside the plates.
   thead th.row-label-head {
     left: 0;
     z-index: 3;
-    background: transparent;
-    box-shadow: none;
+    background: $face;
+    box-shadow: 0 0 0 2px $face;
   }
 
   tbody th {
