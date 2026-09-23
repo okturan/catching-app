@@ -9,6 +9,7 @@ import { localDateRangeIsAllowed, localDayColumns } from "../lib/time_grid";
 import { countsByInstant, parseSlotList, populateTimeZoneSelect, slotISO, toDateTimes } from "../lib/zones";
 
 const SELECTABLE = ".slot.selectable[data-date]";
+const MORNING_MINUTES = 8 * 60;
 
 // The offer grid of the planning form and of Change the times. There, the
 // offer and picked-counts values let the summary name what a removal drops.
@@ -42,6 +43,7 @@ export default class extends Controller {
 
     this.seedDateRange();
     this.draw();
+    this.scrollToWorkingHours();
   }
 
   disconnect() {
@@ -146,6 +148,21 @@ export default class extends Controller {
 
   isPast(instant) {
     return Boolean(this.notBefore && instant.toMillis() < this.notBefore.toMillis());
+  }
+
+  // The grid opens on the earliest painted hour, or on the morning: nobody
+  // plans at midnight, and 00:00 at the top hides every useful row.
+  scrollToWorkingHours() {
+    const box = this.gridTarget.closest(".time-grid-scroll");
+    if (!box) return;
+    const walls = [...this.selection].map((iso) => {
+      const local = DateTime.fromISO(iso).setZone(this.zone);
+      return local.hour * 60 + local.minute;
+    });
+    const minutes = walls.length > 0 ? Math.max(0, Math.min(...walls) - this.slotMinutes) : MORNING_MINUTES;
+    const row = this.gridTarget.querySelector(`.slot[data-row="${Math.floor(minutes / this.slotMinutes)}"]`);
+    const head = this.gridTarget.querySelector("thead");
+    if (row && head) box.scrollTop = row.offsetTop - head.offsetHeight - 4;
   }
 
   replaceSelection(instants) {

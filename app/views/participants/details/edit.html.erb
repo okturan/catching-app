@@ -11,31 +11,33 @@
 <div class="container py-5" id="event-details">
   <h1>Edit details</h1>
   <div class="form-inputs details-face">
-    <p class="details-facts"><%= @event.slot_minutes %>-minute slots · <%= @event.time_zone %></p>
-    <% if @event.finalized? %>
-      <p class="details-facts">Set in stone:
-        <%= zoned_time(@event.start_time, @event.time_zone, format: :date_time) %> to
-        <%= zoned_time(@event.end_time, @event.time_zone) %></p>
-    <% end %>
-
-    <%= form_with model: @event, url: participant_details_path(@participant), method: :patch, id: "details-form" do |form| %>
-      <%= form.error_summary %>
-
-      <%= form.field :name, required: true, maxlength: 120 %>
-      <%= form.field :description, as: :text_area, optional: true, rows: 4, maxlength: 2000 %>
-      <%= form.field :place, optional: true, maxlength: 200, placeholder: "Ege's place, Kadıköy — or 'Zoom'" %>
-      <%= form.field :place_url, as: :url_field, optional: true, maxlength: 2000, placeholder: "Link to join or a map link" %>
-      <%= form.field :duration_minutes, as: :select, optional: true, include_blank: "Not set",
-            choices: duration_select_options(@event.slot_minutes, @event.duration_minutes) %>
-      <% if notice_offered? %>
-        <div class="form-check mb-4">
-          <%= check_box_tag "notice[send]", "1", @event.finalized?, id: "notice_send", class: "form-check-input" %>
-          <%= label_tag "notice_send", "Email the guests about this change", class: "form-check-label" %>
-        </div>
+    <div class="details-main">
+      <p class="details-facts"><%= @event.slot_minutes %>-minute slots · <%= @event.time_zone %></p>
+      <% if @event.finalized? %>
+        <p class="details-facts">Set in stone:
+          <%= zoned_time(@event.start_time, @event.time_zone, format: :date_time) %> to
+          <%= zoned_time(@event.end_time, @event.time_zone) %></p>
       <% end %>
 
-      <%= form.submit "Save details", class: "btn btn-primary" %>
-    <% end %>
+      <%= form_with model: @event, url: participant_details_path(@participant), method: :patch, id: "details-form" do |form| %>
+        <%= form.error_summary %>
+
+        <%= form.field :name, required: true, maxlength: 120 %>
+        <%= form.field :description, as: :text_area, optional: true, rows: 4, maxlength: 2000 %>
+        <%= form.field :place, optional: true, maxlength: 200, placeholder: "Ege's place, Kadıköy — or 'Zoom'" %>
+        <%= form.field :place_url, as: :url_field, optional: true, maxlength: 2000, placeholder: "Link to join or a map link" %>
+        <%= form.field :duration_minutes, as: :select, optional: true, include_blank: "Not set",
+              choices: duration_select_options(@event.slot_minutes, @event.duration_minutes) %>
+        <% if notice_offered? %>
+          <div class="form-check mb-4">
+            <%= check_box_tag "notice[send]", "1", @event.finalized?, id: "notice_send", class: "form-check-input" %>
+            <%= label_tag "notice_send", "Email the guests about this change", class: "form-check-label" %>
+          </div>
+        <% end %>
+
+        <%= form.submit "Save details", class: "btn btn-primary" %>
+      <% end %>
+    </div>
 
     <section class="plan-editor" aria-labelledby="plan-heading">
       <h2 id="plan-heading">The plan</h2>

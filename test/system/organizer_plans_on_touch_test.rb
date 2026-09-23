@@ -32,24 +32,4 @@ class OrganizerPlansOnTouchTest < MobileSystemTestCase
     assert_operator viewport_bottom(".grid-action-bar"), :<=, viewport_top("input[type=submit]"),
       "the sticky action bar covers the submit"
   end
-
-  private
-
-  def document_top(selector)
-    rect(selector, "top + window.scrollY")
-  end
-
-  def viewport_top(selector)
-    rect(selector, "top")
-  end
-
-  def viewport_bottom(selector)
-    rect(selector, "bottom")
-  end
-
-  def rect(selector, expression)
-    page.evaluate_script(
-      "(function () { const r = document.querySelector(#{selector.to_json}).getBoundingClientRect(); return r.#{expression}; })()"
-    )
-  end
 end

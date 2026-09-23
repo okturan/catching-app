@@ -19,6 +19,24 @@ class MobileSystemTestCase < ActionDispatch::SystemTestCase
 
   private
 
+  def document_top(selector)
+    rect(selector, "top + window.scrollY")
+  end
+
+  def viewport_top(selector)
+    rect(selector, "top")
+  end
+
+  def viewport_bottom(selector)
+    rect(selector, "bottom")
+  end
+
+  def rect(selector, expression)
+    page.evaluate_script(
+      "(function () { const r = document.querySelector(#{selector.to_json}).getBoundingClientRect(); return r.#{expression}; })()"
+    )
+  end
+
   # innerWidth grows with the overflow on a phone, so the page is measured
   # against the width the phone shows.
   def assert_no_sideways_scroll

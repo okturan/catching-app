@@ -37,8 +37,8 @@
   .event-face-state .plate { font-size: 0.65rem; padding: 0.3em 0.8em; }
 
   @media (max-width: 520px) {
-    grid-template-columns: 1fr;
-    .event-face-time { justify-self: start; }
+    grid-template-columns: minmax(0, 1fr);
+    .event-face-time { justify-self: start; white-space: normal; }
   }
 }
 

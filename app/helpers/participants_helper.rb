@@ -11,6 +11,26 @@ module ParticipantsHelper
     delivered: "sent"
   }.freeze
 
+  # The grid panel's heading and its one-line instruction, by what the viewer
+  # can do on it: paint, pick the window, or read. Nil hint: nothing to do.
+  def grid_prompt(role:, action:)
+    case [ role, action ]
+    in [ "guest", :save ]
+      [ "When can you make it?", "Paint the times that work for you, then press Save." ]
+    in [ "guest", _ ]
+      [ "When can you make it?", nil ]
+    in [ "organizer", :change_the_times ]
+      [ "Your offer", nil ]
+    in [ "organizer", :set_in_stone ]
+      [ "Pick the time", "Yellow is free for everyone who replied, and the numbers count who else can make it. " \
+        "Drag across one continuous yellow window, then press Set in stone." ]
+    in [ "organizer", _ ]
+      [ "Your offer", "Friends paint over these times in their own zones. Their picks show here as they reply." ]
+    else
+      [ "Everyone's times", nil ]
+    end
+  end
+
   # "Deniz, Priya, and 2 others": the names guests gave, then a count of the
   # guests who have not given one.
   def also_invited(guests)

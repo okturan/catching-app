@@ -1,7 +1,7 @@
 // The account forms and other single-column forms sit on one white face.
 .form-inputs {
   @extend .face;
-  width: min(440px, 100%);
+  width: min(440px, calc(100% - 2rem));
   margin: clamp(1.5rem, 4vw, 3rem) auto 1rem;
   padding: clamp(1.25rem, 3vw, 2rem);
 
@@ -30,7 +30,7 @@
 }
 
 .form-actions {
-  width: min(440px, 100%);
+  width: min(440px, calc(100% - 2rem));
   margin: 0 auto 1rem;
   background: $face;
   border: 1px solid $hairline;
@@ -40,21 +40,11 @@
   box-shadow: none;
 }
 
-.form-actions .btn-primary,
-#organizer-link-recovery .btn-primary,
-#event-details .btn-primary {
-  @extend .plate;
-  border: 0;
-  width: auto;
-  padding: 0.85em 1.6em;
-  font-size: 0.85rem;
-  &:hover { color: $enamel-text; }
-}
 
 #organizer-link-recovery,
 #event-details {
   h1 {
-    width: min(440px, 100%);
+    width: min(440px, calc(100% - 2rem));
     margin: 0 auto;
     font-size: 1.6rem;
     font-weight: 800;
@@ -65,9 +55,27 @@
 // The details face holds the facts, the details form and, after it, the
 // plan editor as siblings: one face, never a form inside a form.
 #event-details {
+  // Wide, the details and the plan side by side on the one face.
+  h1, .details-face { width: min(1040px, calc(100% - 2rem)); }
+  @media (min-width: 960px) {
+    .details-face {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+      column-gap: 2.5rem;
+      align-items: start;
+
+      > .plan-editor {
+        margin-top: 0;
+        padding: 0 0 0 2.5rem;
+        border-top: 0;
+        border-left: 1px solid $hairline;
+      }
+    }
+  }
+
   .details-facts { color: $ink-soft; font-weight: 600; margin: 0 0 1rem; }
   .details-facts time { font-weight: 500; font-size: 0.9rem; color: $ink; }
-  > p { width: min(440px, 100%); margin: 0 auto; padding: 0 0.25rem; }
+  > p { width: min(1040px, calc(100% - 2rem)); margin: 1rem auto 0; padding: 0 0.25rem; }
 
   .plan-editor {
     margin-top: 1.5rem;
@@ -137,7 +145,7 @@ main > .form-inputs + a,
 main > .form-inputs + p,
 main > form + a,
 main > form + p {
-  width: min(440px, 100%);
+  width: min(440px, calc(100% - 2rem));
   margin-left: auto;
   margin-right: auto;
   display: block;
@@ -151,11 +159,32 @@ main > h2 {
 }
 
 .form-links {
-  width: min(440px, 100%);
+  width: min(440px, calc(100% - 2rem));
   margin: 0 auto 2rem;
   padding: 0 0.25rem;
   display: grid;
   gap: 0.35rem;
   br { display: none; }
   a { font-weight: 600; }
+}
+
+// One-message pages (check your inbox, a dead link, keeping an event): the
+// message on a single face in the middle of the wall.
+.notice-page {
+  @extend .face;
+  width: min(560px, calc(100% - 2rem));
+  margin: clamp(1.5rem, 6vw, 4rem) auto;
+  padding: clamp(1.25rem, 3vw, 2rem);
+
+  h1 {
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.75rem;
+    text-wrap: balance;
+  }
+  p { margin: 0 0 0.75rem; color: $ink-soft; }
+  p:last-child { margin-bottom: 0; }
+  strong { color: $ink; }
+  form { margin: 1.25rem 0 1rem; }
 }

@@ -10,6 +10,7 @@ class GuestPaintsOnTouchTest < MobileSystemTestCase
 
     visit participant_path(raw_token(:planning_guest))
     assert page.evaluate_script("matchMedia('(any-pointer: coarse)').matches"), "touch emulation is not active"
+    assert_operator document_top("#time-grid-show"), :<, document_top("#answer-heading"), "the grid comes after the reply on a phone"
     assert_selector "#time-grid-show .slot.selectable", count: 2
     assert_selector "dl.event-facts a.quiet-link", text: "maps.example"
     assert_selector "dl.event-facts ol.event-plan li", count: 2

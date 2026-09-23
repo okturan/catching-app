@@ -41,4 +41,17 @@ class ParticipantsHelperTest < ActionView::TestCase
     assert_equal "Deniz", also_invited([ guest.("Deniz") ])
     assert_equal "3 guests", also_invited([ guest.(nil), guest.(nil), guest.(nil) ])
   end
+
+  test "grid_prompt says what the viewer can do on the grid" do
+    assert_equal "When can you make it?", grid_prompt(role: "guest", action: :save).first
+    assert_match "then press Save", grid_prompt(role: "guest", action: :save).last
+    assert_nil grid_prompt(role: "guest", action: :none).last
+
+    assert_equal "Pick the time", grid_prompt(role: "organizer", action: :set_in_stone).first
+    assert_match "press Set in stone", grid_prompt(role: "organizer", action: :set_in_stone).last
+    assert_equal [ "Your offer", nil ], grid_prompt(role: "organizer", action: :change_the_times)
+    assert_equal "Your offer", grid_prompt(role: "organizer", action: :awaiting_replies).first
+
+    assert_equal [ "Everyone's times", nil ], grid_prompt(role: "viewer", action: nil)
+  end
 end

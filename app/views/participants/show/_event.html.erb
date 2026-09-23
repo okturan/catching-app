@@ -10,9 +10,10 @@
     <% end %>
   </div>
 <% elsif event.finalized? %>
-  <div class="event-when">
-    <span><%= event_window(event) %></span>
-    <span id="final-window-local" data-availability-target="localWindow"></span>
+  <%# The viewer's own zone leads once the page knows it differs. %>
+  <div class="event-when is-set">
+    <span id="final-window-local" data-availability-target="localWindow" hidden></span>
+    <span class="event-when-zone"><%= event_window(event) %></span>
   </div>
 <% else %>
   <div class="event-when is-pending">Time to be confirmed by <%= event.organizer.display_name %></div>

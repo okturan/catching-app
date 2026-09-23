@@ -53,7 +53,9 @@ const makeCell = ({ instant, iso, row, col, slotMinutes, text }) => {
   return td;
 };
 
+// --days lets the stylesheet widen a short grid to its panel.
 const buildHead = (grid, days) => {
+  grid.style.setProperty("--days", String(days.length));
   const thead = element("thead");
   const tr = element("tr");
   tr.appendChild(cornerHeader());

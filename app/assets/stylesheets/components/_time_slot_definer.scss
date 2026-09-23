@@ -7,8 +7,9 @@
 .time-grid-panel {
   @extend .face;
   max-width: 100%;
-  padding: 12px;
+  padding: 16px;
   margin-top: 0;
+  container-type: inline-size;
 }
 
 .time-grid-scroll {
@@ -35,7 +36,7 @@
     font-size: 1.2rem;
     font-weight: 800;
     letter-spacing: -0.02em;
-    margin: 0 0 0.5rem;
+    margin: 0.25rem 0.25rem 0.3rem;
   }
 
   > .time-grid-scroll {
@@ -56,8 +57,9 @@
   .event-new-grid > .time-grid-panel { position: static; }
 }
 
-#grid-paint-hint {
-  margin: 0 0 0.75rem;
+.time-grid-define-wrapper > #grid-paint-hint {
+  margin: 0 0.25rem 1rem;
+  max-width: 62ch;
 }
 
 // One column at 412px: step and zone full width because zone names are long,
@@ -67,7 +69,7 @@
   display: grid;
   gap: 0.75rem;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  margin-bottom: 0.75rem;
+  margin: 0 0.25rem 1rem;
 
   > * { min-width: 0; }
 
@@ -89,6 +91,16 @@
   }
 }
 
+// A wide panel reads the strip on one line: step, zone, then the two days.
+@container (min-width: 760px) {
+  .grid-controls {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr);
+    align-items: start;
+
+    > .grid-days { grid-column: auto; }
+  }
+}
+
 .grid-days-pair {
   display: grid;
   gap: 0.75rem;
@@ -100,9 +112,12 @@
 // The sentence only a touch visitor needs, revealed the way paint mode is.
 .touch-only { display: none; }
 
+// A short grid widens to its panel, to at most 13rem a day; a long one
+// scrolls. --days comes from the script that draws the table.
 .time-grid {
   border-collapse: separate;
   border-spacing: 4px;
+  width: min(100%, calc(4.5rem + var(--days, 3) * 13rem));
   min-width: max-content;
   touch-action: pan-x pan-y pinch-zoom;
   -webkit-touch-callout: none;
@@ -153,7 +168,11 @@
     box-shadow: 0 0 0 2px $face;
   }
 
+  // Shrunk to its labels while the day columns share the rest. A pixel, not a
+  // percentage: a percentage column makes a max-content table as wide as its
+  // label divided by that percentage.
   tbody th {
+    width: 1px;
     position: sticky;
     left: 0;
     z-index: 1;
@@ -234,12 +253,23 @@
       outline-offset: 2px;
     }
 
+    // How many others hold this time: a small tab beside the reading.
+    // Washes are precomputed over each cell colour (the Wash Rule).
     .others {
-      display: block;
-      font-size: 11px;
-      line-height: 1;
-      opacity: 0.8;
+      display: inline-block;
+      margin-left: 0.4em;
+      padding: 0 0.35em;
+      border-radius: 2px;
+      font-size: 10.5px;
+      font-weight: 600;
+      line-height: 1.55;
+      vertical-align: 1px;
+      background: #eeeeee;
+      color: $ink-soft;
     }
+    &.consensus .others { background: #ecd4a8; color: $ink; }
+    &.active .others { background: #4b627b; color: $enamel-text; }
+    &.consensus.active .others { background: #e8b453; color: $ink; }
   }
 
   &.hide-unoffered .slot.inactive {
@@ -346,5 +376,17 @@
   .time-grid .slot {
     min-width: 88px;
     font-size: 14px;
+  }
+
+  // On a phone the controls strip alone is most of a screen, and a budget
+  // shared with it leaves a sliver of grid. The panel scrolls with the page
+  // instead, and the grid box takes most of the screen once it is reached.
+  .time-grid-define-wrapper {
+    max-height: none;
+
+    > .time-grid-scroll {
+      max-height: calc(100dvh - 9rem);
+      min-height: 18rem;
+    }
   }
 }

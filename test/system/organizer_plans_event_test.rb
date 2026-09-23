@@ -33,6 +33,8 @@ class OrganizerPlansEventTest < ApplicationSystemTestCase
 
     first_cell = find('#time-grid-define .slot[data-row="20"][data-col="1"]')
     second_cell = find('#time-grid-define .slot[data-row="21"][data-col="1"]')
+    # Mid-box, clear of the edge bands where a moving stroke scrolls the grid.
+    page.execute_script("arguments[0].scrollIntoView({ block: 'center', behavior: 'instant' })", first_cell)
     page.driver.browser.action.move_to(first_cell.native).pointer_down.move_to(second_cell.native).pointer_up.perform
     assert_text "2 slots on 1 day"
 
@@ -53,7 +55,7 @@ class OrganizerPlansEventTest < ApplicationSystemTestCase
     assert_selector "dl.event-facts a.quiet-link[href='https://zoom.us/j/1']", text: "zoom.us"
     event = Event.find_by(name: "Board games night")
 
-    fill_in "Invite more people (one address per line or comma-separated)", with: "bob@example.com"
+    fill_in "Invite more people", with: "bob@example.com"
     click_button "Send invitations"
     assert_text "1 added. 1 invitation sent."
     assert_text "No replies yet. Invitations sent to 1 person."
@@ -66,5 +68,19 @@ class OrganizerPlansEventTest < ApplicationSystemTestCase
     click_button "Save details"
     assert_text "Details saved."
     assert_selector "dl.event-facts dd", text: /Zoom/
+  end
+  test "the planning grid opens on the morning, not at midnight" do
+    visit new_event_path
+    assert_selector "#time-grid-define .slot[data-date]", minimum: 24
+
+    top = page.evaluate_script(<<~JS)
+      (() => {
+        const box = document.querySelector(".time-grid-scroll");
+        const head = box.querySelector("thead th").getBoundingClientRect().bottom;
+        const row = [...box.querySelectorAll("tbody th")].find((th) => th.getBoundingClientRect().bottom > head + 2);
+        return row.textContent.trim();
+      })()
+    JS
+    assert_includes %w[07:30 08:00], top
   end
 end
