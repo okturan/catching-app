@@ -33,4 +33,12 @@ class ParticipantsHelperTest < ActionView::TestCase
     delivered = guest_state_label(pending, sent.call(delivered_at: Time.utc(2030, 1, 10, 9)), slot_count: 0)
     assert_dom_equal %(sent on <time datetime="2030-01-10T09:00:00Z" class="time" data-zoned-instant="" data-zoned-format="date-time">Thu 10 Jan 2030 09:00 (UTC)</time>), delivered
   end
+
+  test "also_invited names the guests who gave a name and counts the rest" do
+    guest = ->(name) { Participant.new(name:) }
+    assert_equal "Deniz, Priya, and 2 others", also_invited([ guest.("Deniz"), guest.(nil), guest.("Priya"), guest.("") ])
+    assert_equal "Deniz and 1 other", also_invited([ guest.("Deniz"), guest.(nil) ])
+    assert_equal "Deniz", also_invited([ guest.("Deniz") ])
+    assert_equal "3 guests", also_invited([ guest.(nil), guest.(nil), guest.(nil) ])
+  end
 end

@@ -23,6 +23,13 @@ class ParticipantsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match "pending@example.com", response.body
   end
 
+  test "a guest reads who else is invited, never themselves" do
+    get participant_path(@guest_token)
+
+    assert_select ".event-people", text: /Organized by/
+    assert_select ".event-people", text: /#{@guest.name}/, count: 0
+  end
+
   test "the card answers where and how long only when the organizer set them" do
     @event.plan_items.delete_all
     get participant_path(@guest_token)

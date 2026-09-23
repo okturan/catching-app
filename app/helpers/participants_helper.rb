@@ -11,6 +11,16 @@ module ParticipantsHelper
     delivered: "sent"
   }.freeze
 
+  # "Deniz, Priya, and 2 others": the names guests gave, then a count of the
+  # guests who have not given one.
+  def also_invited(guests)
+    names = guests.filter_map { it.name.presence }
+    unnamed = guests.size - names.size
+    return pluralize(unnamed, "guest") if names.empty?
+
+    [ *names, (pluralize(unnamed, "other") if unnamed.positive?) ].compact.to_sentence
+  end
+
   # A guest's reply first, then the fate of their last invitation.
   def guest_state_label(guest, invitations, slot_count:)
     last_invitation = invitations[guest.id]&.last
