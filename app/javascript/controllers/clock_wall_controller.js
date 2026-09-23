@@ -2,6 +2,7 @@ import { Controller } from "@hotwired/stimulus";
 import { DateTime } from "luxon";
 
 import { buildCard, offsetLabel, paintHands, pickCities, shiftLabel } from "../lib/clock";
+import { browserTimeZone } from "../lib/zones";
 
 const AWAKE_FROM = 8;
 const AWAKE_TO = 23;
@@ -12,8 +13,7 @@ export default class extends Controller {
   static targets = ["clocks", "ruler", "awake", "label", "summary"];
 
   connect() {
-    const visitorZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-    this.cards = pickCities(visitorZone).map(([zone, city], index) => buildCard(zone, city, index === 0));
+    this.cards = pickCities(browserTimeZone).map(([zone, city], index) => buildCard(zone, city, index === 0));
     this.clocksTarget.replaceChildren(...this.cards.map((entry) => entry.card));
     this.offsetMinutes = 0;
 

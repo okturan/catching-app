@@ -1,19 +1,45 @@
 import { DateTime } from "luxon";
 
-const browserTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+// Chrome still names these zones as ICU did before the IANA database renamed
+// them, both for the browser's own zone and in its list. People know the
+// current names: nobody in Kyiv looks for Europe/Kiev.
+const RENAMED_ZONES = {
+  "Africa/Asmera": "Africa/Asmara",
+  "America/Buenos_Aires": "America/Argentina/Buenos_Aires",
+  "America/Catamarca": "America/Argentina/Catamarca",
+  "America/Cordoba": "America/Argentina/Cordoba",
+  "America/Godthab": "America/Nuuk",
+  "America/Indianapolis": "America/Indiana/Indianapolis",
+  "America/Jujuy": "America/Argentina/Jujuy",
+  "America/Louisville": "America/Kentucky/Louisville",
+  "America/Mendoza": "America/Argentina/Mendoza",
+  "Asia/Calcutta": "Asia/Kolkata",
+  "Asia/Katmandu": "Asia/Kathmandu",
+  "Asia/Rangoon": "Asia/Yangon",
+  "Asia/Saigon": "Asia/Ho_Chi_Minh",
+  "Atlantic/Faeroe": "Atlantic/Faroe",
+  "Europe/Kiev": "Europe/Kyiv",
+  "Pacific/Enderbury": "Pacific/Kanton",
+  "Pacific/Ponape": "Pacific/Pohnpei",
+  "Pacific/Truk": "Pacific/Chuuk",
+};
+
+const currentZoneName = (zone) => RENAMED_ZONES[zone] || zone;
+
+const browserTimeZone = currentZoneName(Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC");
 
 const isKnownZone = (name) =>
   typeof name === "string" && name !== "" && DateTime.now().setZone(name).isValid;
 
 const availableTimeZones = (extra = []) => {
   const supported = typeof Intl.supportedValuesOf === "function" ? Intl.supportedValuesOf("timeZone") : [];
-  return [...new Set([browserTimeZone, "UTC", ...extra, ...supported])].sort((left, right) => left.localeCompare(right));
+  return [...new Set([browserTimeZone, "UTC", ...extra, ...supported].map(currentZoneName))].sort((left, right) => left.localeCompare(right));
 };
 
 // Fills the select and chooses `preferred` when it is a known zone, else the
 // browser zone. Returns the selected zone.
 const populateTimeZoneSelect = (select, preferred) => {
-  const chosen = isKnownZone(preferred) ? preferred : browserTimeZone;
+  const chosen = isKnownZone(preferred) ? currentZoneName(preferred) : browserTimeZone;
   select.replaceChildren();
 
   availableTimeZones(isKnownZone(preferred) ? [preferred] : []).forEach((timeZone) => {
@@ -46,4 +72,4 @@ const countsByInstant = (counts) =>
       .map(([instant, count]) => [slotISO(instant), count]),
   );
 
-export { countsByInstant, parseSlotList, populateTimeZoneSelect, slotISO, toDateTimes };
+export { browserTimeZone, countsByInstant, currentZoneName, parseSlotList, populateTimeZoneSelect, slotISO, toDateTimes };
