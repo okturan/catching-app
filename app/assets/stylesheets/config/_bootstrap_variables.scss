@@ -6,6 +6,9 @@ $font-family-monospace: $time-font;
 $body-bg: $wall;
 $body-color: $ink;
 $font-size-base: 1rem;
+// Turbo scrolls a new page to the top. Smooth, that is a half-second animation
+// from wherever the last page was scrolled, and clicks land beside their target.
+$enable-smooth-scroll: false;
 $headings-font-weight: 700;
 $headings-letter-spacing: -0.02em;
 

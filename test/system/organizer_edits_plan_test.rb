@@ -50,4 +50,14 @@ class OrganizerEditsPlanTest < ApplicationSystemTestCase
     assert_selector "dl.event-facts .event-plan-note", text: "Dune, part one"
     assert_no_selector "dl.event-facts time[data-zoned-instant]"
   end
+
+  test "a page reached from far down another opens at the top, without scrolling there" do
+    visit edit_participant_details_path(raw_token(:planning_organizer))
+    assert_equal "auto", page.evaluate_script("getComputedStyle(document.documentElement).scrollBehavior")
+
+    page.execute_script("window.scrollTo(0, document.documentElement.scrollHeight)")
+    click_link "Back to the event"
+    assert_selector "#time-grid-show"
+    assert_equal 0, page.evaluate_script("window.scrollY")
+  end
 end
