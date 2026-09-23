@@ -24,6 +24,7 @@ class GuestReadsZonedTimesTest < ApplicationSystemTestCase
     select "UTC", from: "timezone-picker-show"
     assert_selector "dl.event-facts ol.event-plan li:nth-child(1) time[data-zoned-instant]", text: "10:00 (UTC)"
     assert_equal [ "10:00 (UTC)", "10:30 (UTC)" ], plan_starts
+    assert_no_selector "#final-window-local", visible: true, wait: 1
   end
 
   test "dated notes on a cancelled page keep their date in the picker zone" do

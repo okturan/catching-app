@@ -7,7 +7,7 @@ import { summary } from "../lib/selection";
 import { stashSelection, takeStash } from "../lib/stash";
 import { offeredGrid } from "../lib/time_grid";
 import { zonedLabel } from "../lib/zoned_label";
-import { countsByInstant, populateTimeZoneSelect, slotISO, toDateTimes } from "../lib/zones";
+import { countsByInstant, currentZoneName, populateTimeZoneSelect, slotISO, toDateTimes } from "../lib/zones";
 
 const SELECTABLE = ".slot.selectable[data-date]";
 
@@ -148,8 +148,12 @@ export default class extends Controller {
     this.slotsTarget.value = "";
   }
 
+  // The set window again in the viewer's zone, unless that is the event's own.
   renderLocalWindow() {
     if (!this.hasLocalWindowTarget || this.setWindowValue.length < 2) return;
+    const eventZone = currentZoneName(this.gridTarget.dataset.eventTimeZone || "");
+    this.localWindowTarget.hidden = this.zone === eventZone;
+    if (this.localWindowTarget.hidden) return;
     const [start, end] = toDateTimes(this.setWindowValue).map((instant) => instant.setZone(this.zone));
     this.localWindowTarget.textContent = `${start.toFormat("ccc d LLL HH:mm")}–${end.toFormat("HH:mm")} (${this.zone})`;
   }
