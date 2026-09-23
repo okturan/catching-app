@@ -86,8 +86,9 @@ The runtime expects these environment variables:
 - `SMTP_PORT`, `SMTP_USERNAME`, and `SMTP_PASSWORD`: optional SMTP connection settings
 - `INVITATION_DAILY_BUDGET`: optional ceiling on invitation mails per day (default 500)
 - `LOG_REQUESTS`: set to `false` (the Dockerfile does) so Thruster does not log capability links
+- `SOLID_QUEUE_IN_PUMA`: set (the Dockerfile does) to run the job worker inside Puma; `JOB_CONCURRENCY` sets its processes (default 1)
 
-The container prepares the database before starting, listens through Thruster on port 80, and exposes `GET /up` as its health endpoint. It assumes TLS is terminated by the reverse proxy and forces HTTPS for application traffic.
+The container prepares the database before starting, listens through Thruster on port 80, and exposes `GET /up` as its health endpoint. Mail is sent by Solid Queue jobs that wait in the same database, so queued mail survives a restart. It assumes TLS is terminated by the reverse proxy and forces HTTPS for application traffic.
 
 ## How scheduling works
 

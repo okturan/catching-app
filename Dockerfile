@@ -17,6 +17,7 @@ RUN apt-get update -qq && \
 ENV RAILS_ENV="production" \
     NODE_ENV="production" \
     LOG_REQUESTS="false" \
+    SOLID_QUEUE_IN_PUMA="true" \
     BUNDLE_DEPLOYMENT="1" \
     BUNDLE_PATH="/usr/local/bundle" \
     BUNDLE_WITHOUT="development:test" \

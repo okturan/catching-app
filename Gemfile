@@ -10,6 +10,7 @@ gem "pg", "~> 1.6"
 gem "propshaft"
 gem "puma", ">= 7.0"
 gem "thruster", require: false
+gem "solid_queue"
 
 # JavaScript and CSS
 gem "cssbundling-rails"

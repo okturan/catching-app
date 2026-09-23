@@ -5,4 +5,7 @@ port ENV.fetch("PORT", 3000)
 
 plugin :tmp_restart
 
+# Run the Solid Queue supervisor inside Puma, for a single-server deploy.
+plugin :solid_queue if ENV["SOLID_QUEUE_IN_PUMA"]
+
 pidfile ENV["PIDFILE"] if ENV["PIDFILE"]
