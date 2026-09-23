@@ -13,7 +13,7 @@ class GuestPaintsOnTouchTest < MobileSystemTestCase
     assert_selector "#time-grid-show .slot.selectable", count: 2
     assert_selector "dl.event-facts a.quiet-link", text: "maps.example"
     assert_selector "dl.event-facts ol.event-plan li", count: 2
-    assert page.evaluate_script("document.documentElement.scrollWidth <= window.innerWidth"), "body scrolls horizontally"
+    assert_no_sideways_scroll
 
     cells = all("#time-grid-show .slot.selectable")
     assert_selector "#time-grid-show .slot.active", count: 1
@@ -30,5 +30,27 @@ class GuestPaintsOnTouchTest < MobileSystemTestCase
     click_button "Save"
     assert_text "Availability saved."
     assert_selector "#time-grid-show .slot.active", count: 2
+  end
+  test "three days of offer fit the phone, the grid scrolling inside its panel" do
+    event = events(:planning)
+    [ "2030-01-16 10:00", "2030-01-17 10:00" ].each do |start|
+      TimeSlot.create!(event:, participant: participants(:planning_organizer), start_time: Time.utc(*start.split(/[- :]/).map(&:to_i)))
+    end
+
+    visit participant_path(raw_token(:planning_guest))
+    assert_selector "#time-grid-show thead th", count: 4
+    assert_no_sideways_scroll
+    [ "#paint-mode", "button[form='availability-form']", "#timezone-picker-show" ].each do |selector|
+      right = page.evaluate_script("document.querySelector(#{selector.to_json}).getBoundingClientRect().right")
+      assert_operator right, :<=, page.evaluate_script("document.documentElement.clientWidth"), "#{selector} runs off the screen"
+    end
+  end
+
+  private
+
+  # innerWidth grows with the overflow on a phone, so the page is measured
+  # against the width the phone shows.
+  def assert_no_sideways_scroll
+    assert page.evaluate_script("document.documentElement.scrollWidth <= document.documentElement.clientWidth"), "the page scrolls sideways"
   end
 end
