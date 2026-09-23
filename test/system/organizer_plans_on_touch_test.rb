@@ -11,8 +11,7 @@ class OrganizerPlansOnTouchTest < MobileSystemTestCase
     assert_selector "#time-grid-define .slot[data-date]", minimum: 24
     settle_layout
 
-    assert page.evaluate_script("document.documentElement.scrollWidth <= window.innerWidth"),
-      "the page scrolls horizontally"
+    assert_no_sideways_scroll
 
     assert_operator document_top("#time-grid-define"), :<, document_top("input[type=submit]"),
       "the submit comes before the grid it posts"

@@ -45,12 +45,4 @@ class GuestPaintsOnTouchTest < MobileSystemTestCase
       assert_operator right, :<=, page.evaluate_script("document.documentElement.clientWidth"), "#{selector} runs off the screen"
     end
   end
-
-  private
-
-  # innerWidth grows with the overflow on a phone, so the page is measured
-  # against the width the phone shows.
-  def assert_no_sideways_scroll
-    assert page.evaluate_script("document.documentElement.scrollWidth <= document.documentElement.clientWidth"), "the page scrolls sideways"
-  end
 end

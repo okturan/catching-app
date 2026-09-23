@@ -36,8 +36,9 @@
     > .time-grid-panel { grid-row: 2 / -1; }
   }
 
+  // minmax(0, …): a bare 1fr grows to the grid table, and the phone scrolls sideways.
   @media (max-width: 900px) {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-rows: none;
 
     > .form-events,

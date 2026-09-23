@@ -19,6 +19,12 @@ class MobileSystemTestCase < ActionDispatch::SystemTestCase
 
   private
 
+  # innerWidth grows with the overflow on a phone, so the page is measured
+  # against the width the phone shows.
+  def assert_no_sideways_scroll
+    assert page.evaluate_script("document.documentElement.scrollWidth <= document.documentElement.clientWidth"), "the page scrolls sideways"
+  end
+
   # Drags one finger from the first element through the others using real
   # touch events dispatched through DevTools (chromedriver's synthetic touch
   # pointer does not reach the page under mobile emulation). The grid panel is
