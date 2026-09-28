@@ -9,7 +9,6 @@
   max-width: 100%;
   padding: 16px;
   margin-top: 0;
-  container-type: inline-size;
 }
 
 .time-grid-scroll {
@@ -27,7 +26,10 @@
 // offer page. Below 700px of viewport height the strip plus a usable grid no
 // longer fit, so the budget is dropped entirely and the panel scrolls with the
 // page: an action bar the page can reach beats one pinned out of sight.
+// The planning panel is a size container for its controls strip. Only this
+// one: containment around the event page's sticky Save bar is not worth it.
 .time-grid-define-wrapper {
+  container-type: inline-size;
   display: flex;
   flex-direction: column;
   max-height: calc(100dvh - 1rem);
