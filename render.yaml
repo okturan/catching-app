@@ -1,0 +1,43 @@
+# Render blueprint: one web service built from the Dockerfile, one Postgres.
+# Solid Queue runs inside Puma (SOLID_QUEUE_IN_PUMA in the Dockerfile), so
+# there is no separate worker. Mail goes out through Postmark's SMTP server.
+databases:
+  - name: catching-app-db
+    databaseName: catching_app_production
+    user: catching_app
+    plan: basic-256mb
+    region: frankfurt
+    postgresMajorVersion: "17"
+
+services:
+  - type: web
+    name: catching-app
+    runtime: docker
+    plan: starter
+    region: frankfurt
+    healthCheckPath: /up
+    domains:
+      - catching.app
+    envVars:
+      # Thruster serves on 80 and keeps Puma on 3000; this tells Render where to route.
+      - key: PORT
+        value: "80"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: catching-app-db
+          property: connectionString
+      - key: SECRET_KEY_BASE
+        generateValue: true
+      - key: APP_HOST
+        value: catching.app
+      - key: MAILER_FROM
+        value: "Catching App <no-reply@catching.app>"
+      - key: SMTP_ADDRESS
+        value: smtp.postmarkapp.com
+      - key: SMTP_PORT
+        value: "587"
+      # The Postmark server token, as both username and password.
+      - key: SMTP_USERNAME
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
