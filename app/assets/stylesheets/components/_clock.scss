@@ -1,0 +1,87 @@
+// A wall clock: white face, hairline ring, black hands, red second hand.
+.clock {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  // Hung on the wall, not printed on it.
+  filter: drop-shadow(0 6px 8px rgba(20, 20, 20, 0.16));
+}
+
+.clock-face {
+  fill: $face;
+  stroke: $ink;
+  stroke-width: 1.5;
+}
+
+.clock-ring {
+  fill: none;
+  stroke: rgba(20, 20, 20, 0.12);
+  stroke-width: 6;
+}
+
+.clock-tick {
+  stroke: $ink;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  &.clock-tick-major { stroke-width: 3; }
+}
+
+.clock-hand {
+  stroke: $ink;
+  stroke-linecap: round;
+  transform-origin: 50px 50px;
+  transform-box: view-box;
+  &.clock-hour { stroke-width: 4.5; }
+  &.clock-minute { stroke-width: 3; }
+  &.clock-second { stroke: $signal; stroke-width: 1.4; }
+}
+
+.clock-pin {
+  fill: $signal;
+  stroke: $face;
+  stroke-width: 1;
+}
+
+// The one authored motion: hands sweep from noon to now on load.
+.clock[data-sweep] .clock-hand {
+  transition: transform 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clock[data-sweep] .clock-hand { transition: none; }
+}
+
+.clock-card {
+  display: grid;
+  gap: 0.75rem;
+  justify-items: center;
+  text-align: center;
+}
+
+.clock-card .plate {
+  flex-direction: column;
+  gap: 0.2em;
+  padding: 0.55em 1.2em;
+  line-height: 1.15;
+}
+
+.clock-card .plate-city {
+  font-size: 0.72rem;
+}
+
+.clock-card .plate-time {
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
+.clock-card .plate-offset {
+  font-family: $body-font;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  opacity: 0.75;
+}
+
+.clock-card.is-visitor .plate {
+  background: $ink;
+}

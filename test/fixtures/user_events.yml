@@ -1,7 +1,0 @@
-planning_invitee:
-  user: invitee
-  event: planning
-
-finalized_invitee:
-  user: invitee
-  event: finalized

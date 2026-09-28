@@ -1,0 +1,34 @@
+<%= @reason_line %>
+<% if @renamed %>
+
+The event is now called <%= mail_safe(@renamed.last) %> (was <%= mail_safe(@renamed.first) %>)
+<% end %>
+<% if @place %>
+
+Where: <%= @place %>
+<% end %>
+<% if @duration %>
+
+How long: <%= @duration %>
+<% end %>
+<% if @plan.any? %>
+
+Plan:
+<% @plan.each_with_index do |line, index| %>
+<%= index + 1 %>. <%= line %>
+<% end %>
+<% end %>
+<% if @situation %>
+
+<%= @situation %>
+<% end %>
+
+<% if @link %>
+Open your link to see the event as it stands now:
+
+<%= @link %>
+<% else %>
+Open the link from your invitation to see the event as it stands now.
+<% end %>
+
+To stop hearing about this event, open your link and choose Leave this event.

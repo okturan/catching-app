@@ -18,7 +18,7 @@ class HardenDataIntegrityTest < ActiveSupport::TestCase
         ('reversed range', TRUE, '2030-01-15 12:00:00', '2030-01-15 10:00:00')
     SQL
 
-    HardenDataIntegrity.new.send(:normalize_finalized_events)
+    ActiveRecord::Migration.suppress_messages { HardenDataIntegrity.new.send(:normalize_finalized_events) }
 
     assert_equal 1, matching_legacy_events("label = 'single slot' AND status = TRUE AND end_time = start_time + INTERVAL '1 hour'")
     assert_equal 1, matching_legacy_events("label = 'multiple slots' AND status = TRUE AND end_time = '2030-01-15 13:00:00'")

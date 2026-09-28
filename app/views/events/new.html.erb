@@ -1,45 +1,55 @@
-<div class="banner-events mb-1" style="height: 285px; background-image:url(https://res.cloudinary.com/dvpavvw1u/image/upload/v1633029501/blob-scene-haikei_2_fkcf9o.png);">
-  <h1>WE HAVE SO MUCH CATCHING.APP TO DO!</h1>
+<div class="page-head">
+  <h1>Offer the times you can do.</h1>
+  <p class="lede mb-0">Paint your free hours on the grid, in your own zone. Your friends see them in theirs.</p>
 </div>
 
-<div class="event-new-grid">
-<div>
-    <%= simple_form_for(@event) do |f| %>
-      <%= f.error_notification %>
-      <input name="time_slots[time_slot_array]" id="time_slot_array" type="hidden">
-      <div class="form-events" style="background-image:url(https://res.cloudinary.com/dvpavvw1u/image/upload/v1633004095/meetingform2_puuthd.png);">
-        <%= f.input :name, placeholder: "A Fabulous Meeting!" %>
-        <%= f.input :description, as: :text, placeholder: "Do whatever!" %>
-        <%= f.input :invited_user_ids,
-          as: :select,
-          collection: @users,
-          label: "Invite members",
-          label_method: :full_name,
-          value_method: :id,
-          input_html: { class: "form-select", multiple: true } %>
+<%# The form is the two-column grid, with three children in order: the
+    meeting, the grid, who you are. On a phone the grid comes before the
+    button. %>
+<%= form_with model: @event, class: "event-new-grid", data: {
+      controller: "definer duration", action: "definer#submit definer:restepped->duration#restep", duration_step_value: @event.slot_minutes } do |form| %>
+  <input name="time_slots[time_slot_array]" id="time_slot_array" type="hidden" value="<%= params.dig(:time_slots, :time_slot_array) %>"
+    data-definer-target="slots">
 
-        <div class="mb-3">
-          <label class="form-label" for="timezone-picker-new">I am in:</label>
-          <select class="form-select" id="timezone-picker-new"></select>
-        </div>
+  <%= form.error_summary(definer_error_links(@event, organizer: @organizer)) %>
 
-        <div class="mb-3">
-          <label class="form-label" for="event-begin">Start date:</label>
-          <input class="form-control" type="date" name="start" id="event-begin" value="" />
-        </div>
-        <div class="mb-4">
-          <label class="form-label" for="event-end">End date:</label>
-          <input class="form-control" type="date" name="end" id="event-end" value="" />
-        </div>
-        <div class="text-danger" id="range-tooltip" role="status">
-        </div>
+  <section class="form-events" aria-labelledby="meeting-heading">
+    <h2 id="meeting-heading">The meeting</h2>
 
-        <%= f.submit "Catch.App with your Friends!", class: "btn-meeting mb-0" %>
-      </div>
+    <%# Required is the rule and carries no mark; the rest say "(optional)". %>
+    <%= form.field :name, required: true, maxlength: 120, hint: "Your friends see this in the invitation." %>
+    <%= form.field :description, as: :text_area, optional: true, rows: 3, maxlength: 2000, placeholder: "Do whatever!",
+          hint: "Anything your friends should know. You can add this later." %>
+    <%= form.field :place, optional: true, maxlength: 200, placeholder: "Ege's place, Kadıköy — or 'Zoom'",
+          hint: "Where you'll meet, or the app you'll use." %>
+    <%= form.field :place_url, as: :url_field, optional: true, maxlength: 2000, placeholder: "Link to join or a map link",
+          hint: "A joining link or a map link. It must start with http:// or https://." %>
+    <%= form.field :duration_minutes, as: :select, optional: true, include_blank: "Not set",
+          choices: duration_select_options(@event.slot_minutes, @event.duration_minutes), describedby: "duration-note",
+          data: { duration_target: "select" },
+          hint: "How long the meeting itself runs. Lengths that are not a whole number of your slot length are greyed out." do %>
+      <%# Written when a step change drops the chosen length. %>
+      <p class="form-text" id="duration-note" role="status" data-duration-target="note"></p>
     <% end %>
-  </div>
+  </section>
 
-  <div class="time-grid-define-wrapper">
-    <div id="time-grid-define"></div>
-  </div>
-</div>
+  <%= render "events/definer_grid", event: @event, frozen: false, begin_min: nil,
+        heading: "When could you do it?", hint: :paint %>
+
+  <section class="form-events" aria-labelledby="organizer-heading">
+    <h2 id="organizer-heading">Where do we send your link?</h2>
+    <% if authenticated? %>
+      <p class="form-note">Planning as <%= @organizer.name %> (<%= @organizer.email %>).</p>
+    <% else %>
+      <%= fields_for :organizer, @organizer do |organizer| %>
+        <%= organizer.field :name, label: "Your name", required: true, maxlength: 100, autocomplete: "name",
+              hint: "Your friends see this as the organizer." %>
+        <%= organizer.field :email, as: :email_field, label: "Your email", required: true, autocomplete: "email",
+              hint: "We send your organizer link here — it is the only way back into this event." %>
+      <% end %>
+    <% end %>
+
+    <p class="form-note">We email your organizer link to that address. Nothing reaches your friends until you open that link and press Send. Keep the email — that link is how you get back to this event.</p>
+    <%= form.submit "Send me my organizer link", class: "btn-meeting mb-0" %>
+  </section>
+<% end %>

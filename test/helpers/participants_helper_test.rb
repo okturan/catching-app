@@ -1,0 +1,57 @@
+require "test_helper"
+
+class ParticipantsHelperTest < ActionView::TestCase
+  include EventsHelper
+
+  test "a guest who answered reads their answer" do
+    guest = participants(:planning_guest)
+    assert_equal "replied (2 slots)", guest_state_label(guest, {}, slot_count: 2)
+
+    guest.event.offer_revised_at = guest.responded_at + 1.hour
+    assert_equal "replied (1 slot, before the last change)", guest_state_label(guest, {}, slot_count: 1)
+
+    guest.reply_voided_at = Time.current
+    assert_equal "needs a new reply", guest_state_label(guest, {}, slot_count: 0)
+
+    guest.declined_at = Time.current
+    assert_equal "none of these work", guest_state_label(guest, {}, slot_count: 0)
+
+    guest.left_at = Time.current
+    assert_equal "left", guest_state_label(guest, {}, slot_count: 0)
+  end
+
+  test "a guest who has not answered reads the fate of their last invitation" do
+    assert_equal "not sent", guest_state_label(participants(:planning_unsent), {}, slot_count: 0)
+
+    pending = participants(:planning_pending)
+    sent = ->(**stamps) { { pending.id => [ MailDelivery.new(created_at: Time.current, **stamps) ] } }
+    assert_equal "queued", guest_state_label(pending, {}, slot_count: 0)
+    assert_equal "queued", guest_state_label(pending, sent.call, slot_count: 0)
+    assert_equal "delivery unknown, resend", guest_state_label(pending, sent.call(created_at: 20.minutes.ago), slot_count: 0)
+    assert_equal "could not be delivered", guest_state_label(pending, sent.call(failed_at: Time.current), slot_count: 0)
+
+    delivered = guest_state_label(pending, sent.call(delivered_at: Time.utc(2030, 1, 10, 9)), slot_count: 0)
+    assert_dom_equal %(sent on <time datetime="2030-01-10T09:00:00Z" class="time" data-zoned-instant="" data-zoned-format="date-time">Thu 10 Jan 2030 09:00 (UTC)</time>), delivered
+  end
+
+  test "also_invited names the guests who gave a name and counts the rest" do
+    guest = ->(name) { Participant.new(name:) }
+    assert_equal "Deniz, Priya, and 2 others", also_invited([ guest.("Deniz"), guest.(nil), guest.("Priya"), guest.("") ])
+    assert_equal "Deniz and 1 other", also_invited([ guest.("Deniz"), guest.(nil) ])
+    assert_equal "Deniz", also_invited([ guest.("Deniz") ])
+    assert_equal "3 guests", also_invited([ guest.(nil), guest.(nil), guest.(nil) ])
+  end
+
+  test "grid_prompt says what the viewer can do on the grid" do
+    assert_equal "When can you make it?", grid_prompt(role: "guest", action: :save).first
+    assert_match "then press Save", grid_prompt(role: "guest", action: :save).last
+    assert_nil grid_prompt(role: "guest", action: :none).last
+
+    assert_equal "Pick the time", grid_prompt(role: "organizer", action: :set_in_stone).first
+    assert_match "press Set in stone", grid_prompt(role: "organizer", action: :set_in_stone).last
+    assert_equal [ "Your offer", nil ], grid_prompt(role: "organizer", action: :change_the_times)
+    assert_equal "Your offer", grid_prompt(role: "organizer", action: :awaiting_replies).first
+
+    assert_equal [ "Everyone's times", nil ], grid_prompt(role: "viewer", action: nil)
+  end
+end

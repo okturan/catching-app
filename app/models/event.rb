@@ -1,91 +1,96 @@
+# A meeting to find a time for: open while planning, finalized once the time
+# is set, cancelled for good. Every write others can see runs under the row
+# lock and bumps the revision, which calendar files publish as SEQUENCE.
 class Event < ApplicationRecord
-  class ClosedError < StandardError; end
+  include Availability, Finalization, Cancellation, Plan, Announcements
 
-  belongs_to :user, inverse_of: :events
+  class Closed < Refusal; end
 
-  has_many :activities, dependent: :destroy, inverse_of: :event
-  has_many :time_slots, dependent: :destroy, inverse_of: :event
-  has_many :user_events, dependent: :destroy, inverse_of: :event
-  has_many :invited_users, through: :user_events, source: :user
+  SLOT_MINUTES = [ 15, 30, 60 ].freeze
+  GUEST_LIMIT = 50
+  DETAIL_ATTRIBUTES = %w[name description place place_url duration_minutes].freeze
 
-  validates :name, :description, presence: true
-  validates :start_time, :end_time, presence: true, if: :status?
-  validate :end_time_follows_start_time
+  has_many :participants
+  has_one :organizer, -> { organizer }, class_name: "Participant"
+  has_many :guests, -> { guest }, class_name: "Participant"
+  has_many :time_slots, dependent: :delete_all
+  has_many :mail_deliveries
 
-  scope :accessible_to, ->(user) {
-    left_outer_joins(:user_events)
-      .where("events.user_id = :user_id OR user_events.user_id = :user_id", user_id: user.id)
-      .distinct
-  }
+  normalizes :name, with: -> { it.squish }
+  # Applied to nil too, so an omitted description lands on the NOT NULL column as "".
+  normalizes :description, with: -> { it.to_s.strip }, apply_to_nil: true
+  normalizes :place, with: -> { it.squish.presence }
+  # Only the scheme is downcased: "HTTPS://Zoom.us/J/1" keeps its path.
+  normalizes :place_url, with: -> { it.strip.presence&.sub(/\A[a-z][a-z0-9+.\-]*(?=:)/i, &:downcase) }
 
-  def replace_time_slots!(user:, starts_at:)
-    with_lock do
-      ensure_pending!
-      ensure_slots_were_offered!(user, starts_at)
+  validates :name, presence: true, length: { maximum: 120 }
+  validates :description, length: { maximum: 2000 }
+  validates :place, length: { maximum: 200 }
+  validates :place_url, length: { maximum: 2000 }, web_address: true, allow_nil: true
+  validates :slot_minutes, inclusion: { in: SLOT_MINUTES }
+  validates :time_zone, time_zone: true
+  validates :duration_minutes, numericality: { only_integer: true, greater_than: 0, less_than_or_equal_to: 24 * 60 }, allow_nil: true
+  validate :duration_fits_the_grid
 
-      time_slots.where(user: user).delete_all
-      starts_at.each { |start_time| time_slots.create!(user: user, start_time: start_time) }
+  # The only creation path: the event, its organizer and the offer at once.
+  def self.plan!(attributes:, organizer:, starts_at:)
+    transaction do
+      create!(attributes).tap do |event|
+        event.participants.organizer.create!(**organizer, responded_at: Time.current)
+        event.replace_time_slots!(participant: event.organizer, starts_at:)
+      end
     end
   end
 
-  def finalize!(starts_at:)
-    selected_slots = starts_at.uniq.sort
+  def open?
+    !finalized? && !cancelled?
+  end
 
+  def set_in_stone?
+    finalized? && !cancelled?
+  end
+
+  # Cancelled wins over finalized: a cancelled event has one message.
+  def ensure_open!
+    ensure_not_cancelled!
+    raise Closed, "Availability is closed for this event" if finalized?
+  end
+
+  def slot_length
+    slot_minutes.minutes
+  end
+
+  def planned_length
+    Length.new(duration_minutes) if duration_minutes
+  end
+
+  # Returns what changed, as attribute => [was, is].
+  def update_details!(attributes)
     with_lock do
-      ensure_pending!
-      ensure_consensus!(selected_slots)
-      ensure_contiguous!(selected_slots)
-
-      update!(
-        start_time: selected_slots.min,
-        end_time: selected_slots.max + 1.hour,
-        status: true
-      )
+      ensure_not_cancelled!
+      assign_attributes(attributes)
+      self.revision += 1 if changed.intersect?(DETAIL_ATTRIBUTES)
+      save!
+      saved_changes.except("revision", "updated_at")
     end
   end
 
-  def mutually_available_start_times
-    participant_ids = [ user_id, *invited_user_ids ]
+  # Returns the addresses added and those already on the event.
+  def add_guests!(addresses)
+    addresses -= [ organizer.email ]
+    already = addresses & participants.pluck(:email)
+    added = addresses - already
+    raise Refusal, "An event can have at most #{GUEST_LIMIT} guests" if guests.active.count + added.size > GUEST_LIMIT
 
-    time_slots
-      .where(user_id: participant_ids)
-      .group(:start_time)
-      .having("COUNT(DISTINCT user_id) = ?", participant_ids.size)
-      .order(:start_time)
-      .pluck(:start_time)
+    added.each { participants.guest.create!(email: it) }
+    [ added, already ]
   end
 
   private
 
-  def ensure_pending!
-    raise ClosedError, "Availability is closed for this event" if status?
-  end
+  def duration_fits_the_grid
+    return if duration_minutes.nil? || errors.include?(:duration_minutes) || errors.include?(:slot_minutes)
 
-  def ensure_slots_were_offered!(participant, selected_slots)
-    return if participant == user
-
-    offered_slots = time_slots.where(user: user, start_time: selected_slots).pluck(:start_time)
-    return if selected_slots.all? { |slot| offered_slots.include?(slot) }
-
-    raise ArgumentError, "Select only time slots offered by the organizer"
-  end
-
-  def ensure_consensus!(selected_slots)
-    consensus_slots = mutually_available_start_times
-    return if selected_slots.all? { |slot| consensus_slots.include?(slot) }
-
-    raise ArgumentError, "Select only time slots available to every participant"
-  end
-
-  def ensure_contiguous!(selected_slots)
-    return if selected_slots.present? && selected_slots.each_cons(2).all? { |earlier, later| later - earlier == 1.hour }
-
-    raise ArgumentError, "Select one continuous meeting window"
-  end
-
-  def end_time_follows_start_time
-    return if start_time.blank? || end_time.blank? || end_time > start_time
-
-    errors.add(:end_time, "must be after the start time")
+    errors.add(:duration_minutes, "must be a whole number of #{slot_minutes}-minute slots") unless (duration_minutes % slot_minutes).zero?
   end
 end

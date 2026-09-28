@@ -1,0 +1,20 @@
+<p><%= @reason_line %></p>
+<% if @renamed %><p>The event is now called <%= mail_safe(@renamed.last) %> (was <%= mail_safe(@renamed.first) %>)</p><% end %>
+<% if @place %><p>Where: <%= @place %></p><% end %>
+<% if @duration %><p>How long: <%= @duration %></p><% end %>
+<% if @plan.any? %>
+<p>Plan:</p>
+<ol>
+<% @plan.each do |line| %>
+  <li><%= line %></li>
+<% end %>
+</ol>
+<% end %>
+<% if @situation %><p><%= @situation %></p><% end %>
+<% if @link %>
+<p>Open your link to see the event as it stands now:</p>
+<p><%= link_to @link, @link %></p>
+<% else %>
+<p>Open the link from your invitation to see the event as it stands now.</p>
+<% end %>
+<p>To stop hearing about this event, open your link and choose Leave this event.</p>

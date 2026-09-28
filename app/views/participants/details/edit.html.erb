@@ -1,0 +1,107 @@
+<% content_for :head do %>
+  <meta name="robots" content="noindex">
+  <meta name="turbo-cache-control" content="no-cache">
+<% end %>
+<%# Every plan edit redirects back here: morph the page in place and keep the
+    organizer where they were in the plan, instead of scrolling to the top. %>
+<% turbo_refreshes_with method: :morph, scroll: :preserve %>
+<% content_for :canonical_url, root_url %>
+<% content_for :meta_title, "Edit details · #{@event.name} · Catching App" %>
+
+<div class="container py-5" id="event-details">
+  <h1>Edit details</h1>
+  <div class="form-inputs details-face">
+    <div class="details-main">
+      <p class="details-facts"><%= @event.slot_minutes %>-minute slots · <%= @event.time_zone %></p>
+      <% if @event.finalized? %>
+        <p class="details-facts">Set in stone:
+          <%= zoned_time(@event.start_time, @event.time_zone, format: :date_time) %> to
+          <%= zoned_time(@event.end_time, @event.time_zone) %></p>
+      <% end %>
+
+      <%= form_with model: @event, url: participant_details_path(@participant), method: :patch, id: "details-form" do |form| %>
+        <%= form.error_summary %>
+
+        <%= form.field :name, required: true, maxlength: 120 %>
+        <%= form.field :description, as: :text_area, optional: true, rows: 4, maxlength: 2000 %>
+        <%= form.field :place, optional: true, maxlength: 200, placeholder: "Ege's place, Kadıköy — or 'Zoom'" %>
+        <%= form.field :place_url, as: :url_field, optional: true, maxlength: 2000, placeholder: "Link to join or a map link" %>
+        <%= form.field :duration_minutes, as: :select, optional: true, include_blank: "Not set",
+              choices: duration_select_options(@event.slot_minutes, @event.duration_minutes) %>
+        <% if notice_offered? %>
+          <div class="form-check mb-4">
+            <%= check_box_tag "notice[send]", "1", @event.finalized?, id: "notice_send", class: "form-check-input" %>
+            <%= label_tag "notice_send", "Email the guests about this change", class: "form-check-label" %>
+          </div>
+        <% end %>
+
+        <%= form.submit "Save details", class: "btn btn-primary" %>
+      <% end %>
+    </div>
+
+    <section class="plan-editor" aria-labelledby="plan-heading">
+      <h2 id="plan-heading">The plan</h2>
+      <% timeline = @event.plan_timeline %>
+      <% if @event.finalized? && @event.plan_minutes > @event.window_minutes %>
+        <p class="plan-note">The plan runs <%= Length.new(@event.plan_minutes) %>; the set time is <%= Length.new(@event.window_minutes) %>.</p>
+      <% end %>
+      <% if timeline.empty? %>
+        <p class="plan-empty">Nothing planned yet. Guests read the plan on their card, in order.</p>
+      <% else %>
+        <ol class="plan-items">
+          <% timeline.each_with_index do |(item, start), index| %>
+            <li class="plan-item" id="plan-item-<%= item.id %>">
+              <div class="plan-item-head">
+                <span><%= index + 1 %>. <%= plan_item_label(item) %></span>
+                <% if start %><%= zoned_time(start, @event.time_zone) %><% end %>
+              </div>
+              <%= form_with model: item, url: participant_plan_item_path(@participant, item), method: :patch, namespace: "plan_#{item.id}",
+                class: "plan-item-form", html: { aria: { label: "Edit #{item.name}" } } do |form| %>
+                <div class="plan-field-name">
+                  <%= form.label :name, "Name", class: "visually-hidden" %>
+                  <%= form.text_field :name, class: "form-control form-control-sm", maxlength: 80, required: true %>
+                </div>
+                <div>
+                  <%= form.label :duration_minutes, "Length", class: "visually-hidden" %>
+                  <%= form.select :duration_minutes, plan_duration_options(item.duration_minutes), { include_blank: "No length" }, class: "form-select form-select-sm" %>
+                </div>
+                <div>
+                  <%= form.label :description, "Description", class: "visually-hidden" %>
+                  <%= form.text_field :description, class: "form-control form-control-sm", maxlength: 500, placeholder: "One line, optional" %>
+                </div>
+                <%= form.submit "Save", class: "btn btn-outline-primary btn-sm", aria: { label: "Save #{item.name}" } %>
+              <% end %>
+              <div class="plan-controls">
+                <%= button_to "Up", participant_plan_item_move_path(@participant, item), method: :post, params: { move: { position: index - 1 } },
+                  class: "btn btn-outline-secondary btn-sm", aria: { label: "Move #{item.name} up" } %>
+                <%= button_to "Down", participant_plan_item_move_path(@participant, item), method: :post, params: { move: { position: index + 1 } },
+                  class: "btn btn-outline-secondary btn-sm", aria: { label: "Move #{item.name} down" } %>
+                <%= button_to "Remove", participant_plan_item_path(@participant, item), method: :delete, class: "btn btn-outline-danger btn-sm",
+                  aria: { label: "Remove #{item.name}" }, form: { data: { turbo_confirm: "Remove #{item.name} from the plan?" } } %>
+              </div>
+            </li>
+          <% end %>
+        </ol>
+      <% end %>
+
+      <%= form_with url: participant_plan_items_path(@participant), method: :post, scope: :plan_item, id: "plan-add-form", class: "plan-add-form" do |form| %>
+        <div>
+          <%= form.label :name, "Add to the plan", class: "form-label" %>
+          <%= form.text_field :name, class: "form-control", maxlength: 80, required: true, placeholder: "Pizza first" %>
+        </div>
+        <div class="plan-add-row">
+          <div>
+            <%= form.label :duration_minutes, "Length", class: "form-label" %>
+            <%= form.select :duration_minutes, plan_duration_options(nil), { include_blank: "No length" }, class: "form-select" %>
+          </div>
+          <div>
+            <%= form.label :description, "Description", class: "form-label" %>
+            <%= form.text_field :description, class: "form-control", maxlength: 500, placeholder: "One line, optional" %>
+          </div>
+        </div>
+        <%= form.submit "Add to the plan", class: "btn btn-primary" %>
+      <% end %>
+    </section>
+  </div>
+  <p><%= link_to "Back to the event", participant_path(@participant), class: "quiet-link" %></p>
+</div>

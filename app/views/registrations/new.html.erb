@@ -1,0 +1,20 @@
+<%= form_with model: @user, url: registration_path do |form| %>
+  <div class="form-inputs">
+    <h2>Sign up for free</h2>
+    <%= form.error_summary %>
+    <%= form.field :first_name, required: true, autofocus: true, autocomplete: "given-name" %>
+    <%= form.field :last_name, required: true, autocomplete: "family-name" %>
+    <%= form.field :email, as: :email_field, required: true, autocomplete: "email" %>
+    <%= form.field :password, as: :password_field, required: true, autocomplete: "new-password",
+          hint: "#{User::PASSWORD_MINIMUM} characters minimum" %>
+    <%= form.field :password_confirmation, as: :password_field, required: true, autocomplete: "new-password" %>
+  </div>
+
+  <div class="form-actions">
+    <%= form.submit "Sign up!", class: "btn btn-primary" %>
+  </div>
+<% end %>
+
+<div class="form-links">
+  <%= link_to "Log in", new_session_path %>
+</div>

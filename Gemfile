@@ -1,6 +1,6 @@
 source "https://rubygems.org"
 
-ruby "4.0.5"
+ruby "~> 4.0.5"
 
 gem "rails", "~> 8.1.3"
 
@@ -10,6 +10,7 @@ gem "pg", "~> 1.6"
 gem "propshaft"
 gem "puma", ">= 7.0"
 gem "thruster", require: false
+gem "solid_queue"
 
 # JavaScript and CSS
 gem "cssbundling-rails"
@@ -17,8 +18,7 @@ gem "jsbundling-rails"
 gem "turbo-rails"
 
 # Application dependencies
-gem "devise"
-gem "simple_form"
+gem "bcrypt", "~> 3.1"
 gem "tzinfo-data", platforms: %i[windows jruby]
 
 group :development, :test do

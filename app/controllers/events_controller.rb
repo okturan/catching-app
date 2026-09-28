@@ -1,69 +1,67 @@
 class EventsController < ApplicationController
-  before_action :set_accessible_event, only: :show
-  before_action :set_owned_event, only: :update
+  include TimeSlotParams
 
-  def show
-    @host = @event.user
-    @host_time_slots = @event.time_slots.where(user: @host).order(:start_time)
-    @guest_time_slots = @event.time_slots.where.not(user: @host).order(:start_time)
-    @guests = @event.invited_users.order(:first_name, :last_name)
-  end
+  allow_unauthenticated_access only: %i[new create pending]
+
+  # A courtesy layer only; the ledger caps are what hold.
+  rate_limit to: 5, within: 10.minutes, only: :create
 
   def new
-    @event = current_user.events.build
-    load_invitees
+    # No zone yet: the column's UTC default would win over the browser's own
+    # zone in the picker and paint every visitor the wrong hours.
+    @event = Event.new(time_zone: nil)
+    @organizer = Participant.organizer.new(organizer_attributes)
   end
 
   def create
-    @event = current_user.events.build(event_params)
+    @organizer = Participant.organizer.new(organizer_attributes)
+    MailDelivery::Caps.check_event_creation!(organizer_email: @organizer.email, request_ip: request.remote_ip)
 
-    Event.transaction do
-      @event.save!
-      @event.replace_time_slots!(user: current_user, starts_at: parsed_time_slots)
-      @event.invited_users = permitted_invitees
-    end
+    @event = Event.plan!(attributes: event_params, organizer: { name: @organizer.name, email: @organizer.email, user: Current.user },
+      starts_at: parsed_time_slots(slot_minutes: requested_slot_minutes))
+    @event.organizer.send_organizer_link!(request_ip: request.remote_ip)
 
-    redirect_to @event, notice: "Event created."
-  rescue ActiveRecord::RecordInvalid, ArgumentError => error
-    @event.errors.add(:base, error.message) if @event.errors.empty?
-    load_invitees
-    render :new, status: :unprocessable_entity
+    flash[:organizer_email] = @organizer.email
+    redirect_to pending_events_path, notice: "Event created.", status: :see_other
+  rescue MailDelivery::CapExceeded => refusal
+    redirect_to new_event_path, alert: refusal.message, status: :see_other
+  rescue ActiveRecord::RecordInvalid
+    render_form_again
+  rescue Refusal => refusal
+    render_form_again(base: refusal.message)
   end
 
-  def update
-    @event.finalize!(starts_at: parsed_time_slots)
-
-    redirect_to @event, notice: "Meeting time confirmed."
-  rescue ActiveRecord::RecordInvalid, ArgumentError, Event::ClosedError => error
-    redirect_to @event, alert: error.message, status: :see_other
+  def pending
+    @organizer_email = flash[:organizer_email]
   end
 
   private
 
-  def set_accessible_event
-    @event = Event.accessible_to(current_user).find(params[:id])
-  end
-
-  def set_owned_event
-    @event = current_user.events.find(params[:id])
-  end
-
-  def load_invitees
-    @users = User.where.not(id: current_user.id).order(:first_name, :last_name)
-  end
-
-  def permitted_invitees
-    ids = Array(params.dig(:event, :invited_user_ids)).compact_blank
-    User.where(id: ids).where.not(id: current_user.id)
+  # Every mistake at once: a refusal about the grid joins the event's errors.
+  def render_form_again(base: nil)
+    @event = Event.new(event_params)
+    @event.validate
+    @event.errors.add(:base, base) if base
+    @organizer = @event.participants.organizer.new(organizer_attributes)
+    @organizer.validate
+    render :new, status: :unprocessable_entity
   end
 
   def event_params
-    params.require(:event).permit(:name, :description)
+    params.expect(event: %i[name description slot_minutes time_zone place place_url duration_minutes])
   end
 
-  def parsed_time_slots
-    TimeSlotParser.call(params.require(:time_slots).fetch(:time_slot_array))
-  rescue KeyError, TypeError
-    raise ActionController::ParameterMissing, :time_slots
+  def requested_slot_minutes
+    requested = event_params[:slot_minutes].to_i
+    Event::SLOT_MINUTES.include?(requested) ? requested : 30
+  end
+
+  # Signed in, the organizer is the account; a posted organizer[email] is ignored.
+  def organizer_attributes
+    if authenticated?
+      { email: Current.user.email, name: Current.user.full_name }
+    else
+      params.fetch(:organizer, {}).permit(:name, :email)
+    end
   end
 end

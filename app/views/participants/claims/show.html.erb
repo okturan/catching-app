@@ -1,0 +1,10 @@
+<% content_for :head do %>
+  <meta name="robots" content="noindex">
+  <meta name="turbo-cache-control" content="no-cache">
+<% end %>
+<div class="notice-page" id="claim">
+  <h1>Keep <%= @event.name %> in your account</h1>
+  <p>This links your invitation as <strong><%= @participant.email %></strong> to <strong><%= Current.user.email %></strong>. The emailed link keeps working.</p>
+  <%= button_to "Keep this event in my account", participant_claim_path(@participant), method: :post, class: "btn btn-primary" %>
+  <p class="mt-3"><%= link_to "Back to the event", participant_path(@participant) %></p>
+</div>

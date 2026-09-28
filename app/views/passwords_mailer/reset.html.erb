@@ -1,0 +1,3 @@
+<p>Someone asked to reset the password of the Catching App account for <%= @user.email %>.</p>
+<p><%= link_to "Choose a new password", edit_password_url(@user.password_reset_token) %>. The link works for an hour.</p>
+<p>If that wasn't you, ignore this email: your password stays as it is.</p>

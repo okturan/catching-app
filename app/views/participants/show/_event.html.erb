@@ -1,0 +1,52 @@
+<h1><%= event.name %><% if event.cancelled? %> <span class="plate plate-ink">Cancelled</span><% elsif event.finalized? %> <span class="plate">Set in stone</span><% end %></h1>
+<% if event.description.present? %>
+  <%= simple_format(event.description, { class: "event-description" }) %>
+<% end %>
+<% if event.cancelled? %>
+  <div class="event-when is-cancelled">
+    <span>Cancelled on <%= zoned_time(event.cancelled_at, event.time_zone, format: :date_time) %></span>
+    <% if event.finalized? %>
+      <span>Was set for <%= zoned_time(event.start_time, event.time_zone, format: :date_time) %> to <%= zoned_time(event.end_time, event.time_zone) %></span>
+    <% end %>
+  </div>
+<% elsif event.finalized? %>
+  <%# The viewer's own zone leads once the page knows it differs. %>
+  <div class="event-when is-set">
+    <span id="final-window-local" data-availability-target="localWindow" hidden></span>
+    <span class="event-when-zone"><%= event_window(event) %></span>
+  </div>
+<% else %>
+  <div class="event-when is-pending">Time to be confirmed by <%= event.organizer.display_name %></div>
+<% end %>
+<% if participant.organizer? && !event.cancelled? && event.reopen_count.positive? %>
+  <p class="event-reopened">
+    <span><%= event.reopen_count == 1 ? "Reopened once" : "Reopened twice — the last time" %></span>
+    <span>The set time was withdrawn on <%= zoned_time(event.reopened_at, event.time_zone, format: :date_time) %></span>
+  </p>
+<% end %>
+<% if event.place.present? || event.place_url.present? || event.planned_length || plan.any? %>
+  <dl class="event-facts">
+    <% if event.place.present? || event.place_url.present? %>
+      <dt>Where</dt>
+      <dd><%= event.place %><% if event.place_url.present? %> <%= place_link(event) %><% end %></dd>
+    <% end %>
+    <% if event.planned_length %>
+      <dt>How long</dt>
+      <dd><%= event.planned_length %></dd>
+    <% end %>
+    <% if plan.any? %>
+      <dt>Plan</dt>
+      <dd>
+        <ol class="event-plan">
+          <% plan.each do |item, start| %>
+            <li>
+              <span class="event-plan-item"><%= plan_item_label(item) %></span>
+              <% if start %><%= zoned_time(start, event.time_zone) %><% end %>
+              <% if item.description.present? %><span class="event-plan-note"><%= item.description %></span><% end %>
+            </li>
+          <% end %>
+        </ol>
+      </dd>
+    <% end %>
+  </dl>
+<% end %>

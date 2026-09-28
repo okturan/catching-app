@@ -19,15 +19,16 @@ The maintainers especially want to know about:
 - access to another user's events, invitations, availability, profile details,
   or account data;
 - forged or inconsistent scheduling writes, including finalizing time slots as
-  a non-organizer;
+  a non-organizer or sending invitations before the organizer link was opened;
 - injection, cross-site scripting, CSRF, unsafe redirects, file or secret
   exposure, and dependency or container vulnerabilities with a demonstrated
   impact.
 
-Reports about the public member-name lookup are useful when they expose data
-beyond the documented display-name search. Rate-limit observations without a
-practical security impact and defects in seeded development accounts can be
-filed as normal bugs.
+Reports about capability links are especially welcome when a link can be
+guessed, recovered from a log or a page, used after the guest left, or used to
+act as another participant. Rate-limit observations without a practical
+security impact and defects in seeded development accounts can be filed as
+normal bugs.
 
 Test only with accounts and data you control. Do not access another person's
 event, availability, or account, and do not include real credentials or personal

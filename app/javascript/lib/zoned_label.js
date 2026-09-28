@@ -1,0 +1,31 @@
+import { DateTime } from "luxon";
+
+// The two shapes a zoned instant takes, matching Rails' :time and the
+// :date_time of config/initializers/time_formats.rb: a clock reading, or a
+// full date with the clock (data-zoned-format="date-time").
+const FORMATS = {
+  time: "HH:mm",
+  "date-time": "ccc d LLL yyyy HH:mm",
+};
+
+// One instant read in one zone: "20:00 (Europe/Berlin)". The server renders
+// every <time data-zoned-instant> this way in the event zone; the page
+// rewrites them into the picker zone with the same helper, passing the
+// element's data-zoned-format so a dated label keeps its date.
+const zonedLabel = (iso, zone, { format = "time" } = {}) => {
+  const instant = DateTime.fromISO(String(iso || ""), { setZone: true, locale: "en" });
+  if (!instant.isValid) return "";
+  const local = instant.setZone(zone);
+  if (!local.isValid) return "";
+  return `${local.toFormat(FORMATS[format] || FORMATS.time)} (${local.zoneName})`;
+};
+
+// Rewrites every server-rendered instant under root into one zone.
+const rewriteZonedInstants = (root, zone) => {
+  root.querySelectorAll("time[data-zoned-instant]").forEach((element) => {
+    const label = zonedLabel(element.getAttribute("datetime"), zone, { format: element.dataset.zonedFormat || "time" });
+    if (label) element.textContent = label;
+  });
+};
+
+export { rewriteZonedInstants, zonedLabel };

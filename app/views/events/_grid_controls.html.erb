@@ -1,0 +1,47 @@
+<%# frozen: step and zone are disabled, described by the caption that says
+    why. begin_min: the earliest first day, or nil. %>
+<% time_zone = event.time_zone.presence || params.dig(:event, :time_zone) %>
+<div>
+  <label class="form-label" for="event_slot_minutes">Slot length</label>
+  <%= select_tag "event[slot_minutes]",
+    options_for_select([ [ "15 minutes", 15 ], [ "30 minutes", 30 ], [ "60 minutes", 60 ] ], event.slot_minutes),
+    id: "event_slot_minutes", class: "form-select", disabled: frozen,
+    data: { definer_target: "step", action: "definer#restep" },
+    aria: { describedby: frozen ? "grid-frozen-note" : "slot-minutes-hint" } %>
+  <% unless frozen %>
+    <p class="form-text" id="slot-minutes-hint">The size of one cell. Changing it redraws the grid.</p>
+  <% end %>
+</div>
+
+<div>
+  <label class="form-label" for="timezone-picker-new">Times shown in</label>
+  <%# An empty data-selected is rejected as unknown, so the browser zone wins. %>
+  <%= select_tag "event[time_zone]", nil, id: "timezone-picker-new", class: "form-select", disabled: frozen,
+    data: { selected: time_zone.to_s, definer_target: "zone", action: "definer#rezone" },
+    aria: { describedby: frozen ? "grid-frozen-note" : "time-zone-hint" } %>
+  <% unless frozen %>
+    <p class="form-text" id="time-zone-hint">The grid is drawn in this zone. Your friends see the same hours in theirs.</p>
+  <% end %>
+</div>
+
+<% if frozen %>
+  <p class="grid-frozen-note" id="grid-frozen-note">Fixed since the first reply</p>
+<% end %>
+
+<fieldset class="grid-days" aria-describedby="grid-range-hint range-tooltip">
+  <legend class="form-label">Days on the grid</legend>
+  <div class="grid-days-pair">
+    <div>
+      <label class="form-label" for="event-begin">First day</label>
+      <%= tag.input type: "date", id: "event-begin", class: "form-control", value: "", min: begin_min,
+            data: { definer_target: "begin", action: "change->definer#redraw" } %>
+    </div>
+    <div>
+      <label class="form-label" for="event-end">Last day</label>
+      <%= tag.input type: "date", id: "event-end", class: "form-control", value: "",
+            data: { definer_target: "end", action: "change->definer#redraw" } %>
+    </div>
+  </div>
+  <p class="form-text" id="grid-range-hint">Up to 31 days.</p>
+</fieldset>
+<div class="text-danger" id="range-tooltip" role="status" data-definer-target="rangeNote"></div>

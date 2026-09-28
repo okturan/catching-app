@@ -1,153 +1,25 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-
-  <div id="mainC">
-    <div class="message404">
-      <h1>404</h1>
-      <h3>The page you seek is not here!</h3>
-    </div>
-    <div class="footer404">
-      <a href="/" title="home"><i class="fas fa-users mr-1"></i>Take Me Home!</i></a>
-      <p class="legal">CATCHING.APP 2012</p>
-    </div>
-  </div>
-
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Something went wrong (500)</title>
   <style>
-    body,
-    html {
-      background: #000;
-      position: relative;
-      margin: 0;
-      width: 100%;
-      height: 100%;
-    }
-
-    #mainC {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: #fff;
-      font-family: sans-serif;
-      max-width: 340px;
-      -webkit-user-select: none;
-      -moz-user-select: none;
-      -o-user-select: none;
-      user-select: none;
-    }
-
-    .message404 {
-      font-size: 16px;
-      text-align: center;
-    }
-
-    .message404 h1 {
-      margin: 0;
-      padding: 0;
-      font-size: 11em;
-      transform: skewY(-5deg);
-      transition: 0.4s ease-in-out all;
-    }
-
-    .message404 h1 :hover {
-      text-shadow: 20px 20px 0 fade(#afd33d, 10%);
-    }
-
-    /*       @media (max-width: 300px) {
-        font-size: 50vw;
-      }
-    } */
-    .message404 h3 {
-      color: #afd33d;
-      font-size: 0.9em;
-      font-weight: lighter;
-      line-height: 1;
-      /*       @media (max-width: 300px) {
-        font-size: 5vw;
-      } */
-    }
-
-    .footer404 {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      width: 100%;
-    }
-
-    .footer404 a {
-      position: relative;
-      flex: 1;
-      color: rgba(255, 255, 255, 0.6);
-      text-decoration: none;
-      border-radius: 3px;
-      border: 1px solid rgba(255, 255, 255, 0.6);
-      margin: 0 20px;
-      text-align: center;
-      padding: 10px 0;
-      overflow: hidden;
-      transition: all 0.2s ease-in-out;
-      z-index: 3;
-    }
-
-    /*       @media (max-width: 300px) {
-        flex: 5 100%;
-        width: 100%;
-      } */
-
-    .footer404 a:hover {
-      border: 1px solid rgba(255, 255, 255, 1);
-      color: #121212;
-      -webkit-transform: scale(1.3);
-      transform: scale(1.3);
-      background: rgb(185, 139, 255);
-      background: radial-gradient(circle,
-        rgba(0, 235, 156, 1) 0%,
-        rgb(185, 139, 255) 100%
-        /*         span {
-          width: 310px;
-          height: 310px;
-        } */
-      }
-
-      .footer404 span {
-        content:'';
-        position: absolute;
-        background: #afd33d;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 0;
-        height: 0;
-        border-radius: 50%;
-        transition: all 0.5s ease;
-        z-index: -1;
-      }
-
-      /*         @media (max-width: 300px) {
-          transition: all 0.2s ease-in;
-        } */
-
-      a:active {
-        background: lighten(#afd33d, 10%);
-      }
-
-      .legal {
-        text-align: center;
-        flex: 3;
-        color: fade(#ccc, 50%);
-
-        /*     @media (max-width: 300px) {
-      font-size: 4vw;
-      flex: 5 100%;
-      padding: 5px 10px;
-      }
-    }
-  } */
-      }
+    body, html { background: #000; color: #fff; margin: 0; width: 100%; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    main { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); max-width: 360px; text-align: center; }
+    h1 { font-size: 72px; margin: 0 0 8px; letter-spacing: 6px; }
+    p { font-size: 18px; margin: 0 0 24px; opacity: 0.85; }
+    a { color: #1edd88; text-decoration: none; font-weight: 600; }
+    a:hover { text-decoration: underline; }
+    small { display: block; margin-top: 32px; opacity: 0.5; letter-spacing: 2px; }
   </style>
 </head>
-
+<body>
+  <main>
+    <h1>500</h1>
+    <p>Something went wrong on our side. Your answers are safe; try again in a moment.</p>
+    <a href="/">Take me home</a>
+    <small>CATCHING.APP</small>
+  </main>
+</body>
 </html>

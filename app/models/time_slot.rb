@@ -1,7 +1,34 @@
+# One painted instant. Slots are written in bulk, so the database holds the
+# rules.
 class TimeSlot < ApplicationRecord
-  belongs_to :user, inverse_of: :time_slots
-  belongs_to :event, inverse_of: :time_slots
+  MAX_DAYS = 31
+  # A day has at most 25 hours, on the night the clocks go back.
+  MAX_HOURS = MAX_DAYS * 25
+  # A slot stays paintable for a day after it starts, so "today" covers every
+  # zone on the planet.
+  PAST_GRACE = 24.hours
 
-  validates :start_time, presence: true,
-    uniqueness: { scope: %i[user_id event_id] }
+  belongs_to :participant
+  belongs_to :event
+
+  # The grid's comma-separated ISO 8601 times, deduplicated and in order.
+  def self.parse(value, slot_minutes:)
+    values = value.to_s.split(",").compact_blank
+    limit = MAX_HOURS * 60 / slot_minutes
+    raise Refusal, "Select at least one time slot" if values.empty?
+    raise Refusal, "Select no more than #{limit} time slots" if values.size > limit
+
+    instants = values.map { parse_instant(it) }.uniq.sort
+    raise Refusal, "Time slots must fit within a #{MAX_DAYS}-day window" if instants.last - instants.first > MAX_DAYS.days
+    raise Refusal, "Select time slots from today onward" if instants.first < PAST_GRACE.ago
+
+    instants
+  end
+
+  def self.parse_instant(value)
+    Time.iso8601(value).utc
+  rescue ArgumentError
+    raise Refusal, "Time slots must use ISO 8601 timestamps"
+  end
+  private_class_method :parse_instant
 end

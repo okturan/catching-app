@@ -1,26 +1,30 @@
-<div class="col-md-10 ms-auto col-xl-6 me-auto">
-  <div>
-    <div class="tabs-container">
-      <div class="tabs">
-        <input type="radio" id="radio-1" name="tabs" data-tab-content="my-events" checked />
-        <label class="tab" for="radio-1"><span class="me-1" aria-hidden="true">🗓</span>My Events<span class="notification"><%= @events.count %></span></label>
-        <input type="radio" id="radio-2" name="tabs" data-tab-content="popular-activities"/>
-        <label class="tab" for="radio-2"><span class="me-1" aria-hidden="true">📊</span>Popular Activities<span class="notification">3</span></label>
-        <input type="radio" id="radio-3" name="tabs" data-tab-content="members" />
-        <label class="tab" for="radio-3"><span class="me-1" aria-hidden="true">👥</span>Members<span class="notification"><%= @members.count %></span></label>
-        <span class="glider"></span>
+<div class="dashboard" data-controller="zoned-times">
+  <h1>Your events</h1>
+
+  <section aria-labelledby="organizing-heading">
+    <h2 class="section-title" id="organizing-heading">Organizing <span class="plate"><%= @organizing.size %></span></h2>
+    <% if @organizing.any? %>
+      <div class="event-list">
+        <%= render partial: "dashboards/participant", collection: @organizing, locals: { guest_counts: @guest_counts } %>
       </div>
-      <div class="tab-contents">
-        <div class="tab-content w-100" data-tab-content-id="my-events">
-          <%= render "dashboards/shared/my_events" %>
-        </div>
-        <div class="tab-content w-100 d-none" data-tab-content-id="popular-activities">
-          <%= render "dashboards/shared/my_activities" %>
-        </div>
-        <div class="tab-content w-100 d-none" data-tab-content-id="members">
-          <%= render "dashboards/shared/my_friends" %>
-        </div>
+    <% else %>
+      <div class="empty">
+        <span>Nothing planned yet.</span>
+        <%= link_to "Plan a meeting", new_event_path, class: "plate plate-button-sm" %>
       </div>
-    </div>
-  </div>
+    <% end %>
+  </section>
+
+  <section aria-labelledby="invited-heading">
+    <h2 class="section-title" id="invited-heading">Invited <span class="plate"><%= @invited.size %></span></h2>
+    <% if @invited.any? %>
+      <div class="event-list">
+        <%= render partial: "dashboards/participant", collection: @invited, locals: { guest_counts: @guest_counts } %>
+      </div>
+    <% else %>
+      <div class="empty">
+        <span>No invitations yet. Guest links you open while signed in show up here.</span>
+      </div>
+    <% end %>
+  </section>
 </div>

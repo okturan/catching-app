@@ -1,0 +1,128 @@
+// Shared materials of the world.
+
+:root {
+  --wall: #{$wall};
+  --face: #{$face};
+  --ink: #{$ink};
+  --enamel: #{$enamel};
+  --signal: #{$signal};
+  --awake: #{$awake};
+  --time-font: #{$time-font};
+}
+
+html {
+  background: $wall;
+}
+
+body {
+  background: $wall;
+  color: $ink;
+  font-family: $body-font;
+  font-feature-settings: "ss01";
+  -webkit-font-smoothing: antialiased;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+body > main {
+  flex: 1 0 auto;
+}
+
+::selection {
+  background: $awake;
+  color: $ink;
+}
+
+:focus-visible {
+  outline: 3px solid $enamel;
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+h1, h2, h3, h4 {
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+// Time is always set in the mono face, tabular by construction.
+.time,
+time,
+.slot,
+.plate-time {
+  font-family: $time-font;
+  font-variant-numeric: tabular-nums;
+}
+
+// Enamel plate: white engraved caps on deep blue. Flat colour, one hairline bevel.
+.plate {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  background: $enamel;
+  color: $enamel-text;
+  padding: 0.45em 1em;
+  border-radius: 3px;
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 -1px 0 rgba(0, 0, 0, 0.35), 0 2px 4px rgba(20, 20, 20, 0.25);
+  position: relative;
+  white-space: nowrap;
+
+  &.plate-lg {
+    font-size: 0.95rem;
+    padding: 0.7em 1.4em;
+  }
+
+  &.plate-signal { background: $signal; }
+  &.plate-ink { background: $ink; }
+}
+
+// White glass panel: the face of an instrument on the wall.
+.face {
+  background: $face;
+  border: 1px solid $hairline;
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(20, 20, 20, 0.06), 0 6px 18px -8px rgba(20, 20, 20, 0.25);
+}
+
+.face-pad {
+  padding: clamp(1rem, 2.5vw, 1.75rem);
+}
+
+.wall-section {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: clamp(2.5rem, 6vw, 5rem) clamp(1rem, 4vw, 2.5rem);
+}
+
+.eyebrowless-heading {
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 800;
+  margin: 0 0 0.35em;
+}
+
+.lede {
+  font-size: clamp(1.05rem, 1.4vw, 1.25rem);
+  line-height: 1.5;
+  max-width: 62ch;
+  color: $ink-soft;
+}
+
+.quiet-link {
+  color: $ink-soft;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  text-decoration-color: rgba(20, 20, 20, 0.35);
+  &:hover { color: $ink; text-decoration-color: $ink; }
+}
+
+.hairline {
+  border: 0;
+  border-top: 1px solid $hairline;
+  margin: 0;
+}
+
+.visually-hidden-focusable:focus { position: static; }

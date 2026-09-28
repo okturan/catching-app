@@ -1,36 +1,317 @@
+// Three children: the card side, the grid, the answer side. Wide, the grid
+// spans both rows of the right column and stays in view; the rows are auto
+// then 1fr so the answer side sits directly under the card. On a phone the
+// three stack in source order, the grid straight after the card.
 .event-show-grid {
-  display: flex;
-  justify-content: center;
-  flex-direction: row;
-  flex-flow: wrap;
-  padding: 1% 5%;
+  display: grid;
+  grid-template-columns: minmax(300px, 400px) minmax(0, 1fr);
+  grid-template-rows: auto 1fr;
+  gap: 1rem clamp(1rem, 3vw, 2.5rem);
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: clamp(1rem, 3vw, 2rem) clamp(1rem, 4vw, 2.5rem) 3rem;
+  align-items: start;
+
+  > .event-show-side { grid-column: 1; }
+  > .time-grid-panel {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    position: sticky;
+    top: 1rem;
+  }
+
+  // minmax(0, …): a bare 1fr grows to the grid table, and the phone scrolls sideways.
+  @media (max-width: 900px) {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+
+    > .event-show-side,
+    > .time-grid-panel { grid-column: auto; grid-row: auto; position: static; }
+  }
 }
 
-.event-new-grid {
-  display: flex;
-  justify-content: center;
-  flex-direction: row;
-  flex-flow: wrap;
-  padding: 5%;
+.event-show-side {
+  display: grid;
+  gap: 1rem;
+  align-content: start;
+  min-width: 0;
+
+  &:empty { display: none; }
 }
 
+// Wide, the panel is a column bounded to the viewport, like the definer, so
+// its head, the scroll box and the action bar with Save all stay in view.
+@media (min-width: 901px) {
+  .time-grid-show-wrapper {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100dvh - var(--navbar-h) - 1rem);
+
+    > .time-grid-scroll {
+      flex: 1 1 auto;
+      min-height: 12rem;
+      max-height: none;
+    }
+  }
+}
+
+// What the grid is for, and the two controls that change how it reads.
+.grid-panel-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+  padding: 0.25rem 0.25rem 1rem;
+
+  h2 {
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.3rem;
+  }
+  .form-text { margin: 0; max-width: 62ch; }
+}
+
+.grid-panel-title {
+  flex: 1 1 20rem;
+  min-width: 0;
+}
+
+.grid-view-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+}
+
+// A select is as wide as its longest zone name unless told otherwise.
 #event-show-select {
-  width: 65%;
+  width: 15rem;
+  max-width: 100%;
+  .form-select { min-width: 0; }
+  small { display: block; margin-top: 0.25rem; font-size: 0.75rem; color: $ink-soft; }
 }
 
-.event-show-card {
-  align-self: flex-start;
-  justify-content: space-evenly;
-  align-items: center;
-  display: flex;
-  flex-direction: column;
-  margin-right: 3vw;
-  margin-top: 16px;
+.event-panel {
+  @extend .face;
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  display: grid;
+  gap: 0.75rem;
+
+  .plate { justify-self: start; }
+  h1 {
+    font-size: clamp(1.5rem, 2.6vw, 2rem);
+    font-weight: 800;
+    margin: 0;
+    .plate { font-size: 0.65rem; vertical-align: middle; margin-left: 0.4rem; }
+  }
+  .event-description { color: $ink-soft; margin: 0; }
+  .event-when {
+    font-family: $time-font;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    display: grid;
+    gap: 0.15rem;
+  }
+  .event-when.is-pending { color: $ink-soft; font-family: $body-font; font-weight: 600; }
+  // The set window, read off a band of wall: the viewer's own zone first when
+  // it differs, the event's zone under it in small.
+  .event-when.is-set {
+    padding: 0.65rem 0.8rem;
+    border-radius: 4px;
+    background: $wall;
+    > span { font-size: 1rem; font-weight: 500; color: $ink; }
+    > #final-window-local:not([hidden]) + .event-when-zone { font-size: 0.78rem; color: $ink-soft; }
+  }
+  // The cancelled line: words in the body face, the instants in the mono face.
+  .event-when.is-cancelled { font-family: $body-font; font-weight: 600; }
+  // The organizer's hairline note after a reopen: how many are left and
+  // when the set time was withdrawn, the instant in the mono face.
+  .event-reopened {
+    display: grid;
+    gap: 0.15rem;
+    margin: 0;
+    padding-top: 0.6rem;
+    border-top: 1px solid $hairline;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: $ink-soft;
+    span:first-child { color: $ink; }
+    time { font-size: 0.85rem; color: $ink; }
+  }
+  // Where and how long: labels in the form-label style, values in body type.
+  .event-facts {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: 0.35rem 1rem;
+    margin: 0;
+    font-size: 0.95rem;
+    dt { font-weight: 600; margin: 0; }
+    dd { margin: 0; overflow-wrap: anywhere; }
+  }
+  // The plan: an ordered list read top to bottom, a derived start in the
+  // mono face once the time is set, the note as a muted second line.
+  .event-plan {
+    margin: 0;
+    padding-left: 1.25rem;
+    li { margin: 0 0 0.3rem; }
+    li:last-child { margin-bottom: 0; }
+    time { display: block; font-size: 0.85rem; }
+    .event-plan-note { display: block; color: $ink-soft; font-size: 0.9rem; }
+  }
+  // Plate buttons under the card: Add to calendar once set, Edit details
+  // for the organizer, Plan a new event once cancelled.
+  .event-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  // The organizer's reminder that a change has not reached the guests: one
+  // sentence in the body face and the plate that sends the notice.
+  .event-untold {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: $ink-soft;
+    .event-untold-form { margin: 0; }
+  }
+  .event-people {
+    border-top: 1px solid $hairline;
+    padding-top: 0.75rem;
+    font-size: 0.9rem;
+    color: $ink-soft;
+    strong { color: $ink; }
+  }
 }
 
-.event-show-card-top {
+// Reopen the time (while set) and Cancel this event, side by side under the
+// guests: the two writes that change what the event is, kept apart from
+// the everyday controls.
+.event-organizer-ends {
   display: flex;
-  justify-content: space-evenly;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  form { margin: 0; }
+}
+
+.organizer-panel {
+  @extend .face;
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  display: grid;
+  gap: 1rem;
+
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin: 0;
+    .plate { font-size: 0.7rem; padding: 0.35em 0.8em; }
+  }
+  form { margin: 0; }
+}
+
+.switch-row {
+  display: flex;
   align-items: center;
-  margin-top: 6px;
+  gap: 0.5rem;
+  margin: 0;
+  cursor: pointer;
+  .switch-label { font-size: 0.85rem; font-weight: 600; color: $ink-soft; white-space: nowrap; }
+}
+
+// The guest's reply: a name the organizer reads, and the two other answers.
+.guest-panel {
+  .form-label { margin-bottom: 0.35rem; }
+  .form-text { margin: 0.35rem 0 0; }
+}
+
+.guest-panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  form { margin: 0; }
+}
+
+.event-leave form { margin: 0; }
+
+// Keeping the event in an account: optional, so a line on the wall, not a face.
+.event-keep {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.6rem;
+  margin: 0;
+  padding: 0.25rem 0.25rem 0;
+  font-size: 0.9rem;
+  color: $ink-soft;
+  a { font-weight: 700; color: $enamel; }
+}
+
+.guests-invite {
+  display: grid;
+  gap: 0.4rem;
+  .form-label { margin: 0; }
+  .form-text { margin: 0; }
+  .btn-meeting { justify-self: start; margin-top: 0.35rem; }
+}
+
+.guests-blocked {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  background: $awake-wash;
+  color: $ink;
+  font-weight: 600;
+}
+
+// One guest per row, read top to bottom: who, where they stand, what the
+// organizer can do. The table stays a table; the narrow column stacks it.
+.guest-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+
+  thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  tbody tr {
+    display: grid;
+    gap: 0.15rem;
+    padding: 0.75rem 0;
+    border-top: 1px solid $hairline;
+  }
+  td { display: block; padding: 0; }
+
+  .guest-who {
+    min-width: 0;
+    strong { display: block; font-weight: 700; overflow-wrap: anywhere; }
+    span { display: block; color: $ink-soft; font-size: 0.82rem; overflow-wrap: anywhere; }
+  }
+  .guest-state {
+    color: $ink-soft;
+    time { font-size: 0.78rem; color: $ink-soft; }
+  }
+  .guest-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 1rem;
+    &:empty { display: none; }
+    form { margin: 0; }
+    .btn-link { padding: 0.15rem 0; font-size: 0.82rem; border: 0; }
+  }
+
+  tr.is-left { opacity: 0.6; }
 }

@@ -1,0 +1,68 @@
+<% digest = ->(name) { Digest::SHA256.hexdigest(name.to_s.delete("_").ljust(32, "0")) } %>
+
+planning_organizer:
+  event: planning
+  user: owner
+  role: organizer
+  email: owner@example.com
+  name: Olivia Owner
+  token_digest: <%= digest.call(:planning_organizer) %>
+  link_opened_at: 2030-01-01 09:00:00 UTC
+  responded_at: 2030-01-01 09:00:00 UTC
+
+planning_guest:
+  event: planning
+  user: invitee
+  role: guest
+  email: invitee@example.com
+  name: Ian Invitee
+  token_digest: <%= digest.call(:planning_guest) %>
+  responded_at: 2030-01-02 09:00:00 UTC
+
+planning_pending:
+  event: planning
+  role: guest
+  email: pending@example.com
+  token_digest: <%= digest.call(:planning_pending) %>
+
+planning_unsent:
+  event: planning
+  role: guest
+  email: unsent@example.com
+
+planning_left:
+  event: planning
+  role: guest
+  email: left@example.com
+  responded_at: 2030-01-03 09:00:00 UTC
+  declined_at: 2030-01-03 09:00:00 UTC
+  left_at: 2030-01-03 09:00:00 UTC
+
+other_organizer:
+  event: other_event
+  user: other_owner
+  role: organizer
+  email: other-owner@example.com
+  name: Uma Organizer
+  token_digest: <%= digest.call(:other_organizer) %>
+  link_opened_at: 2030-01-01 09:00:00 UTC
+  responded_at: 2030-01-01 09:00:00 UTC
+
+finalized_organizer:
+  event: finalized
+  user: owner
+  role: organizer
+  email: owner@example.com
+  name: Olivia Owner
+  token_digest: <%= digest.call(:finalized_organizer) %>
+  link_opened_at: 2030-01-01 09:00:00 UTC
+  responded_at: 2030-01-01 09:00:00 UTC
+
+finalized_guest:
+  event: finalized
+  user: invitee
+  role: guest
+  email: invitee@example.com
+  name: Ian Invitee
+  token_digest: <%= digest.call(:finalized_guest) %>
+  responded_at: 2030-01-02 09:00:00 UTC

@@ -1,0 +1,54 @@
+<% content_for :head do %>
+  <meta name="robots" content="noindex">
+  <meta name="turbo-cache-control" content="no-cache">
+<% end %>
+<% content_for :canonical_url, root_url %>
+<% content_for :meta_title, "#{@event.name} · Catching App" %>
+
+<%# Three children in reading order: what the event is, the grid, then the
+    answer and the organizer's tools. On a wide screen the grid takes the
+    right column beside both; on a phone it comes straight after the card. %>
+<%= tag.div class: "event-show-grid", data: {
+      controller: "availability", action: "submit->availability#remember pageshow@window->availability#reloadIfPersisted",
+      availability_offered_value: @offered_slots, availability_mine_value: @my_slots, availability_counts_value: @availability_counts,
+      availability_consensus_value: @consensus_slots, availability_set_window_value: @set_window } do %>
+  <div class="event-show-side">
+    <div class="event-panel">
+      <%= render "participants/show/event", event: @event, participant: @participant, plan: @plan %>
+      <%= render "participants/show/people", event: @event, participant: @participant, guests: @guests, counts: @counts %>
+      <%= render "participants/show/actions", event: @event, participant: @participant, untold_changes: @untold_changes %>
+    </div>
+
+    <% if @revealed_url %>
+      <div class="alert alert-warning position-static m-0" role="status">
+        Link for <%= @revealed_guest.email %> (shown once): <code><%= @revealed_url %></code>
+      </div>
+    <% end %>
+  </div>
+
+  <%= render "participants/show/grid", event: @event, participant: @participant, role: @role, counts: @counts,
+        notice: @grid_notice, action: @grid_action, every_offer_past: @every_offer_past %>
+
+  <div class="event-show-side">
+    <% if @participant.guest? %>
+      <%= render "participants/show/answer", event: @event, participant: @participant %>
+    <% elsif @event.open? %>
+      <%= form_with url: participant_finalization_path(@participant), method: :post, id: "finalize-form", hidden: true do %>
+        <input id="final-time-slot-array" name="time_slots[time_slot_array]" type="hidden" value="" data-availability-target="slots">
+      <% end %>
+    <% end %>
+
+    <% if @participant.organizer? %>
+      <%= render "participants/show/guests", event: @event, organizer: @participant, guests: @guests,
+            invitations: @invitations, counts: @counts, slot_counts: @slot_counts %>
+      <%= render "participants/show/ends", event: @event, participant: @participant unless @event.cancelled? %>
+    <% end %>
+
+    <% if token_request? && !@participant.claimed? && !@participant.left? %>
+      <p class="event-keep">
+        <%= link_to "Keep this event in your account", participant_claim_path(@participant), class: "quiet-link" %>
+        <span>Optional. The emailed link keeps working either way.</span>
+      </p>
+    <% end %>
+  </div>
+<% end %>

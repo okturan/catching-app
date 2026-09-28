@@ -14,6 +14,9 @@ Rails.application.configure do
   config.log_tags = [ :request_id ]
   config.logger = ActiveSupport::TaggedLogging.logger($stdout)
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")
+
+  # Jobs wait in the primary database, so queued mail outlives a restart.
+  config.active_job.queue_adapter = :solid_queue
   config.silence_healthcheck_path = "/up"
   config.active_support.report_deprecations = false
 

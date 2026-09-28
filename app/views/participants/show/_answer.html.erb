@@ -1,0 +1,22 @@
+<% leave = button_to "Leave this event", participant_path(participant), method: :delete, class: "btn btn-outline-danger",
+      params: { "participant[time_zone]" => "" }, form: { data: { turbo_confirm: "Leave this event for good? Your link will stop working." } } %>
+<% if event.open? %>
+  <section class="organizer-panel guest-panel" aria-labelledby="answer-heading">
+    <h2 id="answer-heading">Your reply</h2>
+    <%= form_with url: participant_path(participant), method: :patch, id: "availability-form" do |form| %>
+      <input name="time_slots[time_slot_array]" id="new-time-slot-array" type="hidden" data-availability-target="slots">
+      <input name="participant[time_zone]" type="hidden">
+      <%= form.label :name, "Your name", for: "participant_name", class: "form-label" %>
+      <%= form.text_field :name, value: participant.name, id: "participant_name", name: "participant[name]", class: "form-control", maxlength: 100,
+            autocomplete: "name", aria: { describedby: "participant-name-hint" } %>
+      <p class="form-text" id="participant-name-hint">Optional. <%= event.organizer.display_name %> sees it beside your times.</p>
+    <% end %>
+    <div class="guest-panel-actions">
+      <%= button_to "None of these times work", participant_decline_path(participant), method: :post, class: "btn btn-outline-secondary",
+        params: { "participant[time_zone]" => "" }, form: { data: { turbo_confirm: "Tell the organizer none of these times work for you?" } } %>
+      <%= leave %>
+    </div>
+  </section>
+<% else %>
+  <div class="event-leave"><%= leave %></div>
+<% end %>

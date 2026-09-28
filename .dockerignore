@@ -3,7 +3,6 @@
 /.bundle/
 /.env*
 /config/master.key
-/config/credentials/*.key
 
 /log/*
 /tmp/*
@@ -13,6 +12,5 @@
 /app/assets/builds/*
 /public/assets/
 
-/.devcontainer/
 /.dockerignore
 /Dockerfile*

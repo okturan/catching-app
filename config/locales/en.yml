@@ -1,33 +1,33 @@
-# Files in the config/locales directory are used for internationalization
-# and are automatically loaded by Rails. If you want to use locales other
-# than English, add the necessary files in this directory.
-#
-# To use the locales, use `I18n.t`:
-#
-#     I18n.t 'hello'
-#
-# In views, this is aliased to just `t`:
-#
-#     <%= t('hello') %>
-#
-# To use a different locale, set it with `I18n.locale`:
-#
-#     I18n.locale = :es
-#
-# This would use the information in config/locales/es.yml.
-#
-# The following keys must be escaped otherwise they will not be retrieved by
-# the default I18n backend:
-#
-# true, false, on, off, yes, no
-#
-# Instead, surround them with single quotes.
-#
-# en:
-#   'true': 'foo'
-#
-# To learn more, please read the Rails Internationalization guide
-# available at https://guides.rubyonrails.org/i18n.html.
-
+# Application translations.
 en:
-  hello: "Hello world"
+  meta:
+    title: We have some catching app to do!
+    description: Find a time that works for everyone, shown in everyone's own time zone. No sign-up needed.
+  activerecord:
+    attributes:
+      event:
+        # Three columns whose humanized names are not what any page calls
+        # them. Naming them here is what makes a full message read as the
+        # page does: "Link must be a web address…", not "Place url must be…".
+        place_url: Link
+        duration_minutes: Planned length
+        slot_minutes: Slot length
+      plan_item:
+        duration_minutes: Length
+      user:
+        # has_secure_password's name for the current password an update must prove.
+        password_challenge: Current password
+    errors:
+      models:
+        event:
+          attributes:
+            duration_minutes:
+              less_than_or_equal_to: must be at most 24 hours
+        plan_item:
+          attributes:
+            duration_minutes:
+              less_than_or_equal_to: must be at most 24 hours
+  errors:
+    messages:
+      not_a_web_address: must be a web address starting with http:// or https://
+      unknown_time_zone: is not a known time zone

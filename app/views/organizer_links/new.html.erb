@@ -1,0 +1,7 @@
+<div class="container py-5" id="organizer-link-recovery">
+  <h1>Email me my organizer link</h1>
+  <%= form_with scope: :organizer_link, url: organizer_links_path, class: "form-inputs" do |form| %>
+    <%= form.field :email, as: :email_field, label: "Your email address", required: true, autocomplete: "email" %>
+    <%= form.submit "Send me my link", class: "btn btn-primary" %>
+  <% end %>
+</div>
