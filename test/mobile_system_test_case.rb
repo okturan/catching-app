@@ -65,6 +65,20 @@ class MobileSystemTestCase < ActionDispatch::SystemTestCase
     browser.execute_cdp("Input.dispatchTouchEvent", type: "touchEnd", touchPoints: [])
   end
 
+  # A finger tap through the same DevTools touch channel as touch_drag.
+  # Mixing the two channels loses chromedriver's first tap after a drag on
+  # some Chrome versions, which no real finger does.
+  def touch_tap(element)
+    browser = page.driver.browser
+    # A tap that lands while the browser still settles the previous gesture
+    # is dropped on a slow runner; a person never taps that fast.
+    settle_layout
+    sleep 0.5
+    x, y = center_of(element)
+    browser.execute_cdp("Input.dispatchTouchEvent", type: "touchStart", touchPoints: [ { x: x, y: y } ])
+    browser.execute_cdp("Input.dispatchTouchEvent", type: "touchEnd", touchPoints: [])
+  end
+
   # Waits two animation frames so scrolling and sticky positioning are laid out.
   def settle_layout
     page.evaluate_async_script("requestAnimationFrame(() => requestAnimationFrame(arguments[0]))")

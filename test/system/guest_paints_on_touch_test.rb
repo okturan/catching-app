@@ -28,7 +28,7 @@ class GuestPaintsOnTouchTest < MobileSystemTestCase
     assert_selector "#time-grid-show .slot.active", count: 2
     assert_selector "button[form='availability-form']", visible: true
 
-    click_button "Save"
+    touch_tap(find_button("Save"))
     assert_text "Availability saved."
     assert_selector "#time-grid-show .slot.active", count: 2
   end
