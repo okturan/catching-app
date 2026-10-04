@@ -1,3 +1,11 @@
+<%# Whose page this is: the link decides, not a login. %>
+<p class="event-viewer">
+  <% if participant.organizer? %>
+    You organize this event. This page opens from your organizer link; keep that email.
+  <% else %>
+    You're invited<% if participant.name.present? %> as <strong><%= participant.name %></strong><% end %>. This page opens from your personal link.
+  <% end %>
+</p>
 <h1><%= event.name %><% if event.cancelled? %> <span class="plate plate-ink">Cancelled</span><% elsif event.finalized? %> <span class="plate">Set in stone</span><% end %></h1>
 <% if event.description.present? %>
   <%= simple_format(event.description, { class: "event-description" }) %>

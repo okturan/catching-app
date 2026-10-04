@@ -1,21 +1,15 @@
-<p>Your reply to <strong><%= mail_safe(@event.name) %></strong> is saved.</p>
+<% content_for :preheader, "Your reply to #{mail_safe(@event.name)} is saved." %>
+<%= email_heading "Reply saved" %>
+<%= email_paragraph do %>Your reply to <strong><%= mail_safe(@event.name) %></strong> is saved.<% end %>
 <% if @declined %>
-  <p>You said none of the offered times work for you.</p>
+  <%= email_paragraph "You said none of the offered times work for you." %>
 <% else %>
-  <p>Your available times (<%= @recipient_ranges[:zone] %>):</p>
-  <ul>
-    <% @recipient_ranges[:days].each do |day, ranges| %>
-      <li><%= day %>: <%= ranges.join(", ") %></li>
-    <% end %>
-  </ul>
-  <% if @recipient_ranges[:more].positive? %><p>and <%= @recipient_ranges[:more] %> more days.</p><% end %>
+  <%= email_paragraph "Your available times (#{@recipient_ranges[:zone]}):" %>
+  <%= email_times(*@recipient_ranges[:days].map { |day, ranges| "#{day}: #{ranges.join(", ")}" }) %>
+  <% if @recipient_ranges[:more].positive? %><%= email_note "and #{@recipient_ranges[:more]} more days." %><% end %>
   <% if @event_ranges[:zone] != @recipient_ranges[:zone] %>
-    <p>In the event's zone (<%= @event_ranges[:zone] %>):</p>
-    <ul>
-      <% @event_ranges[:days].each do |day, ranges| %>
-        <li><%= day %>: <%= ranges.join(", ") %></li>
-      <% end %>
-    </ul>
+    <%= email_note "In the event's zone (#{@event_ranges[:zone]}):" %>
+    <%= email_times(*@event_ranges[:days].map { |day, ranges| "#{day}: #{ranges.join(", ")}" }) %>
   <% end %>
 <% end %>
-<p>To change your reply, use the link from your invitation. You will hear from us when the time is set, and if the organizer changes the plan.</p>
+<%= email_note "To change your reply, use the link from your invitation. You will hear from us when the time is set, and if the organizer changes the plan." %>

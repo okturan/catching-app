@@ -1,0 +1,5 @@
+<% content_for :preheader, "Your Catching App account now uses a different email address." %>
+<%= email_heading "Your email address was changed" %>
+<%= email_paragraph "The Catching App account for #{@user.full_name} no longer uses #{@previous_email}. It now uses #{@user.email}." %>
+<%= email_paragraph "If that was you, there's nothing to do." %>
+<%= email_note "If it wasn't, someone has your password: reset it from the login page with your new address, or ask for a reset link to be sent there. Events you were invited to at this address still open from their emailed links." %>

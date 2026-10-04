@@ -1,0 +1,17 @@
+<h2>Log in with an emailed link</h2>
+
+<%= form_with url: login_links_path do |form| %>
+  <div class="form-inputs">
+    <%= form.field :email, as: :email_field, label: "Email", required: true, autofocus: true, autocomplete: "email",
+          hint: "We email you a link that logs you in, once, within 15 minutes. No password needed." %>
+  </div>
+
+  <div class="form-actions">
+    <%= form.submit "Email me a login link", class: "btn btn-primary" %>
+  </div>
+<% end %>
+
+<div class="form-links">
+  <%= link_to "Log in with a password", new_session_path %><br>
+  <%= link_to "Sign up", new_registration_path %>
+</div>

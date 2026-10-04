@@ -27,7 +27,7 @@ class ParticipantMailerTest < ActionMailer::TestCase
     assert_equal [ "owner@example.com" ], mail.to
     assert_equal [ "no-reply@catching.app" ], mail.from
     assert_equal "Catching App: your organizer link", mail.subject
-    [ mail.html_part.body.to_s, mail.text_part.body.to_s ].each do |body|
+    [ html_text(mail), mail.text_part.body.to_s ].each do |body|
       assert_includes body, "/p/#{@token}"
       assert_not_includes body, "crypto"
       assert_not_includes body, "evil.example"
@@ -45,7 +45,7 @@ class ParticipantMailerTest < ActionMailer::TestCase
     assert_equal [ "owner@example.com" ], mail.reply_to
     assert mail.subject.start_with?("Catching App: PayPal Support"), mail.subject
     assert_operator mail.subject.length, :<=, 80
-    [ mail.html_part.body.to_s, mail.text_part.body.to_s ].each do |body|
+    [ html_text(mail), mail.text_part.body.to_s ].each do |body|
       assert_includes body, "Invitation from PayPal Support paypal.example (owner@example.com)"
       assert_includes body, "/p/#{@token}"
       assert_not_includes body, "evil.example/desc", "the description never reaches the mail"
@@ -72,7 +72,7 @@ class ParticipantMailerTest < ActionMailer::TestCase
     assert_no_match %r{/p/[A-Za-z0-9]{32}}, text
     closing = "To change your reply, use the link from your invitation. You will hear from us when the time is set, and if the organizer changes the plan."
     assert text.strip.end_with?(closing), text
-    assert_match(/<p>#{Regexp.escape(closing)}<\/p>\s*<\/body>/, mail.html_part.body.to_s)
+    assert_match(/#{Regexp.escape(closing)}<\/p>\s*<\/td>/, mail.html_part.body.to_s)
     assert_not_includes mail.html_part.body.to_s, "once more"
   end
 
@@ -93,7 +93,7 @@ class ParticipantMailerTest < ActionMailer::TestCase
     assert_equal "Catching App: Ege changed Dune night", mail.subject
     assert_equal [ "invitee@example.com" ], mail.to
     assert_equal [ "owner@example.com" ], mail.reply_to
-    [ CGI.unescapeHTML(mail.html_part.body.to_s), mail.text_part.body.to_s ].each do |body|
+    [ html_text(mail), mail.text_part.body.to_s ].each do |body|
       assert_includes body, "Ege changed the details of Dune night."
       assert_includes body, "The event is now called Dune night (was Film night evil.example)"
       assert_includes body, "Where: Ege's place maps.example/x"
@@ -111,7 +111,7 @@ class ParticipantMailerTest < ActionMailer::TestCase
     end
     leave = "To stop hearing about this event, open your link and choose Leave this event."
     assert mail.text_part.body.to_s.strip.end_with?(leave), mail.text_part.body.to_s
-    assert_match(/<p>#{Regexp.escape(leave)}<\/p>\s*<\/body>/, mail.html_part.body.to_s)
+    assert_match(/#{Regexp.escape(leave)}<\/p>\s*<\/td>/, mail.html_part.body.to_s)
   end
 
   test "event_updated keeps the fixed prefix first, truncates the subject and says nothing about a rename without one" do
@@ -122,7 +122,7 @@ class ParticipantMailerTest < ActionMailer::TestCase
 
     assert mail.subject.start_with?("Catching App: Ege evil.example changed NNN"), mail.subject
     assert_operator mail.subject.length, :<=, 80
-    [ mail.html_part.body.to_s, mail.text_part.body.to_s ].each do |body|
+    [ html_text(mail), mail.text_part.body.to_s ].each do |body|
       assert_includes body, "Ege evil.example changed #{'N' * 120}. Here is what is set now."
       assert_not_includes body, "is now called"
       assert_not_includes body, "Where:"
@@ -180,7 +180,7 @@ class ParticipantMailerTest < ActionMailer::TestCase
 
     assert_equal "Catching App: Finalized event is set for Tue 15 Jan", mail.subject
     assert_equal [ "owner@example.com" ], mail.reply_to
-    [ CGI.unescapeHTML(mail.html_part.body.to_s), mail.text_part.body.to_s ].each do |body|
+    [ html_text(mail), mail.text_part.body.to_s ].each do |body|
       assert_includes body, "Tue 15 Jan 2030 11:00–12:00 (Europe/Berlin)"
       assert_includes body, "Tue 15 Jan 2030 10:00–11:00 (UTC)"
       assert_includes body, "Where: Ege's place"
@@ -203,7 +203,7 @@ class ParticipantMailerTest < ActionMailer::TestCase
 
     mail = finalized_mail(guest)
 
-    [ mail.html_part.body.to_s, mail.text_part.body.to_s ].each do |body|
+    [ html_text(mail), mail.text_part.body.to_s ].each do |body|
       assert_includes body, "http://example.com/p/#{guest.id}"
       assert_no_match %r{/p/[A-Za-z0-9]{32}}, body
     end
@@ -218,7 +218,7 @@ class ParticipantMailerTest < ActionMailer::TestCase
 
     mail = finalized_mail(guest, token: pending)
 
-    [ mail.html_part.body.to_s, mail.text_part.body.to_s ].each do |body|
+    [ html_text(mail), mail.text_part.body.to_s ].each do |body|
       assert_includes body, "http://example.com/p/#{pending}"
       assert_no_match %r{/p/\d+\b}, body
       assert_equal body.scan("http://example.com/p/#{pending}").size, outside_calendar(body).scan("://").size, "only the participant link carries a scheme"
@@ -232,7 +232,7 @@ class ParticipantMailerTest < ActionMailer::TestCase
     mail = finalized_mail(organizer)
 
     assert_equal [ "owner@example.com" ], mail.to
-    [ mail.html_part.body.to_s, mail.text_part.body.to_s ].each do |body|
+    [ html_text(mail), mail.text_part.body.to_s ].each do |body|
       assert_includes body, "Open your organizer link"
       assert_not_includes outside_calendar(body), "://"
       assert_not_includes body, "/p/"
@@ -276,7 +276,7 @@ class ParticipantMailerTest < ActionMailer::TestCase
     assert_equal "Catching App: Finalized event is cancelled", mail.subject
     assert_equal [ "invitee@example.com" ], mail.to
     assert_equal [ "owner@example.com" ], mail.reply_to
-    [ mail.html_part.body.to_s, mail.text_part.body.to_s ].each do |body|
+    [ html_text(mail), mail.text_part.body.to_s ].each do |body|
       assert_includes body, "Olivia evil.example Owner cancelled"
       assert_includes body, "Finalized event"
       assert_includes body, "It was set for Tue 15 Jan 2030 11:00–12:00 (Europe/Berlin)."
@@ -333,7 +333,7 @@ class ParticipantMailerTest < ActionMailer::TestCase
     assert_equal "Catching App: Finalized event is no longer set for Tue 15 Jan", mail.subject
     assert_equal [ "invitee@example.com" ], mail.to
     assert_equal [ "owner@example.com" ], mail.reply_to
-    [ CGI.unescapeHTML(mail.html_part.body.to_s), mail.text_part.body.to_s ].each do |body|
+    [ html_text(mail), mail.text_part.body.to_s ].each do |body|
       assert_includes body, "Finalized event"
       assert_includes body, " is no longer set for Tue 15 Jan 2030 14:30–15:30 (Asia/Kolkata)."
       assert_includes body, "In the event's zone: Tue 15 Jan 2030 10:00–11:00 (Europe/Berlin)"
@@ -348,7 +348,7 @@ class ParticipantMailerTest < ActionMailer::TestCase
     text = mail.text_part.body.to_s.strip
     assert text.end_with?("You will get one message when a new time is set.\n\nTo stop hearing about this event, open your link and choose Leave this event."), text
     leave = "To stop hearing about this event, open your link and choose Leave this event."
-    assert_match(/<p>#{Regexp.escape(leave)}<\/p>\s*<\/body>/, mail.html_part.body.to_s)
+    assert_match(/#{Regexp.escape(leave)}<\/p>\s*<\/td>/, mail.html_part.body.to_s)
 
     assert calendar_of(mail).start_with?("BEGIN:VCALENDAR")
     file = calendar_of(mail)
@@ -368,7 +368,7 @@ class ParticipantMailerTest < ActionMailer::TestCase
 
     mail = reopened_mail(guest, token: pending)
 
-    [ mail.html_part.body.to_s, mail.text_part.body.to_s ].each do |body|
+    [ html_text(mail), mail.text_part.body.to_s ].each do |body|
       assert_includes body, "http://example.com/p/#{pending}"
       assert_no_match %r{/p/\d+\b}, body
       assert_equal body.scan("http://example.com/p/#{pending}").size, outside_calendar(body).scan("://").size, "only the participant link carries a scheme"

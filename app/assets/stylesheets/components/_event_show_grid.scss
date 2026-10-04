@@ -107,6 +107,16 @@
     .plate { font-size: 0.65rem; vertical-align: middle; margin-left: 0.4rem; }
   }
   .event-description { color: $ink-soft; margin: 0; }
+  // Whose page this is, above the event name: the link is the identity.
+  .event-viewer {
+    margin: 0;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid $hairline;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: $ink-soft;
+    strong { color: $ink; }
+  }
   .event-when {
     font-family: $time-font;
     font-size: 0.85rem;

@@ -1,13 +1,14 @@
-<p><strong><%= mail_safe(@event.name) %></strong> is no longer set for <%= @recipient_window %>.</p>
-<% if @recipient_window != @event_window %><p>In the event's zone: <%= @event_window %></p><% end %>
-<p><%= mail_safe(@organizer.name) %> withdrew this time and is planning again.</p>
+<% content_for :preheader, "#{mail_safe(@event.name)} is no longer set. #{mail_safe(@organizer.name)} is planning again." %>
+<%= email_paragraph do %><strong><%= mail_safe(@event.name) %></strong> is no longer set for <%= @recipient_window %>.<% end %>
+<% if @recipient_window != @event_window %><%= email_note "In the event's zone: #{@event_window}" %><% end %>
+<%= email_paragraph "#{mail_safe(@organizer.name)} withdrew this time and is planning again." %>
 <% if @link %>
-<p>Your link:</p>
-<p><%= link_to @link, @link %></p>
+  <%= email_paragraph "Your link:" %>
+  <%= email_button "Open the event", @link %>
 <% else %>
-<p>Use the link from your invitation.</p>
+  <%= email_paragraph "Use the link from your invitation." %>
 <% end %>
-<p>If you added it to your calendar, this file removes it:</p>
-<p><%= link_to @calendar_url, @calendar_url %></p>
-<p>Your painted times still count. Open your link to change them. You will get one message when a new time is set.</p>
-<p>To stop hearing about this event, open your link and choose Leave this event.</p>
+<%= email_paragraph "If you added it to your calendar, this file removes it:" %>
+<%= email_button "Remove from calendar", @calendar_url, fallback: false %>
+<%= email_note "Your painted times still count. Open your link to change them. You will get one message when a new time is set." %>
+<%= email_note "To stop hearing about this event, open your link and choose Leave this event." %>

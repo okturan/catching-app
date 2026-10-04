@@ -5,6 +5,9 @@
     <%= form.field :first_name, required: true, autocomplete: "given-name" %>
     <%= form.field :last_name, required: true, autocomplete: "family-name" %>
     <%= form.field :email, as: :email_field, required: true, autocomplete: "email" %>
+    <% unless @user.email_confirmed? %>
+      <p class="form-text account-unconfirmed">Not confirmed yet. Use the link we emailed, or ask for a new one below.</p>
+    <% end %>
     <%= form.field :password, as: :password_field, optional: true, autocomplete: "new-password",
           hint: "Leave it blank to keep the one you have." %>
     <%= form.field :password_confirmation, as: :password_field, optional: true, autocomplete: "new-password" %>
@@ -15,6 +18,10 @@
   <div class="form-actions">
     <%= form.submit "Update", class: "btn btn-primary" %>
   </div>
+<% end %>
+
+<% unless @user.email_confirmed? %>
+  <%= button_to "Send the confirmation link again", resend_email_confirmation_path, method: :post, class: "btn btn-link", form: { class: "account-resend" } %>
 <% end %>
 
 <p>Unhappy? <%= link_to "Delete my account", account_path,

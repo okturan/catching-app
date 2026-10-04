@@ -1,23 +1,18 @@
-<p><strong><%= mail_safe(@event.name) %></strong> is set.</p>
-<p><%= @recipient_window %></p>
-<% if @recipient_window != @event_window %><p>In the event's zone: <%= @event_window %></p><% end %>
-<% if @place %><p>Where: <%= @place %></p><% end %>
-<% if @duration %><p>How long: <%= @duration %></p><% end %>
+<% content_for :preheader, "#{mail_safe(@event.name)}: #{@recipient_window}" %>
+<%= email_paragraph do %><strong><%= mail_safe(@event.name) %></strong> is set.<% end %>
+<%= email_times @recipient_window, (@recipient_window != @event_window ? "In the event's zone: #{@event_window}" : nil) %>
+<%= email_facts("Where:" => @place, "How long:" => @duration) %>
 <% if @plan.any? %>
-<p>Plan:</p>
-<ol>
-<% @plan.each do |line| %>
-  <li><%= line %></li>
+  <%= email_paragraph "Plan:" %>
+  <%= email_list @plan %>
 <% end %>
-</ol>
-<% end %>
+<%= email_paragraph "Add it to your calendar, with a reminder:" %>
+<%= email_button "Add to calendar", @calendar_url, fallback: false %>
 <% if @link %>
-<p>Open your link for the details:</p>
-<p><%= link_to @link, @link %></p>
+  <%= email_paragraph "Open your link for the details:" %>
+  <%= email_button "Open the event", @link %>
 <% else %>
-<p>Open your organizer link for the details.</p>
+  <%= email_paragraph "Open your organizer link for the details." %>
 <% end %>
-<p>Add it to your calendar, with a reminder:</p>
-<p><%= link_to @calendar_url, @calendar_url %></p>
-<p>You will hear from us again only if the organizer changes the plan, reopens the time or cancels.</p>
-<% if @link %><p>To stop hearing about this event, open your link and choose Leave this event.</p><% end %>
+<%= email_note "You will hear from us again only if the organizer changes the plan, reopens the time or cancels." %>
+<% if @link %><%= email_note "To stop hearing about this event, open your link and choose Leave this event." %><% end %>

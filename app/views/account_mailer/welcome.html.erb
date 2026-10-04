@@ -1,0 +1,8 @@
+<% content_for :preheader, "Your account remembers every event you plan or join. Confirm your address to finish." %>
+<%= email_heading "Welcome, #{@user.first_name}" %>
+<%= email_paragraph "Your Catching App account is ready. It keeps every event you plan, and every invitation you open while signed in, in one list." %>
+<%= email_paragraph "Confirm that this address is yours:" %>
+<%= email_button "Confirm my email", @confirm_url %>
+<%= email_rule %>
+<%= email_note "You never need the account to answer an invitation: every event still opens from its own emailed link." %>
+<%= email_note "If you didn't sign up, ignore this email; nothing else will be sent. The link works for three days." %>

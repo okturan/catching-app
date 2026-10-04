@@ -15,6 +15,25 @@ class User < ApplicationRecord
   validates :password, presence: true, on: :password_reset
   has_secure_password reset_token: { expires_in: 1.hour }
 
+  # A confirmation link stops working once the address changes again.
+  generates_token_for :email_confirmation, expires_in: 3.days do
+    email
+  end
+
+  # A login link works once: using one moves this mark, which logging out
+  # does not undo.
+  generates_token_for :login, expires_in: 15.minutes do
+    login_link_used_at&.to_f
+  end
+
+  def email_confirmed?
+    email_confirmed_at?
+  end
+
+  def confirm_email!
+    update!(email_confirmed_at: Time.current) unless email_confirmed?
+  end
+
   def full_name
     "#{first_name} #{last_name}".squish
   end

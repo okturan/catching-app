@@ -45,4 +45,15 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
     get dashboard_path
     assert_redirected_to new_session_path
   end
+
+  test "changing the address unconfirms it and tells both addresses; a new password is reported" do
+    @owner.update!(email_confirmed_at: Time.current)
+    sign_in @owner
+
+    assert_enqueued_emails 3 do
+      patch account_path, params: { user: { first_name: "Olivia", last_name: "Owner", email: "olivia@example.com",
+        password: "a brand new long password", password_confirmation: "a brand new long password", password_challenge: PASSWORD } }
+    end
+    assert_not @owner.reload.email_confirmed?
+  end
 end

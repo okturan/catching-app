@@ -23,6 +23,13 @@ class ParticipantsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match "pending@example.com", response.body
   end
 
+  test "the page says whose view it is" do
+    get participant_path(@guest_token)
+    assert_select ".event-viewer", text: /You're invited/
+    get participant_path(@organizer_token)
+    assert_select ".event-viewer", text: /You organize this event/
+  end
+
   test "a guest reads who else is invited, never themselves" do
     get participant_path(@guest_token)
 
