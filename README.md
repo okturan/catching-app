@@ -92,7 +92,7 @@ The container prepares the database before starting, listens through Thruster on
 
 The app runs on one Hetzner server, deployed with [Kamal](https://kamal-deploy.org) from `config/deploy.yml`. Kamal builds the image from the `Dockerfile`, starts it behind kamal-proxy (which obtains the Let's Encrypt certificates for `catching.app` and `www.catching.app`), and runs PostgreSQL 17 as an accessory on the same server. The job worker runs inside Puma, so there is no separate worker container.
 
-Secrets are read at deploy time by `.kamal/secrets` from files in `~/.config/catching-app/` on the deploying machine (`secret_key_base`, `postgres_password`, and `onesignal_api_key`); no secret is stored in the repository.
+Secrets are read at deploy time by `.kamal/secrets` from files in `~/.config/catching-app/` on the deploying machine (`secret_key_base`, `postgres_password`, and `resend_api_key`); no secret is stored in the repository.
 
 ```bash
 bin/kamal deploy        # build, push and switch to the new version
@@ -100,7 +100,7 @@ bin/kamal logs          # follow the app's logs
 bin/kamal console       # a Rails console on the server
 ```
 
-Mail goes out through [OneSignal](https://onesignal.com)'s email API (`lib/onesignal_delivery.rb`), from `no-reply@catching.app` on the authenticated sending domain `mail.catching.app`, with click tracking off so personal links are never rewritten. OneSignal sends no attachments, so the mails that change a calendar link to a signed calendar file instead (`CalendarLink`). Setting `SMTP_ADDRESS` switches delivery back to plain SMTP.
+Mail goes out through [Resend](https://resend.com)'s SMTP server from `no-reply@catching.app`, with click tracking off so personal links are never rewritten. Calendar files are linked rather than attached (`CalendarLink`), so the same mails also work through OneSignal's email API (`lib/onesignal_delivery.rb`), which the app uses when `SMTP_ADDRESS` is unset.
 
 ## How scheduling works
 
