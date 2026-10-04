@@ -1,4 +1,9 @@
 Rails.application.routes.draw do
+  # www.<APP_HOST> answers with a permanent redirect to the bare domain.
+  constraints ->(request) { ENV["APP_HOST"].present? && request.host == "www.#{ENV["APP_HOST"]}" } do
+    get "(*path)", to: redirect(status: 301) { |_params, request| "https://#{ENV["APP_HOST"]}#{request.fullpath}" }, format: false
+  end
+
   resource :session, only: %i[new create destroy]
   resources :passwords, param: :token, only: %i[new create edit update]
   resource :registration, only: %i[new create]

@@ -37,3 +37,5 @@ group :test do
   gem "capybara"
   gem "selenium-webdriver"
 end
+
+gem "kamal", "~> 2.12", require: false
