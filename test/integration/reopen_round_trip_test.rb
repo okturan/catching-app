@@ -29,7 +29,7 @@ class ReopenRoundTripTest < ActionDispatch::IntegrationTest
   end
 
   def sequence_of(mail)
-    mail.attachments.first.body.decoded[/SEQUENCE:(\d+)/, 1].to_i
+    calendar_of(mail)[/SEQUENCE:(\d+)/, 1].to_i
   end
 
   def guest_mails(kind)
@@ -48,8 +48,8 @@ class ReopenRoundTripTest < ActionDispatch::IntegrationTest
     withdrawn = ActionMailer::Base.deliveries.last(2)
     assert_equal %w[invitee@example.com pending@example.com], withdrawn.flat_map(&:to).sort
     withdrawn.each do |mail|
-      assert_includes mail.attachments.first.body.decoded, "STATUS:CANCELLED"
-      assert_includes mail.attachments.first.body.decoded, "DTSTART:20300115T100000Z"
+      assert_includes calendar_of(mail), "STATUS:CANCELLED"
+      assert_includes calendar_of(mail), "DTSTART:20300115T100000Z"
     end
     get participant_calendar_path(@guest_token)
     assert_response :not_found
@@ -69,7 +69,7 @@ class ReopenRoundTripTest < ActionDispatch::IntegrationTest
     finalize!(@twelve)
     assert_equal Time.utc(2030, 1, 15, 12), @event.start_time
     second = ActionMailer::Base.deliveries.last(3)
-    assert second.all? { |mail| mail.attachments.first.body.decoded.include?("DTSTART:20300115T120000Z") }
+    assert second.all? { |mail| calendar_of(mail).include?("DTSTART:20300115T120000Z") }
 
     reopen!
     assert_equal 2, @event.reopen_count
@@ -100,11 +100,11 @@ class ReopenRoundTripTest < ActionDispatch::IntegrationTest
     withdrawn_sequence = sequence_of(to_guest.call(withdrawn))
     assert_operator withdrawn_sequence, :>, sequences[0]
     assert_operator withdrawn_sequence, :<, sequences[1]
-    last_file = to_guest.call(third).attachments.first.body.decoded
+    last_file = calendar_of(to_guest.call(third))
     assert_includes last_file, "STATUS:CONFIRMED"
     assert_includes last_file, "SEQUENCE:#{@event.revision}"
     assert_equal @event.revision, @event.notified_revision
-    uids = [ first, second, third ].map { |batch| to_guest.call(batch).attachments.first.body.decoded[/UID:(\S+)/, 1] }
+    uids = [ first, second, third ].map { |batch| calendar_of(to_guest.call(batch))[/UID:(\S+)/, 1] }
     assert_equal 1, uids.uniq.size, "one calendar entry for the life of the event"
   end
 end

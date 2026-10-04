@@ -80,8 +80,8 @@ The runtime expects these environment variables:
 - `DATABASE_URL`: PostgreSQL connection URL
 - `SECRET_KEY_BASE` or `RAILS_MASTER_KEY`: Rails signing secret
 - `MAILER_FROM`: sender address
-- `SMTP_ADDRESS`: SMTP server address
-- `SMTP_PORT`, `SMTP_USERNAME`, and `SMTP_PASSWORD`: optional SMTP connection settings
+- `ONESIGNAL_APP_ID` and `ONESIGNAL_API_KEY`: the OneSignal app that sends the mail
+- `SMTP_ADDRESS`, `SMTP_PORT`, `SMTP_USERNAME`, and `SMTP_PASSWORD`: optional; when `SMTP_ADDRESS` is set, mail goes out over SMTP instead
 - `INVITATION_DAILY_BUDGET`: optional ceiling on invitation mails per day (default 500)
 - `LOG_REQUESTS`: set to `false` (the Dockerfile does) so Thruster does not log capability links
 - `SOLID_QUEUE_IN_PUMA`: set (the Dockerfile does) to run the job worker inside Puma; `JOB_CONCURRENCY` sets its processes (default 1)
@@ -92,7 +92,7 @@ The container prepares the database before starting, listens through Thruster on
 
 The app runs on one Hetzner server, deployed with [Kamal](https://kamal-deploy.org) from `config/deploy.yml`. Kamal builds the image from the `Dockerfile`, starts it behind kamal-proxy (which obtains the Let's Encrypt certificates for `catching.app` and `www.catching.app`), and runs PostgreSQL 17 as an accessory on the same server. The job worker runs inside Puma, so there is no separate worker container.
 
-Secrets are read at deploy time by `.kamal/secrets` from files in `~/.config/catching-app/` on the deploying machine (`secret_key_base`, `postgres_password`, and `resend_api_key`); no secret is stored in the repository.
+Secrets are read at deploy time by `.kamal/secrets` from files in `~/.config/catching-app/` on the deploying machine (`secret_key_base`, `postgres_password`, and `onesignal_api_key`); no secret is stored in the repository.
 
 ```bash
 bin/kamal deploy        # build, push and switch to the new version
@@ -100,7 +100,7 @@ bin/kamal logs          # follow the app's logs
 bin/kamal console       # a Rails console on the server
 ```
 
-Mail goes out through [Resend](https://resend.com)'s SMTP server. The sending domain `catching.app` is verified there with the DKIM and return-path records Resend lists, and the API key is the SMTP password.
+Mail goes out through [OneSignal](https://onesignal.com)'s email API (`lib/onesignal_delivery.rb`), from `no-reply@catching.app` on the authenticated sending domain `mail.catching.app`, with click tracking off so personal links are never rewritten. OneSignal sends no attachments, so the mails that change a calendar link to a signed calendar file instead (`CalendarLink`). Setting `SMTP_ADDRESS` switches delivery back to plain SMTP.
 
 ## How scheduling works
 

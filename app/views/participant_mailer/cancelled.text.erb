@@ -7,5 +7,6 @@ In the event's zone: <%= @event_window %>
 <% end %>
 Nothing else will be sent about this event.
 <% if @recipient_window %>
-If you added it to your calendar, the attached file removes it.
+If you added it to your calendar, this file removes it:
+<%= @calendar_url %>
 <% end %>

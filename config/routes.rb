@@ -4,7 +4,8 @@ Rails.application.routes.draw do
     get "(*path)", to: redirect(status: 301) { |_params, request| "https://#{ENV["APP_HOST"]}#{request.fullpath}" }, format: false
   end
 
-  resource :session, only: %i[new create destroy]
+  get "calendar/:token" => "calendar_links#show", as: :calendar_link, constraints: { token: %r{[^/]+} }, format: false
+    resource :session, only: %i[new create destroy]
   resources :passwords, param: :token, only: %i[new create edit update]
   resource :registration, only: %i[new create]
   resource :account, only: %i[edit update destroy]

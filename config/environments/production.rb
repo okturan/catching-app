@@ -27,16 +27,24 @@ Rails.application.configure do
     host: ENV.fetch("APP_HOST"),
     protocol: "https"
   }
-  config.action_mailer.delivery_method = :smtp
-  config.action_mailer.raise_delivery_errors = true
-  config.action_mailer.smtp_settings = {
-    address: ENV.fetch("SMTP_ADDRESS"),
-    port: ENV.fetch("SMTP_PORT", 587),
-    user_name: ENV["SMTP_USERNAME"],
-    password: ENV["SMTP_PASSWORD"],
-    authentication: :plain,
-    enable_starttls_auto: true
-  }
+  # OneSignal's email API; SMTP_ADDRESS switches back to plain SMTP.
+  if ENV["SMTP_ADDRESS"].present?
+    config.action_mailer.delivery_method = :smtp
+    config.action_mailer.smtp_settings = {
+      address: ENV["SMTP_ADDRESS"],
+      port: ENV.fetch("SMTP_PORT", 587),
+      user_name: ENV["SMTP_USERNAME"],
+      password: ENV["SMTP_PASSWORD"],
+      authentication: :plain,
+      enable_starttls_auto: true
+    }
+  else
+    config.action_mailer.delivery_method = :onesignal
+    config.action_mailer.onesignal_settings = {
+      app_id: ENV.fetch("ONESIGNAL_APP_ID"),
+      api_key: ENV.fetch("ONESIGNAL_API_KEY")
+    }
+  end
 
   config.i18n.fallbacks = true
   config.active_record.dump_schema_after_migration = false

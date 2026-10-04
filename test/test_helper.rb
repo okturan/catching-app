@@ -13,9 +13,20 @@ module ActiveSupport
     # before their slots, so no test ages into failure.
     setup { travel_to Time.utc(2030, 1, 10, 12) }
 
-    # Fixture digests are built from these literal raw tokens (see
-    # test/fixtures/participants.yml), so tests can build real links.
-    def raw_token(fixture_name)
+  # Fixture digests are built from these literal raw tokens (see
+  # test/fixtures/participants.yml), so tests can build real links.
+  # The calendar file a mail links to, as CalendarLinksController serves it.
+  def calendar_of(mail)
+    token = mail.text_part.body.to_s[%r{/calendar/([^\s"<]+)}, 1] or flunk("no calendar link in the mail")
+    CalendarLink.file_for(token).body
+  end
+
+  # A mail body without its calendar link, which is ours and opens no page.
+  def outside_calendar(body)
+    body.gsub(%r{https?://[^/\s]+/calendar/[^\s"<]+}, "")
+  end
+
+  def raw_token(fixture_name)
       fixture_name.to_s.delete("_").ljust(32, "0")
     end
 

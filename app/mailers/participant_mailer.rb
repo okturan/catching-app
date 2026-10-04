@@ -8,9 +8,6 @@ class ParticipantMailer < ApplicationMailer
 
   self.delivery_job = MailDeliveryJob
 
-  CALENDAR_ATTACHMENT = "catching-app.ics".freeze
-  CALENDAR_MIME_TYPE = "text/calendar; method=PUBLISH".freeze
-
   SUBJECT_PREFIX = "Catching App: ".freeze
   SUBJECT_LIMIT = 80
 
@@ -45,7 +42,7 @@ class ParticipantMailer < ApplicationMailer
     @duration = @event.planned_length
     @plan = plan_lines(window.first)
     @link = guest_link
-    attach_calendar(window:, status: :confirmed)
+    @calendar_url = calendar_url(window:, status: :confirmed)
     mail(reply_to: @organizer.email, subject: subject_for("#{mail_safe(@event.name)} is set for #{recipient_day(window.first)}"))
   end
 
@@ -67,7 +64,7 @@ class ParticipantMailer < ApplicationMailer
   def cancelled
     if (window = params[:window])
       describe_window(*window)
-      attach_calendar(window:, status: :cancelled)
+      @calendar_url = calendar_url(window:, status: :cancelled)
     end
     mail(reply_to: @organizer.email, subject: subject_for("#{mail_safe(@event.name)} is cancelled"))
   end
@@ -76,7 +73,7 @@ class ParticipantMailer < ApplicationMailer
     window = params.fetch(:previous_window)
     describe_window(*window)
     @link = guest_link
-    attach_calendar(window:, status: :cancelled)
+    @calendar_url = calendar_url(window:, status: :cancelled)
     mail(reply_to: @organizer.email, subject: subject_for("#{mail_safe(@event.name)} is no longer set for #{recipient_day(window.first)}"))
   end
 
@@ -165,11 +162,8 @@ class ParticipantMailer < ApplicationMailer
 
   # The sequence travels with the window: a job delayed past a reopen or a
   # cancel must publish the revision it was enqueued at, never a newer one.
-  def attach_calendar(window:, status:)
-    attachments[CALENDAR_ATTACHMENT] = {
-      mime_type: CALENDAR_MIME_TYPE,
-      content: CalendarFile.new(@event, mode: :mail, window:, status:, sequence: params[:sequence]).body
-    }
+  def calendar_url(window:, status:)
+    calendar_link_url(CalendarLink.token_for(@event, window:, status:, sequence: params[:sequence]))
   end
 
   # "60-minute slots between 15 Jan and 20 Jan 2030 (Europe/Berlin)"

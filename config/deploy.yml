@@ -33,13 +33,11 @@ env:
   clear:
     APP_HOST: catching.app
     MAILER_FROM: "Catching App <no-reply@catching.app>"
-    SMTP_ADDRESS: smtp.resend.com
-    SMTP_PORT: 587
-    SMTP_USERNAME: resend
+    ONESIGNAL_APP_ID: a289b356-7e21-45cd-889b-700a27e8d483
   secret:
     - SECRET_KEY_BASE
     - DATABASE_URL
-    - SMTP_PASSWORD
+    - ONESIGNAL_API_KEY
 
 aliases:
   console: app exec --interactive --reuse "bin/rails console"

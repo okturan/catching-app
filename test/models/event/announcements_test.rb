@@ -66,8 +66,8 @@ class Event::AnnouncementsTest < ActiveSupport::TestCase
     assert_no_match %r{/p/[A-Za-z0-9]{32}}, claimed_body
     mails.each_value do |mail|
       assert_includes mail.text_part.body.to_s, "Tue 15 Jan 2030 10:00–11:00 (UTC)"
-      assert_includes mail.attachments.first.body.decoded, "STATUS:CANCELLED"
-      assert_includes mail.attachments.first.body.decoded, "SEQUENCE:5"
+      assert_includes calendar_of(mail), "STATUS:CANCELLED"
+      assert_includes calendar_of(mail), "SEQUENCE:5"
     end
     assert MailDelivery.reopened.all? { |row| row.reload.delivered_at.present? }
   end
@@ -101,7 +101,7 @@ class Event::AnnouncementsTest < ActiveSupport::TestCase
     mail = ActionMailer::Base.deliveries.last
     assert_equal [ "invitee@example.com" ], mail.to
     assert_includes mail.text_part.body.to_s, "Finalized event is no longer set for Tue 15 Jan 2030 10:00–11:00 (UTC)."
-    assert_includes mail.attachments.first.body.decoded, "DTSTART:20300115T100000Z"
+    assert_includes calendar_of(mail), "DTSTART:20300115T100000Z"
     assert_equal 0, MailDelivery.reopened.where(recipient_email: "owner@example.com").count, "no organizer copy"
   end
 
@@ -136,9 +136,9 @@ class Event::AnnouncementsTest < ActiveSupport::TestCase
     assert_includes mails["invitee@example.com"].text_part.body.to_s, "http://example.com/p/#{@guest.id}"
     assert_no_match %r{/p/[A-Za-z0-9]{32}}, mails["invitee@example.com"].text_part.body.to_s
     organizer_body = mails["owner@example.com"].text_part.body.to_s
-    assert_not_includes organizer_body, "://"
+    assert_not_includes outside_calendar(organizer_body), "://"
     assert_includes organizer_body, "Open your organizer link"
-    mails.each_value { |mail| assert_equal [ "catching-app.ics" ], mail.attachments.map(&:filename) }
+    mails.each_value { |mail| assert_includes calendar_of(mail), "STATUS:CONFIRMED" }
   end
 
   test "announce_finalization! prints the window from the job's own params after a reopen-shaped change" do
@@ -153,7 +153,7 @@ class Event::AnnouncementsTest < ActiveSupport::TestCase
     mails = ActionMailer::Base.deliveries.last(2)
     mails.each do |mail|
       assert_includes mail.text_part.body.to_s, "Tue 15 Jan 2030 10:00–11:00 (UTC)"
-      assert_includes mail.attachments.first.body.decoded, "DTSTART:20300115T100000Z"
+      assert_includes calendar_of(mail), "DTSTART:20300115T100000Z"
     end
   end
 
@@ -302,8 +302,8 @@ class Event::AnnouncementsTest < ActiveSupport::TestCase
     mails.each do |mail|
       assert_equal "Catching App: Finalized event is cancelled", mail.subject
       assert_includes mail.text_part.body.to_s, "It was set for Tue 15 Jan 2030 10:00–11:00 (UTC)."
-      assert_not_includes mail.text_part.body.to_s, "://"
-      assert_includes mail.attachments.first.body.decoded, "STATUS:CANCELLED"
+      assert_not_includes outside_calendar(mail.text_part.body.to_s), "://"
+      assert_includes calendar_of(mail), "STATUS:CANCELLED"
     end
     assert MailDelivery.cancelled.where(event: finalized).all? { |row| row.delivered_at.present? }
 
