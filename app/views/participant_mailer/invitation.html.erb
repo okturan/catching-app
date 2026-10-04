@@ -1,7 +1,9 @@
-<p>Invitation from <%= mail_safe(@organizer.name) %> (<%= @organizer.email %>)</p>
-<p><strong><%= mail_safe(@event.name) %></strong></p>
-<p><%= @offer %></p>
-<p>Paint the times that work for you:</p>
-<p><%= link_to @link, @link %></p>
-<p>You will get at most: up to 5 resends, one confirmation when you reply, up to 5 notes if the organizer changes the plan, one message each time the time is set or reopened, and one if it is cancelled.</p>
-<p>If you don't know this person, ignore this email. You can also leave the event from the page above.</p>
+<% content_for :preheader, "#{mail_safe(@organizer.name)} is finding a time for #{mail_safe(@event.name)}. Paint the times that work for you." %>
+<%= email_note "Invitation from #{mail_safe(@organizer.name)} (#{@organizer.email})" %>
+<%= email_heading mail_safe(@event.name) %>
+<%= email_times @offer %>
+<%= email_paragraph "Paint the times that work for you:" %>
+<%= email_button "Paint my times", @link %>
+<%= email_rule %>
+<%= email_note "You will get at most: up to 5 resends, one confirmation when you reply, up to 5 notes if the organizer changes the plan, one message each time the time is set or reopened, and one if it is cancelled." %>
+<%= email_note "If you don't know this person, ignore this email. You can also leave the event from the page above." %>

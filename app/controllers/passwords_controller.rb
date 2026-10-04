@@ -24,6 +24,7 @@ class PasswordsController < ApplicationController
 
     if @user.save(context: :password_reset)
       @user.sessions.delete_all
+      AccountMailer.password_changed(@user).deliver_later
       redirect_to new_session_path, notice: "Your password was changed. Log in with the new one.", status: :see_other
     else
       render :edit, status: :unprocessable_entity

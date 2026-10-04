@@ -15,6 +15,11 @@ module ActiveSupport
 
   # Fixture digests are built from these literal raw tokens (see
   # test/fixtures/participants.yml), so tests can build real links.
+  # What a reader sees in a mail's HTML part: the text, entities decoded.
+  def html_text(mail)
+    CGI.unescapeHTML(Rails::HTML5::FullSanitizer.new.sanitize(mail.html_part.body.to_s)).gsub(/[ \t]+/, " ")
+  end
+
   # The calendar file a mail links to, as CalendarLinksController serves it.
   def calendar_of(mail)
     token = mail.text_part.body.to_s[%r{/calendar/([^\s"<]+)}, 1] or flunk("no calendar link in the mail")

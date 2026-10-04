@@ -6,6 +6,9 @@ Rails.application.routes.draw do
 
   get "calendar/:token" => "calendar_links#show", as: :calendar_link, constraints: { token: %r{[^/]+} }, format: false
     resource :session, only: %i[new create destroy]
+  resources :login_links, param: :token, only: %i[new create show]
+  resources :email_confirmations, param: :token, only: %i[show]
+  post "email_confirmation" => "email_confirmations#create", as: :resend_email_confirmation
   resources :passwords, param: :token, only: %i[new create edit update]
   resource :registration, only: %i[new create]
   resource :account, only: %i[edit update destroy]

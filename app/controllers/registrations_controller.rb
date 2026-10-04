@@ -10,8 +10,9 @@ class RegistrationsController < ApplicationController
     @user = User.new(params.expect(user: %i[first_name last_name email password password_confirmation]))
 
     if @user.save
+      AccountMailer.welcome(@user).deliver_later
       start_new_session_for @user
-      redirect_to after_authentication_url, notice: "Welcome! You have signed up successfully.", status: :see_other
+      redirect_to after_authentication_url, notice: "Welcome! Confirm your address from the email we just sent.", status: :see_other
     else
       render :new, status: :unprocessable_entity
     end

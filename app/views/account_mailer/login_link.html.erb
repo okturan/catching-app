@@ -1,0 +1,6 @@
+<% content_for :preheader, "Your link to log in to Catching App. It works once, for 15 minutes." %>
+<%= email_heading "Log in to Catching App" %>
+<%= email_paragraph "Someone asked for a login link for #{@user.email}. Press the button to log in, no password needed:" %>
+<%= email_button "Log me in", @login_url %>
+<%= email_note "The link works once, for 15 minutes." %>
+<%= email_note "If you didn't ask for it, ignore this email: nobody can log in without it." %>

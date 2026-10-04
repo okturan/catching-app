@@ -1,10 +1,11 @@
-<p><%= mail_safe(@organizer.name) %> cancelled <strong><%= mail_safe(@event.name) %></strong>.</p>
+<% content_for :preheader, "#{mail_safe(@event.name)} is cancelled." %>
+<%= email_paragraph do %><%= mail_safe(@organizer.name) %> cancelled <strong><%= mail_safe(@event.name) %></strong>.<% end %>
 <% if @recipient_window %>
-<p>It was set for <%= @recipient_window %>.</p>
-<% if @recipient_window != @event_window %><p>In the event's zone: <%= @event_window %></p><% end %>
+  <%= email_paragraph "It was set for #{@recipient_window}." %>
+  <% if @recipient_window != @event_window %><%= email_note "In the event's zone: #{@event_window}" %><% end %>
 <% end %>
-<p>Nothing else will be sent about this event.</p>
+<%= email_paragraph "Nothing else will be sent about this event." %>
 <% if @recipient_window %>
-<p>If you added it to your calendar, this file removes it:</p>
-<p><%= link_to @calendar_url, @calendar_url %></p>
+  <%= email_paragraph "If you added it to your calendar, this file removes it:" %>
+  <%= email_button "Remove from calendar", @calendar_url, fallback: false %>
 <% end %>

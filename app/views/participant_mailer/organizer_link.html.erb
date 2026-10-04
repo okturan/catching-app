@@ -1,4 +1,7 @@
-<p>You, or someone using your address, started planning an event on Catching App.</p>
-<p>Open your organizer link to see replies and send invitations:</p>
-<p><%= link_to @link, @link %></p>
-<p>If this wasn't you, ignore this email. Nothing else will be sent.</p>
+<% content_for :preheader, "Your organizer link: see replies and send the invitations." %>
+<%= email_heading "Your event is ready" %>
+<%= email_paragraph "You, or someone using your address, started planning an event on Catching App." %>
+<%= email_paragraph "Open your organizer link to see replies and send invitations:" %>
+<%= email_button "Open my event", @link %>
+<%= email_note "Keep this email: the link is how you get back to your event. Nothing goes to your friends until you open it and press Send." %>
+<%= email_note "If this wasn't you, ignore this email. Nothing else will be sent." %>

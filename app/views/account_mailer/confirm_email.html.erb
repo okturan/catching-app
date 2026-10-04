@@ -1,0 +1,5 @@
+<% content_for :preheader, "Confirm the new address for your Catching App account." %>
+<%= email_heading "Confirm your email address" %>
+<%= email_paragraph "This is now the address of the Catching App account for #{@user.full_name}. Confirm that it's yours:" %>
+<%= email_button "Confirm my email", @confirm_url %>
+<%= email_note "If you didn't make this change, ignore this email. The link works for three days." %>
