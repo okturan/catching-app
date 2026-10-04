@@ -25,7 +25,8 @@ module ParticipantsHelper
       [ "Pick the time", "Yellow is free for everyone who replied, and the numbers count who else can make it. " \
         "Drag across one continuous yellow window, then press Set in stone." ]
     in [ "organizer", _ ]
-      [ "Your offer", "Friends paint over these times in their own zones. Their picks show here as they reply." ]
+      [ "Your offer", "Friends paint over these times in their own zones, and their picks show here as they reply. " \
+        "To offer different times, use Change the times." ]
     else
       [ "Everyone's times", nil ]
     end

@@ -45,4 +45,17 @@ class GuestReadsZonedTimesTest < ApplicationSystemTestCase
   def plan_starts
     all("dl.event-facts ol.event-plan li time[data-zoned-instant]").map(&:text)
   end
+
+  test "the hide switch shows only when the grid has times that were not offered" do
+    visit participant_path(raw_token(:planning_guest))
+    assert_selector "#time-grid-show .slot.offered", count: 2
+    assert_no_selector "#time-grid-show .slot.inactive"
+    assert_no_selector "label.switch-row", text: "Hide times not offered"
+
+    TimeSlot.create!(event: events(:planning), participant: participants(:planning_organizer), start_time: Time.utc(2030, 1, 16, 12))
+    visit participant_path(raw_token(:planning_guest))
+    assert_selector "#time-grid-show .slot.inactive"
+    find("label.switch-row", text: "Hide times not offered").click
+    assert_selector "#time-grid-show.hide-unoffered"
+  end
 end

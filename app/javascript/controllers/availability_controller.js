@@ -97,6 +97,10 @@ export default class extends Controller {
     });
     seedTabindex(this.gridTarget, SELECTABLE);
     this.gridTarget.classList.toggle("hide-unoffered", this.hasHideSwitchTarget && this.hideSwitchTarget.checked);
+    // A grid where every time is offered has nothing to hide.
+    if (this.hasHideSwitchTarget) {
+      this.hideSwitchTarget.closest(".switch-row").hidden = !this.gridTarget.querySelector(".slot.inactive");
+    }
     this.renderLocalWindow();
     // Server-rendered instants arrive in the event's zone.
     rewriteZonedInstants(this.element, this.zone);
