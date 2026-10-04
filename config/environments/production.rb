@@ -42,6 +42,6 @@ Rails.application.configure do
   config.active_record.dump_schema_after_migration = false
   config.active_record.attributes_for_inspect = [ :id ]
 
-  config.hosts = [ ENV.fetch("APP_HOST") ]
+  config.hosts = [ ENV.fetch("APP_HOST"), "www.#{ENV.fetch("APP_HOST")}" ]
   config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
 end

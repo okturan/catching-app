@@ -1,0 +1,60 @@
+# Deployed with Kamal (bin/kamal deploy) to one Hetzner server: the app
+# behind kamal-proxy, which gets the Let's Encrypt certificate, and
+# PostgreSQL beside it. Solid Queue runs inside Puma (see the Dockerfile).
+service: catching-app
+image: catching-app
+
+servers:
+  web:
+    - 178.104.14.208
+
+# Thruster serves the app on port 80 inside the container.
+proxy:
+  ssl: true
+  hosts:
+    - catching.app
+    - www.catching.app
+  app_port: 80
+  healthcheck:
+    path: /up
+
+# A private registry on this machine, reached by the server over SSH.
+registry:
+  server: localhost:5555
+
+# The server builds its own x86 image; emulating x86 on an ARM Mac is slow
+# and breaks the asset build.
+builder:
+  arch: amd64
+  remote: ssh://root@178.104.14.208
+  local: false
+
+env:
+  clear:
+    APP_HOST: catching.app
+    MAILER_FROM: "Catching App <no-reply@catching.app>"
+    SMTP_ADDRESS: smtp.resend.com
+    SMTP_PORT: 587
+    SMTP_USERNAME: resend
+  secret:
+    - SECRET_KEY_BASE
+    - DATABASE_URL
+    - SMTP_PASSWORD
+
+aliases:
+  console: app exec --interactive --reuse "bin/rails console"
+  logs: app logs -f
+  dbc: app exec --interactive --reuse "bin/rails dbconsole"
+
+accessories:
+  db:
+    image: postgres:17
+    host: 178.104.14.208
+    env:
+      clear:
+        POSTGRES_USER: catching_app
+        POSTGRES_DB: catching_app_production
+      secret:
+        - POSTGRES_PASSWORD
+    directories:
+      - data:/var/lib/postgresql/data
