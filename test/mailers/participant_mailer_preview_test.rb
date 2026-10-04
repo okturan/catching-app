@@ -28,7 +28,7 @@ class ParticipantMailerPreviewTest < ActiveSupport::TestCase
     assert_includes finalized, "Where: "
     assert_includes finalized, "How long: "
     assert_match(/^Plan:\n1\. .+ \(\d+ min\) at \d{2}:\d{2} \(/, finalized)
-    assert_equal [ "catching-app.ics" ], ParticipantMailerPreview.call("finalized").attachments.map(&:filename)
+    assert_includes ParticipantMailerPreview.call("finalized").text_part.body.to_s, "/calendar/"
     assert_not_includes ParticipantMailerPreview.call("finalized_organizer_copy").text_part.body.to_s, "Leave this event"
 
     voided = ParticipantMailerPreview.call("event_updated_offer_voided").text_part.body.to_s
@@ -37,10 +37,10 @@ class ParticipantMailerPreviewTest < ActiveSupport::TestCase
     assert_includes stale, "Some of the offered times changed (2 added, 1 removed)."
     assert_includes ParticipantMailerPreview.call("event_updated_details").text_part.body.to_s, "The event is now called"
 
-    cancelled = ParticipantMailerPreview.call("cancelled")
-    assert_includes cancelled.attachments.first.body.decoded, "STATUS:CANCELLED"
-    assert_empty ParticipantMailerPreview.call("cancelled_while_pending").attachments
-    assert_includes ParticipantMailerPreview.call("reopened").attachments.first.body.decoded, "STATUS:CANCELLED"
+    calendar = ->(mail) { CalendarLink.file_for(mail.text_part.body.to_s[%r{/calendar/([^\s"<]+)}, 1]).body }
+    assert_includes calendar.(ParticipantMailerPreview.call("cancelled")), "STATUS:CANCELLED"
+    assert_not_includes ParticipantMailerPreview.call("cancelled_while_pending").text_part.body.to_s, "/calendar/"
+    assert_includes calendar.(ParticipantMailerPreview.call("reopened")), "STATUS:CANCELLED"
 
     assert_equal before, [ Event.count, Participant.count, PlanItem.count, MailDelivery.count, event.reload.attributes ]
   end

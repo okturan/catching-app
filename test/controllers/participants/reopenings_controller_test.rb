@@ -193,8 +193,8 @@ module Participants
       assert_equal %w[claimed@example.com invitee@example.com], mails.keys.sort
       mails.each_value do |mail|
         assert_equal "Catching App: Finalized event is no longer set for Tue 15 Jan", mail.subject
-        assert_includes mail.attachments.first.body.decoded, "STATUS:CANCELLED"
-        assert_includes mail.attachments.first.body.decoded, "SEQUENCE:#{@event.reload.revision}"
+        assert_includes calendar_of(mail), "STATUS:CANCELLED"
+        assert_includes calendar_of(mail), "SEQUENCE:#{@event.reload.revision}"
       end
 
       fresh = mails["invitee@example.com"].text_part.body.to_s[%r{/p/([A-Za-z0-9]{32})}, 1]

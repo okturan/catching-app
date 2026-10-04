@@ -35,7 +35,7 @@ module Participants
       assert_equal 3, @event.notified_revision
       mails = ActionMailer::Base.deliveries.last(3).index_by { |mail| mail.to.first }
       assert_equal %w[invitee@example.com owner@example.com pending@example.com], mails.keys.sort
-      assert mails.values.all? { |mail| mail.attachments.map(&:filename) == [ "catching-app.ics" ] }
+      assert mails.values.all? { |mail| calendar_of(mail).include?("STATUS:CONFIRMED") }
 
       fresh = mails["pending@example.com"].text_part.body.to_s[%r{/p/([A-Za-z0-9]{32})}, 1]
       assert fresh
@@ -52,7 +52,7 @@ module Participants
 
       assert_includes mails["invitee@example.com"].text_part.body.to_s, "/p/#{participants(:planning_guest).id}"
       assert_nil participants(:planning_guest).reload.pending_token_digest
-      assert_not_includes mails["owner@example.com"].text_part.body.to_s, "://"
+      assert_not_includes outside_calendar(mails["owner@example.com"].text_part.body.to_s), "://"
     end
 
     test "a shorter window than the planned length still finalizes" do

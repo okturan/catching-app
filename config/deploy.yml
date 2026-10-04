@@ -33,6 +33,8 @@ env:
   clear:
     APP_HOST: catching.app
     MAILER_FROM: "Catching App <no-reply@catching.app>"
+    # Resend's SMTP server. Without SMTP_ADDRESS the app would use OneSignal's
+    # API instead, given ONESIGNAL_APP_ID and ONESIGNAL_API_KEY.
     SMTP_ADDRESS: smtp.resend.com
     SMTP_PORT: 587
     SMTP_USERNAME: resend
