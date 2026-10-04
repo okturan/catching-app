@@ -90,13 +90,17 @@ The container prepares the database before starting, listens through Thruster on
 
 ## Deployment
 
-`render.yaml` is a [Render](https://render.com) blueprint for the whole stack: one Docker web service built from the `Dockerfile` and one PostgreSQL database in Frankfurt. The job worker runs inside Puma, so there is no separate worker service. To deploy:
+The app runs on one Hetzner server, deployed with [Kamal](https://kamal-deploy.org) from `config/deploy.yml`. Kamal builds the image from the `Dockerfile`, starts it behind kamal-proxy (which obtains the Let's Encrypt certificates for `catching.app` and `www.catching.app`), and runs PostgreSQL 17 as an accessory on the same server. The job worker runs inside Puma, so there is no separate worker container.
 
-1. In Render, choose **New > Blueprint**, connect this repository, and apply `render.yaml`. `SECRET_KEY_BASE` is generated and `DATABASE_URL` is wired to the database.
-2. Create a Postmark server, verify `catching.app` as a sender domain (the DKIM and Return-Path DNS records Postmark lists), and set its server API token as both `SMTP_USERNAME` and `SMTP_PASSWORD` on the web service.
-3. Add `catching.app` as a custom domain on the web service and point the domain's DNS at Render as instructed; Render issues the TLS certificate.
+Secrets are read at deploy time by `.kamal/secrets` from files in `~/.config/catching-app/` on the deploying machine (`secret_key_base`, `postgres_password`, and `resend_api_key`); no secret is stored in the repository.
 
-The first deploy runs `db:prepare`, which creates the schema, including the Solid Queue tables. `GET /up` is the health check.
+```bash
+bin/kamal deploy        # build, push and switch to the new version
+bin/kamal logs          # follow the app's logs
+bin/kamal console       # a Rails console on the server
+```
+
+Mail goes out through [Resend](https://resend.com)'s SMTP server. The sending domain `catching.app` is verified there with the DKIM and return-path records Resend lists, and the API key is the SMTP password.
 
 ## How scheduling works
 

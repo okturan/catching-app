@@ -22,8 +22,12 @@ proxy:
 registry:
   server: localhost:5555
 
+# The server builds its own x86 image; emulating x86 on an ARM Mac is slow
+# and breaks the asset build.
 builder:
   arch: amd64
+  remote: ssh://root@178.104.14.208
+  local: false
 
 env:
   clear:
