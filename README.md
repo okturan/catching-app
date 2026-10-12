@@ -98,6 +98,7 @@ To deploy from a laptop instead, `.kamal/secrets` reads the same values from fil
 
 ```bash
 export KAMAL_REGISTRY_PASSWORD=$(gh auth token)
+bin/kamal registry login # the server builds the image, so it signs in too
 bin/kamal deploy        # build, push and switch to the new version
 bin/kamal logs          # follow the app's logs
 bin/kamal console       # a Rails console on the server
