@@ -1,0 +1,65 @@
+name: Deploy
+
+# Ships master to catching.app once CI has passed on it; can also be run by
+# hand from the Actions tab.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+# One deploy at a time, and never cancel one halfway.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://catching.app
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # v1
+        with:
+          bundler-cache: true
+
+      # The server's own host key, so the connection is to it and no other.
+      - name: Set up SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          echo "178.104.14.208 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICGqEjuqJUKHctMUVbRVrFSXAaTEbKOHYlzAIEJRZXaS" > ~/.ssh/known_hosts
+
+      # .kamal/secrets reads these files, as it does on a laptop.
+      - name: Write secrets
+        env:
+          SECRET_KEY_BASE: ${{ secrets.SECRET_KEY_BASE }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+        run: |
+          install -d -m 700 ~/.config/catching-app
+          printf '%s' "$SECRET_KEY_BASE" > ~/.config/catching-app/secret_key_base
+          printf '%s' "$POSTGRES_PASSWORD" > ~/.config/catching-app/postgres_password
+          printf '%s' "$RESEND_API_KEY" > ~/.config/catching-app/resend_api_key
+
+      - name: Deploy
+        env:
+          KAMAL_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+        run: bin/kamal deploy
