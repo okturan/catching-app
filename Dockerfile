@@ -57,6 +57,9 @@ RUN bundle exec bootsnap precompile -j 1 app/ lib/ && \
 
 FROM base
 
+# Links the image on ghcr.io to this repository.
+LABEL org.opencontainers.image.source="https://github.com/okturan/catching-app"
+
 RUN groupadd --system --gid 1000 rails && \
     useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash && \
     mkdir -p log storage tmp && \

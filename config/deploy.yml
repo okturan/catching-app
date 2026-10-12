@@ -1,8 +1,8 @@
-# Deployed with Kamal (bin/kamal deploy) to one Hetzner server: the app
-# behind kamal-proxy, which gets the Let's Encrypt certificate, and
-# PostgreSQL beside it. Solid Queue runs inside Puma (see the Dockerfile).
+# Deployed with Kamal to one Hetzner server: the app behind kamal-proxy,
+# which gets the Let's Encrypt certificate, and PostgreSQL beside it. The
+# deploy workflow runs bin/kamal deploy after CI passes on master. Solid Queue runs inside Puma (see the Dockerfile).
 service: catching-app
-image: catching-app
+image: okturan/catching-app
 
 servers:
   web:
@@ -18,9 +18,14 @@ proxy:
   healthcheck:
     path: /up
 
-# A private registry on this machine, reached by the server over SSH.
+# GitHub's container registry. The deploy workflow signs in with its own
+# token; from a laptop, KAMAL_REGISTRY_PASSWORD is a token that can write
+# packages (see the README).
 registry:
-  server: localhost:5555
+  server: ghcr.io
+  username: okturan
+  password:
+    - KAMAL_REGISTRY_PASSWORD
 
 # The server builds its own x86 image; emulating x86 on an ARM Mac is slow
 # and breaks the asset build.
