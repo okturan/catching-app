@@ -59,7 +59,11 @@ jobs:
           printf '%s' "$POSTGRES_PASSWORD" > ~/.config/catching-app/postgres_password
           printf '%s' "$RESEND_API_KEY" > ~/.config/catching-app/resend_api_key
 
+      # The server builds and pushes the image, so it signs in first; the
+      # token it gets lasts only as long as this job.
       - name: Deploy
         env:
           KAMAL_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-        run: bin/kamal deploy
+        run: |
+          bin/kamal registry login
+          bin/kamal deploy
