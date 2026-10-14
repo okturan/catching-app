@@ -45,7 +45,7 @@ jobs:
           install -d -m 700 ~/.ssh
           printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
-          echo "178.104.14.208 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICGqEjuqJUKHctMUVbRVrFSXAaTEbKOHYlzAIEJRZXaS" > ~/.ssh/known_hosts
+          echo "178.104.118.172 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH2UC1CIQxvshnt82l/eHtX5jp9+v4JdnQXaQnslLiSi" > ~/.ssh/known_hosts
 
       # .kamal/secrets reads these files, as it does on a laptop.
       - name: Write secrets
@@ -59,11 +59,7 @@ jobs:
           printf '%s' "$POSTGRES_PASSWORD" > ~/.config/catching-app/postgres_password
           printf '%s' "$RESEND_API_KEY" > ~/.config/catching-app/resend_api_key
 
-      # The server builds and pushes the image, so it signs in first; the
-      # token it gets lasts only as long as this job.
       - name: Deploy
         env:
           KAMAL_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          bin/kamal registry login
-          bin/kamal deploy
+        run: bin/kamal deploy

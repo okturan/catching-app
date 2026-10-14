@@ -90,16 +90,14 @@ The container prepares the database before starting, listens through Thruster on
 
 ## Deployment
 
-The app runs on one Hetzner server, deployed with [Kamal](https://kamal-deploy.org) from `config/deploy.yml`. Kamal builds the image from the `Dockerfile`, starts it behind kamal-proxy (which obtains the Let's Encrypt certificates for `catching.app` and `www.catching.app`), and runs PostgreSQL 17 as an accessory on the same server. The job worker runs inside Puma, so there is no separate worker container.
+The app runs on `hub`, a Hetzner server it shares with other apps, deployed with [Kamal](https://kamal-deploy.org) from `config/deploy.yml`. Kamal starts the image behind kamal-proxy (which obtains the Let's Encrypt certificates for `catching.app` and `www.catching.app`) and runs PostgreSQL 17 as an accessory on the same server. The job worker runs inside Puma, so there is no separate worker container. Host, limits, backups and restore steps are in [AGENTS.md](AGENTS.md).
 
-Every push to `master` that passes CI is deployed by `.github/workflows/deploy.yml`: the server builds the image, which goes to GitHub's container registry (`ghcr.io/okturan/catching-app`), and Kamal switches traffic to it once `/up` answers. The workflow can also be run by hand from the Actions tab. Its secrets (`SSH_PRIVATE_KEY`, `SECRET_KEY_BASE`, `POSTGRES_PASSWORD`, `RESEND_API_KEY`) live in the repository's `production` environment, which only `master` can use; no secret is stored in the repository.
+Every push to `master` that passes CI is deployed by `.github/workflows/deploy.yml`: the runner builds the image, pushes it to GitHub's container registry (`ghcr.io/okturan/catching-app`), and Kamal switches traffic to it once `/up` answers. To redeploy without a new commit, run the workflow from the Actions tab. Its secrets (`SSH_PRIVATE_KEY`, `SECRET_KEY_BASE`, `POSTGRES_PASSWORD`, `RESEND_API_KEY`) live in the repository's `production` environment, which only `master` can use; no secret is stored in the repository.
 
-To deploy from a laptop instead, `.kamal/secrets` reads the same values from files in `~/.config/catching-app/` (`secret_key_base`, `postgres_password`, `resend_api_key`), and the registry token comes from the GitHub CLI (`gh auth refresh -s write:packages` once):
+From a laptop, `.kamal/secrets` reads the same values from files in `~/.config/catching-app/` (`secret_key_base`, `postgres_password`, `resend_api_key`) and the registry token from the GitHub CLI:
 
 ```bash
 export KAMAL_REGISTRY_PASSWORD=$(gh auth token)
-bin/kamal registry login # the server builds the image, so it signs in too
-bin/kamal deploy        # build, push and switch to the new version
 bin/kamal logs          # follow the app's logs
 bin/kamal console       # a Rails console on the server
 ```
