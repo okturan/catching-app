@@ -3,7 +3,7 @@
 ## Hosting
 
 - **Host:** `hub`, 178.104.118.172 (Hetzner, nbg1, Ubuntu 24.04), shared with other apps under the plan in
-  `~/code/backlog/hetzner-consolidation.md`. Moved there from its own server (178.104.14.208) on 2026-10-15.
+  `~/code/backlog/hetzner-consolidation.md`. Moved there from its own server on 2026-10-15.
 - **DNS:** Cloudflare, DNS only. `catching.app` A → hub; `www` CNAME → apex. The app redirects `www` to the apex.
 - **Routing:** kamal-proxy on hub owns 80/443 for every app and routes `catching.app` and `www.catching.app` here.
 - **Deploys:** `.github/workflows/deploy.yml` after CI passes on `master`, as root over SSH with the key
