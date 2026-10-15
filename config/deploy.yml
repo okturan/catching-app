@@ -6,7 +6,11 @@
 service: catching-app
 image: okturan/catching-app
 
-# The box is shared, so every container has a ceiling.
+# The box is shared, so every container has a ceiling. Kamal puts web on the
+# shared kamal network for kamal-proxy; it also joins catching-app-private,
+# the only network the database is on, so no other app on the box can reach
+# the database. That network is internal (no way out) and made once on hub:
+#   docker network create --internal catching-app-private
 servers:
   web:
     hosts:
@@ -14,6 +18,7 @@ servers:
     options:
       memory: 1g
       cpus: 1
+      network: catching-app-private
 
 # Thruster serves the app on port 80 inside the container.
 proxy:
@@ -61,6 +66,7 @@ accessories:
   db:
     image: postgres:17
     host: 178.104.118.172
+    network: catching-app-private
     options:
       memory: 512m
       cpus: 0.5
