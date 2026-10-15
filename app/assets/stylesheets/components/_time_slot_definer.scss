@@ -63,48 +63,59 @@
   max-inline-size: 62ch;
 }
 
-// One column at 412px: step and zone full width because zone names are long,
-// then the two dates two-up. The reset's min-width: 0 is what stops a native
-// date input setting a floor wider than the viewport.
+// The settings that redraw the grid: four fields on one baseline. Narrow,
+// step and zone take a row each (zone names are long) and the two days
+// share one; from 30rem, two by two; from 46rem, all four in a row. The
+// two days are one fieldset that rides the strip's own columns.
 .grid-controls {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.75rem;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
   margin: 0 0.25rem 1rem;
 
-  > .grid-days,
-  > .grid-frozen-note,
+  > .grid-field-step,
+  > .grid-field-zone,
+  > .grid-hints,
   > #range-tooltip { grid-column: 1 / -1; }
+
+  > .grid-days {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: inherit;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-inline-size: 0;
+  }
 
   .form-select,
   .form-control { inline-size: 100%; }
 
-  .form-text { margin-block-start: 0.25rem; }
+  > .grid-hints {
+    margin: 0;
+    font-size: var(--step--1);
+    color: var(--ink-soft);
 
-  // Reboot floats a legend and blows up its size; this one is a form label.
-  legend.form-label {
-    float: none;
-    inline-size: auto;
-    font-size: inherit;
-    line-height: inherit;
+    span + span::before { content: " "; }
   }
+
+  > #range-tooltip:empty { display: none; }
 }
 
-// A wide panel reads the strip on one line: step, zone, then the two days.
-@container (width >= 760px) {
+@container (width >= 30rem) {
+  .grid-controls > :is(.grid-field-step, .grid-field-zone) { grid-column: auto; }
+}
+
+@container (width >= 46rem) {
   .grid-controls {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr);
-    align-items: start;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
 
-    > .grid-days { grid-column: auto; }
+    > .grid-days { grid-column: span 2; }
   }
 }
 
-.grid-days-pair {
-  display: grid;
-  gap: 0.75rem;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
+.grid-field .form-label { margin-block-end: 0.3rem; }
 
 // The sentence only a touch visitor needs, revealed the way paint mode is.
 .touch-only { display: none; }
@@ -316,7 +327,7 @@
 
 // Offer page: step and zone frozen after the first reply, the past-times
 // caption and the event being changed.
-.grid-frozen-note { margin: 0; font-size: var(--step--1); font-weight: 600; color: var(--ink-soft); }
+.grid-frozen-note { font-weight: 600; }
 .offer-note { margin: 0 0 1rem; font-size: var(--step--1); font-weight: 600; color: var(--ink-soft); }
 .offer-event-name { font-size: var(--step-1); font-weight: 800; margin: 0 0 0.75rem; }
 
