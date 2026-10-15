@@ -6,13 +6,13 @@
 
 .time-grid-panel {
   @extend .face;
-  max-width: 100%;
+  max-inline-size: 100%;
   padding: 16px;
-  margin-top: 0;
+  margin-block-start: 0;
 }
 
 .time-grid-scroll {
-  max-height: calc(100dvh - var(--navbar-h) - var(--action-bar-h));
+  max-block-size: calc(100dvh - var(--navbar-h) - var(--action-bar-h));
   overflow: auto;
   overscroll-behavior: contain;
 }
@@ -32,69 +32,66 @@
   container-type: inline-size;
   display: flex;
   flex-direction: column;
-  max-height: calc(100dvh - 1rem);
+  max-block-size: calc(100dvh - 1rem);
 
   > h2 {
-    font-size: 1.2rem;
+    font-size: var(--step-1);
     font-weight: 800;
-    letter-spacing: -0.02em;
     margin: 0.25rem 0.25rem 0.3rem;
   }
 
   > .time-grid-scroll {
     flex: 1 1 auto;
-    min-height: 0;
-    max-height: none;
+    min-block-size: 0;
+    max-block-size: none;
   }
 
   @media (min-height: 700px) {
-    > .time-grid-scroll { min-height: 12rem; }
+    > .time-grid-scroll { min-block-size: 12rem; }
   }
 }
 
 // A short window (a 1366x768 laptop, a shortened browser) cannot hold the
 // strip, a usable grid and the bar at once. Give the page its scroll back.
 @media (max-height: 699px) {
-  .time-grid-define-wrapper { max-height: none; }
+  .time-grid-define-wrapper { max-block-size: none; }
   .event-new-grid > .time-grid-panel { position: static; }
 }
 
 .time-grid-define-wrapper > #grid-paint-hint {
   margin: 0 0.25rem 1rem;
-  max-width: 62ch;
+  max-inline-size: 62ch;
 }
 
 // One column at 412px: step and zone full width because zone names are long,
-// then the two dates two-up. min-width: 0 on the item and on the control is
-// what stops a native date input setting a floor wider than the viewport.
+// then the two dates two-up. The reset's min-width: 0 is what stops a native
+// date input setting a floor wider than the viewport.
 .grid-controls {
   display: grid;
   gap: 0.75rem;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
   margin: 0 0.25rem 1rem;
-
-  > * { min-width: 0; }
 
   > .grid-days,
   > .grid-frozen-note,
   > #range-tooltip { grid-column: 1 / -1; }
 
   .form-select,
-  .form-control { width: 100%; min-width: 0; }
+  .form-control { inline-size: 100%; }
 
-  .form-text { margin-top: 0.25rem; }
+  .form-text { margin-block-start: 0.25rem; }
 
   // Reboot floats a legend and blows up its size; this one is a form label.
   legend.form-label {
     float: none;
-    width: auto;
+    inline-size: auto;
     font-size: inherit;
     line-height: inherit;
   }
 }
 
 // A wide panel reads the strip on one line: step, zone, then the two days.
-@container (min-width: 760px) {
+@container (width >= 760px) {
   .grid-controls {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr);
     align-items: start;
@@ -107,8 +104,6 @@
   display: grid;
   gap: 0.75rem;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-
-  > * { min-width: 0; }
 }
 
 // The sentence only a touch visitor needs, revealed the way paint mode is.
@@ -119,8 +114,8 @@
 .time-grid {
   border-collapse: separate;
   border-spacing: 4px;
-  width: min(100%, calc(4.5rem + var(--days, 3) * 13rem));
-  min-width: max-content;
+  inline-size: min(100%, calc(4.5rem + var(--days, 3) * 13rem));
+  min-inline-size: max-content;
   touch-action: pan-x pan-y pinch-zoom;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -136,22 +131,22 @@
   // Day headers are enamel plates; row headers are dial numerals.
   thead th {
     position: sticky;
-    top: 0;
+    inset-block-start: 0;
     z-index: 2;
     padding: 0.55em 0.9em;
     text-align: center;
     white-space: nowrap;
     border-radius: 3px;
     touch-action: pan-x pan-y pinch-zoom;
-    background: $enamel;
-    color: $enamel-text;
+    background: var(--enamel);
+    color: var(--enamel-text);
     font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.1em;
     text-transform: uppercase;
     // The face-coloured ring closes the border-spacing, so cells scrolling
     // under the sticky plates do not show between them.
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 -1px 0 rgba(0, 0, 0, 0.35), 0 2px 4px rgba(20, 20, 20, 0.25), 0 0 0 2px $face;
+    box-shadow: var(--shadow-plate), 0 0 0 2px var(--face);
 
     small {
       display: block;
@@ -164,48 +159,48 @@
 
   // Opaque, so row labels scroll under the corner instead of beside the plates.
   thead th.row-label-head {
-    left: 0;
+    inset-inline-start: 0;
     z-index: 3;
-    background: $face;
-    box-shadow: 0 0 0 2px $face;
+    background: var(--face);
+    box-shadow: 0 0 0 2px var(--face);
   }
 
   // Shrunk to its labels while the day columns share the rest. A pixel, not a
   // percentage: a percentage column makes a max-content table as wide as its
   // label divided by that percentage.
   tbody th {
-    width: 1px;
+    inline-size: 1px;
     position: sticky;
-    left: 0;
+    inset-inline-start: 0;
     z-index: 1;
     padding: 0 0.6em;
-    font-family: $time-font;
+    font-family: var(--time-font);
     font-size: 12px;
     font-weight: 500;
-    text-align: right;
+    text-align: end;
     white-space: nowrap;
-    background: $face;
-    color: $ink-soft;
+    background: var(--face);
+    color: var(--ink-soft);
     touch-action: pan-x pan-y pinch-zoom;
   }
 
   tr.day-boundary th,
   tr.day-boundary td {
-    border-top: 2px dashed rgba(0, 0, 0, 0.35);
+    border-block-start: 2px dashed var(--rule);
   }
 
   .slot {
-    min-width: 120px;
-    height: var(--slot-row-height);
+    min-inline-size: 120px;
+    block-size: var(--slot-row-height);
     font-size: 13px;
     line-height: 1.3;
     text-align: center;
     vertical-align: middle;
     cursor: default;
-    border: 1px solid rgba(20, 20, 20, 0.22);
+    border: 1px solid var(--ink-22);
     border-radius: 3px;
-    background: $face;
-    color: $ink;
+    background: var(--face);
+    color: var(--ink);
 
     // Only a cell the viewer can paint looks pressable.
     &.selectable { cursor: pointer; }
@@ -218,20 +213,20 @@
     }
 
     &.inactive {
-      background: $wall;
-      color: rgba(20, 20, 20, 0.35);
-      border-color: rgba(20, 20, 20, 0.08);
+      background: var(--wall);
+      color: var(--ink-35);
+      border-color: var(--ink-08);
       cursor: default;
     }
 
     &.offered {
-      background: $face;
-      border-color: rgba(20, 20, 20, 0.45);
+      background: var(--face);
+      border-color: var(--ink-45);
     }
 
     &.consensus {
-      background: $awake-wash;
-      border-color: $awake-deep;
+      background: var(--awake-wash);
+      border-color: var(--awake-deep);
     }
 
     &.past {
@@ -241,40 +236,37 @@
     }
 
     &.active {
-      background: $enamel !important;
-      border-color: $enamel-deep !important;
-      color: $enamel-text;
-      animation: pulse 0.3s ease-in;
+      background: var(--enamel) !important;
+      border-color: var(--enamel-deep) !important;
+      color: var(--enamel-text);
     }
 
     &.consensus.active {
-      background: $awake !important;
-      border-color: $ink !important;
-      color: $ink;
+      background: var(--awake) !important;
+      border-color: var(--on-awake) !important;
+      color: var(--on-awake);
     }
 
     &:focus-visible {
-      outline: 3px solid $signal;
+      outline: 3px solid var(--signal);
       outline-offset: 2px;
     }
 
-    // How many others hold this time: a small tab beside the reading.
-    // Washes are precomputed over each cell colour (the Wash Rule).
+    // How many others hold this time: a small tab beside the reading, a
+    // wash of the cell's own text over its own colour.
     .others {
       display: inline-block;
-      margin-left: 0.4em;
+      margin-inline-start: 0.4em;
       padding: 0 0.35em;
       border-radius: 2px;
       font-size: 10.5px;
       font-weight: 600;
       line-height: 1.55;
       vertical-align: 1px;
-      background: #eeeeee;
-      color: $ink-soft;
+      background: rgb(128 128 128 / 0.14);
+      background: color-mix(in oklch, currentColor 8%, transparent);
+      color: inherit;
     }
-    &.consensus .others { background: #ecd4a8; color: $ink; }
-    &.active .others { background: #4b627b; color: $enamel-text; }
-    &.consensus.active .others { background: #e8b453; color: $ink; }
   }
 
   &.hide-unoffered .slot.inactive {
@@ -294,7 +286,7 @@
   .alert {
     position: static;
     margin: 0;
-    width: 100%;
+    inline-size: 100%;
   }
 }
 
@@ -305,11 +297,11 @@
 // Inline notices at the top of the action bar: what changed under a guest,
 // or who has not answered the current times. One sentence, body face.
 .grid-action-bar .grid-notice {
-  width: 100%;
+  inline-size: 100%;
   margin: 0;
   font-weight: 600;
-  color: $ink-soft;
-  time { font-size: 0.9rem; color: $ink; }
+  color: var(--ink-soft);
+  time { font-size: 0.9rem; color: var(--ink); }
 }
 
 // The organizer's dead end: every offered time is behind the cut-off.
@@ -319,42 +311,46 @@
   align-items: center;
   gap: 0.5rem 0.75rem;
   font-weight: 600;
-  color: $ink-soft;
+  color: var(--ink-soft);
 }
 
 // Offer page: step and zone frozen after the first reply, the past-times
 // caption and the event being changed.
-.grid-frozen-note { margin: 0; font-size: 0.85rem; font-weight: 600; color: $ink-soft; }
-.offer-note { margin: 0 0 1rem; font-size: 0.9rem; font-weight: 600; color: $ink-soft; }
-.offer-event-name { font-size: 1.2rem; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 0.75rem; }
+.grid-frozen-note { margin: 0; font-size: var(--step--1); font-weight: 600; color: var(--ink-soft); }
+.offer-note { margin: 0 0 1rem; font-size: var(--step--1); font-weight: 600; color: var(--ink-soft); }
+.offer-event-name { font-size: var(--step-1); font-weight: 800; margin: 0 0 0.75rem; }
 
 .paint-mode {
   display: none;
   gap: 4px;
   margin: 0;
   padding: 4px;
-  border: 1px solid rgba(20, 20, 20, 0.3);
-  border-radius: 4px;
-  background: $face;
+  border: 1px solid var(--rule);
+  // Concentric: the outer corner is the label's plus the padding.
+  border-radius: calc(var(--radius-plate) + 4px);
+  background: var(--face);
 
   label {
     margin: 0;
     padding: 6px 14px;
-    border-radius: 3px;
+    border-radius: var(--radius-plate);
     cursor: pointer;
     font-weight: 600;
+
+    &:active { scale: 0.96; }
+    &:has(input:focus-visible) { outline: max(2px, 0.08em) solid var(--link); outline-offset: 2px; }
   }
 
   input {
     position: absolute;
     opacity: 0;
-    width: 0;
-    height: 0;
+    inline-size: 0;
+    block-size: 0;
   }
 
   label:has(input:checked) {
-    background: $enamel;
-    color: $enamel-text;
+    background: var(--enamel);
+    color: var(--enamel-text);
   }
 }
 
@@ -367,11 +363,11 @@
 
   .grid-action-bar {
     position: sticky;
-    bottom: 0;
+    inset-block-end: 0;
     z-index: 5;
-    background: $face;
-    border-top: 1px solid $hairline;
-    box-shadow: 0 -6px 16px -10px rgba(20, 20, 20, 0.35);
+    background: var(--face);
+    border-block-start: 1px solid var(--hairline);
+    box-shadow: var(--shadow-bar);
   }
 
   .time-grid[data-slot-minutes="60"] { --slot-row-height: 44px; }
@@ -379,7 +375,7 @@
   .time-grid[data-slot-minutes="15"] { --slot-row-height: 28px; }
 
   .time-grid .slot {
-    min-width: 88px;
+    min-inline-size: 88px;
     font-size: 14px;
   }
 
@@ -387,11 +383,20 @@
   // shared with it leaves a sliver of grid. The panel scrolls with the page
   // instead, and the grid box takes most of the screen once it is reached.
   .time-grid-define-wrapper {
-    max-height: none;
+    max-block-size: none;
 
     > .time-grid-scroll {
-      max-height: calc(100dvh - 9rem);
-      min-height: 18rem;
+      max-block-size: calc(100dvh - 9rem);
+      min-block-size: 18rem;
     }
   }
+}
+
+// A painted cell settles into place: in from a hair larger, never a flash.
+@keyframes slot-settle {
+  from { scale: 1.06; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .time-grid .slot.active { animation: slot-settle 200ms var(--ease-out); }
 }

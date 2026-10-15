@@ -4,17 +4,8 @@
 .plate-button-sm,
 .btn.btn-primary {
   @extend .plate;
+  @extend .plate-press;
   border: 0;
-  text-decoration: none;
-  cursor: pointer;
-  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s;
-  &:hover, &:focus-visible {
-    color: $enamel-text;
-    transform: translateY(-1px);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 -1px 0 rgba(0, 0, 0, 0.35), 0 6px 12px -4px rgba(20, 20, 20, 0.4);
-  }
-  &:active { transform: translateY(0); }
-  &:disabled { opacity: 0.6; transform: none; }
 }
 
 .btn-meeting,
@@ -25,40 +16,33 @@
 }
 
 .btn.btn-primary {
-  --bs-btn-bg: #{$enamel};
-  --bs-btn-hover-bg: #{$enamel};
-  --bs-btn-active-bg: #{$enamel};
-  --bs-btn-color: #{$enamel-text};
-  --bs-btn-hover-color: #{$enamel-text};
-  --bs-btn-active-color: #{$enamel-text};
+  --bs-btn-bg: var(--enamel);
+  --bs-btn-hover-bg: var(--enamel);
+  --bs-btn-active-bg: var(--enamel);
+  --bs-btn-color: var(--enamel-text);
+  --bs-btn-hover-color: var(--enamel-text);
+  --bs-btn-active-color: var(--enamel-text);
+  --bs-btn-disabled-bg: var(--enamel);
+  --bs-btn-disabled-color: var(--enamel-text);
 }
 
 // A finger needs more than a text line to hit: the small and link buttons
-// grow to 40px tall on touch screens.
+// grow to 44px tall on touch screens.
 @media (any-pointer: coarse) {
   .btn-sm,
   .btn-link.btn-sm {
-    min-height: 40px;
+    min-block-size: 44px;
     display: inline-flex;
     align-items: center;
   }
-}
-
-.btn-event {
-  @extend .plate;
-  text-decoration: none;
-  &:hover { color: $enamel-text; }
 }
 
 .btn-outline-primary,
 .btn-outline-secondary,
 .btn-outline-danger {
   font-weight: 700;
-  background: $face;
 }
 
 .btn-link {
   font-weight: 700;
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
 }

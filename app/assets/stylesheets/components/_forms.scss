@@ -1,91 +1,106 @@
-// The account forms and other single-column forms sit on one white face.
+// Single-column pages (the account forms, link recovery, one-message
+// pages) set a narrow content column; every child of main fills it.
+body:has(> main > form > .form-inputs),
+body:has(> main > #organizer-link-recovery) { --page-content: 27.5rem; }
+body:has(> main > .notice-page) { --page-content: 35rem; }
+body:has(> main > #event-details) { --page-content: 65rem; }
+
+// The account forms sit on one white face.
 .form-inputs {
   @extend .face;
-  width: min(440px, calc(100% - 2rem));
-  margin: clamp(1.5rem, 4vw, 3rem) auto 1rem;
-  padding: clamp(1.25rem, 3vw, 2rem);
-
-  // The account forms put the submit in a sibling block; it joins the same face.
-  &:has(+ .form-actions) {
-    margin-bottom: 0;
-    border-bottom: 0;
-    border-radius: 6px 6px 0 0;
-    padding-bottom: 0.5rem;
-    box-shadow: none;
-  }
+  margin-block: var(--space-section) 1rem;
+  padding: var(--space-panel);
 
   h2 {
-    font-size: 1.6rem;
+    font-size: var(--step-2);
     font-weight: 800;
-    margin-bottom: 1rem;
+    margin-block-end: 1rem;
   }
+}
+
+// A page heading above the face pulls the face up to it.
+main > h2 + form > .form-inputs { margin-block-start: 1rem; }
+
+// The account forms put the submit in a sibling block; it joins the same face.
+.form-inputs:has(+ .form-actions) {
+  margin-block-end: 0;
+  border-block-end: 0;
+  border-end-start-radius: 0;
+  border-end-end-radius: 0;
+  padding-block-end: 0.5rem;
+  box-shadow: none;
 }
 
 // Inside a single-column face the 422 summary is an edge, not a second face.
 .form-inputs .error-summary {
   box-shadow: none;
-  margin-bottom: 1rem;
+  margin-block-end: 1rem;
 
-  h2 { font-size: 1.2rem; margin-bottom: 0.5rem; }
+  h2 { font-size: var(--step-1); margin-block-end: 0.5rem; }
 }
 
 .form-actions {
-  width: min(440px, calc(100% - 2rem));
-  margin: 0 auto 1rem;
-  background: $face;
-  border: 1px solid $hairline;
-  border-top: 0;
-  border-radius: 0 0 6px 6px;
-  padding: 0 clamp(1.25rem, 3vw, 2rem) clamp(1.25rem, 3vw, 2rem);
-  box-shadow: none;
+  margin-block-end: 1rem;
+  background: var(--face);
+  border: 1px solid var(--hairline);
+  border-block-start: 0;
+  border-end-start-radius: var(--radius-face);
+  border-end-end-radius: var(--radius-face);
+  padding: 0 var(--space-panel) var(--space-panel);
 }
 
+main > h2 {
+  margin-block: var(--space-section) 0;
+  padding-inline: 0.25rem;
+  font-size: var(--step-2);
+  font-weight: 800;
+}
+
+main > p,
+main > form + a,
+main > form + p {
+  display: block;
+  padding-inline: 0.25rem;
+}
 
 #organizer-link-recovery,
 #event-details {
+  padding-block: var(--space-section);
+
   h1 {
-    width: min(440px, calc(100% - 2rem));
-    margin: 0 auto;
-    font-size: 1.6rem;
+    margin: 0;
+    font-size: var(--step-2);
     font-weight: 800;
   }
-  .form-inputs { margin-top: 1rem; }
+  .form-inputs { margin-block: 1rem 0; }
 }
 
 // The details face holds the facts, the details form and, after it, the
-// plan editor as siblings: one face, never a form inside a form.
+// plan editor as siblings: one face, never a form inside a form. Given the
+// room, the details and the plan sit side by side.
 #event-details {
-  // Wide, the details and the plan side by side on the one face.
-  h1, .details-face { width: min(1040px, calc(100% - 2rem)); }
-  @media (min-width: 960px) {
-    .details-face {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
-      column-gap: 2.5rem;
-      align-items: start;
+  .details-face {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem 2.5rem;
+    align-items: start;
 
-      > .plan-editor {
-        margin-top: 0;
-        padding: 0 0 0 2.5rem;
-        border-top: 0;
-        border-left: 1px solid $hairline;
-      }
-    }
+    > .details-main { flex: 1 1 22rem; }
+    > .plan-editor { flex: 999 1 26rem; }
   }
 
-  .details-facts { color: $ink-soft; font-weight: 600; margin: 0 0 1rem; }
-  .details-facts time { font-weight: 500; font-size: 0.9rem; color: $ink; }
-  > p { width: min(1040px, calc(100% - 2rem)); margin: 1rem auto 0; padding: 0 0.25rem; }
+  .details-facts { color: var(--ink-soft); font-weight: 600; margin: 0 0 1rem; }
+  .details-facts time { font-weight: 500; font-size: var(--step--1); color: var(--ink); }
+  > p { margin-block: 1rem 0; padding-inline: 0.25rem; }
 
   .plan-editor {
-    margin-top: 1.5rem;
-    padding-top: 1.25rem;
-    border-top: 1px solid $hairline;
     display: grid;
     gap: 1rem;
-    h2 { font-size: 1.2rem; font-weight: 800; margin: 0; }
+    padding-block-start: 1.25rem;
+    border-block-start: 1px solid var(--hairline);
+    h2 { font-size: var(--step-1); font-weight: 800; margin: 0; }
   }
-  .plan-note, .plan-empty { margin: 0; color: $ink-soft; }
+  .plan-note, .plan-empty { margin: 0; color: var(--ink-soft); }
   .plan-note { font-weight: 600; }
   .plan-items {
     list-style: none;
@@ -97,8 +112,8 @@
   .plan-item {
     display: grid;
     gap: 0.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid $hairline;
+    padding-block-end: 1rem;
+    border-block-end: 1px solid var(--hairline);
   }
   .plan-item-head {
     display: flex;
@@ -106,8 +121,7 @@
     align-items: baseline;
     gap: 0.75rem;
     font-weight: 600;
-    overflow-wrap: anywhere;
-    time { font-size: 0.85rem; font-weight: 500; white-space: nowrap; }
+    time { font-size: var(--step--1); font-weight: 500; white-space: nowrap; }
   }
   .plan-item-form {
     display: grid;
@@ -125,44 +139,35 @@
   .plan-add-form {
     display: grid;
     gap: 0.75rem;
-    .form-label { margin-bottom: 0.25rem; }
+    .form-label { margin-block-end: 0.25rem; }
     .btn-primary { justify-self: start; }
   }
   .plan-add-row {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
     gap: 0.75rem;
   }
 }
 
-.back-link {
-  text-decoration: underline;
+// Once the plan sits beside the details, a rule between them, not above.
+@container details (width >= 50.5rem) {
+  #event-details .plan-editor {
+    padding-block-start: 0;
+    padding-inline-start: 2.5rem;
+    border-block-start: 0;
+    border-inline-start: 1px solid var(--hairline);
+  }
 }
 
-main > h2,
-main > p,
-main > .form-inputs + a,
-main > .form-inputs + p,
-main > form + a,
-main > form + p {
-  width: min(440px, calc(100% - 2rem));
-  margin-left: auto;
-  margin-right: auto;
-  display: block;
-  padding: 0 0.25rem;
-}
+#event-details .form-inputs { container: details / inline-size; }
 
-main > h2 {
-  margin-top: clamp(1.5rem, 4vw, 3rem);
-  font-size: 1.6rem;
-  font-weight: 800;
-}
+.back-link { text-decoration: underline; }
 
 .form-links {
-  width: min(440px, calc(100% - 2rem));
-  margin: 0 auto 2rem;
-  padding: 0 0.25rem;
+  margin-block: 0 2rem;
+  padding-inline: 0.25rem;
   display: grid;
+  justify-items: start;
   gap: 0.35rem;
   br { display: none; }
   a { font-weight: 600; }
@@ -172,19 +177,17 @@ main > h2 {
 // message on a single face in the middle of the wall.
 .notice-page {
   @extend .face;
-  width: min(560px, calc(100% - 2rem));
-  margin: clamp(1.5rem, 6vw, 4rem) auto;
-  padding: clamp(1.25rem, 3vw, 2rem);
+  margin-block: var(--space-section);
+  padding: var(--space-panel);
+
+  > * { margin-block: 0; }
+  > * + * { margin-block-start: 0.75rem; }
+  > form { margin-block: 1.25rem 1rem; }
 
   h1 {
-    font-size: 1.6rem;
+    font-size: var(--step-2);
     font-weight: 800;
-    letter-spacing: -0.02em;
-    margin: 0 0 0.75rem;
-    text-wrap: balance;
   }
-  p { margin: 0 0 0.75rem; color: $ink-soft; }
-  p:last-child { margin-bottom: 0; }
-  strong { color: $ink; }
-  form { margin: 1.25rem 0 1rem; }
+  p { color: var(--ink-soft); }
+  strong { color: var(--ink); }
 }

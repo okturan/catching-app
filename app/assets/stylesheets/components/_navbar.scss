@@ -1,39 +1,41 @@
+// The header is a content grid of its own: the bar sits in the content
+// column, the hairline runs edge to edge.
 .wall-nav {
-  border-bottom: 1px solid $hairline;
-  background: $wall;
+  border-block-end: 1px solid var(--hairline);
+  background: var(--wall);
 }
 
 .wall-nav-inner {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0.9rem clamp(1rem, 4vw, 2.5rem);
+  padding-block: 0.9rem;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  gap: 1rem 1.5rem;
 }
 
 // The wordmark is ink, not a plate: one primary action in the header.
 .brand {
   font-weight: 800;
   letter-spacing: -0.02em;
-  font-size: 1.15rem;
-  color: $ink;
+  font-size: var(--step-1);
+  color: var(--ink);
   text-decoration: none;
-  &:hover { color: $enamel; }
 }
 
+@media (hover: hover) and (pointer: fine) {
+  .brand:hover { color: var(--link); }
+}
+
+// The plate and the menu button keep to the far end of the row.
 .wall-nav-right {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   order: 3;
+  margin-inline-start: auto;
 }
 
-.nav-cta {
-  text-decoration: none;
-  &:hover { color: $enamel-text; }
-}
+.nav-cta { text-decoration: none; }
 
 .wall-nav-links {
   display: flex;
@@ -45,42 +47,55 @@
   flex-wrap: wrap;
 
   .nav-link {
-    color: $ink;
+    color: var(--ink);
     font-weight: 600;
-    padding: 0.4rem 0;
+    padding-block: 0.4rem;
+    padding-inline: 0;
     text-decoration: none;
-    border-bottom: 2px solid transparent;
-    &:hover { border-bottom-color: $ink; }
+    border-block-end: 2px solid transparent;
+
+    &:active { border-block-end-color: var(--link); }
   }
 }
 
-// The phone menu button: two ink lines, no box.
+@media (hover: hover) and (pointer: fine) {
+  .wall-nav-links .nav-link:hover { color: var(--ink); border-block-end-color: currentColor; }
+}
+
+// The phone menu button: two ink lines, no box, and a 44px target.
 .navbar-toggler {
-  width: 40px;
-  height: 40px;
+  position: relative;
+  inline-size: 40px;
+  block-size: 40px;
   padding: 0;
   border: 0;
   background: transparent;
-  color: $ink;
+  color: var(--ink);
   display: grid;
   place-items: center;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: min(0px, (100% - 44px) / 2);
+  }
   &:focus { box-shadow: none; }
-  &:focus-visible { outline: 3px solid $enamel; }
+  &:active { scale: 0.92; }
+  svg { inline-size: 22px; }
 }
 
 @media (min-width: 768px) {
-  .wall-nav-inner { justify-content: flex-start; gap: 1.5rem; }
+  .wall-nav-inner { flex-wrap: nowrap; }
   .navbar-collapse { flex: 1 1 auto; }
   .wall-nav-right { order: 5; }
 }
 
 @media (max-width: 767.98px) {
-  .wall-nav-inner { flex-wrap: wrap; }
   .navbar-collapse { order: 4; flex-basis: 100%; }
   .navbar-collapse .wall-nav-links {
     flex-direction: column;
     align-items: flex-start;
-    padding-top: 0.75rem;
+    padding-block-start: 0.75rem;
   }
   .nav-cta { font-size: 0.7rem; padding: 0.5em 0.8em; }
 }

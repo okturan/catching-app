@@ -1,48 +1,84 @@
-// Event panels on the dashboard.
-.event-face {
-  @extend .face;
-  padding: 1.25rem 1.5rem;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.5rem 1.5rem;
-  align-items: start;
-  color: $ink;
-  text-decoration: none;
-  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s;
-
-  &:hover {
-    color: $ink;
-    transform: translateY(-2px);
-    box-shadow: 0 1px 2px rgba(20, 20, 20, 0.06), 0 12px 24px -12px rgba(20, 20, 20, 0.35);
-  }
-
-  h3 {
-    font-size: 1.25rem;
-    font-weight: 800;
-    margin: 0;
-  }
-  p { margin: 0; color: $ink-soft; }
-  .event-face-time {
-    font-family: $time-font;
-    font-size: 0.9rem;
-    white-space: nowrap;
-    justify-self: end;
-    .body-font { font-family: $body-font; color: $ink-soft; }
-  }
-  .event-face-state {
-    grid-column: 1 / -1;
-    font-size: 0.85rem;
-    color: $ink-soft;
-  }
-  .event-face-state .plate { font-size: 0.65rem; padding: 0.3em 0.8em; }
-
-  @media (max-width: 520px) {
-    grid-template-columns: minmax(0, 1fr);
-    .event-face-time { justify-self: start; white-space: normal; }
-  }
-}
-
+// Event panels on the dashboard: the whole face is the link, and it reads
+// as two columns once it has the room.
 .event-list {
   display: grid;
   gap: 1rem;
+  container-type: inline-size;
+}
+
+.event-face {
+  @extend .face;
+  position: relative;
+  isolation: isolate;
+  padding: 1.25rem 1.5rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.5rem 1.5rem;
+  align-items: start;
+  color: var(--ink);
+  text-decoration: none;
+  box-shadow: none;
+
+  // The resting and the lifted shadow on two layers: hover fades between
+  // them instead of repainting one large blur.
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    pointer-events: none;
+  }
+  &::before { box-shadow: var(--shadow-face); }
+  &::after { box-shadow: var(--shadow-lift); opacity: 0; }
+
+  &:active { scale: 0.99; }
+
+  h3 {
+    font-size: var(--step-1);
+    font-weight: 800;
+    margin: 0;
+  }
+  // The description in full is on the event page; two lines say enough here.
+  p {
+    margin: 0;
+    color: var(--ink-soft);
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    overflow: clip;
+  }
+  .event-face-time {
+    font-family: var(--time-font);
+    font-size: var(--step--1);
+    .body-font { font-family: var(--body-font); color: var(--ink-soft); }
+  }
+  .event-face-state {
+    font-size: var(--step--1);
+    color: var(--ink-soft);
+  }
+  .event-face-state .plate { font-size: 0.65rem; padding: 0.3em 0.8em; }
+}
+
+@container (width > 32rem) {
+  .event-face {
+    grid-template-columns: minmax(0, 1fr) auto;
+
+    .event-face-time { justify-self: end; white-space: nowrap; }
+    .event-face-state { grid-column: 1 / -1; }
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .event-face:hover { color: var(--ink); translate: 0 -2px; }
+  .event-face:hover::before { opacity: 0; }
+  .event-face:hover::after { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .event-face { transition: translate 200ms var(--ease-out), scale 160ms var(--ease-out); }
+  .event-face::before,
+  .event-face::after { transition: opacity 200ms var(--ease-out); }
 }

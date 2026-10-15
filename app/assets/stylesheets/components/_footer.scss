@@ -1,13 +1,11 @@
 .wall-footer {
-  border-top: 1px solid $hairline;
-  background: $wall-deep;
-  margin-top: auto;
+  border-block-start: 1px solid var(--hairline);
+  background: var(--wall-deep);
+  margin-block-start: auto;
 }
 
 .wall-footer-inner {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 1.5rem clamp(1rem, 4vw, 2.5rem);
+  padding-block: 1.5rem;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -18,6 +16,6 @@
 .wall-footer-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 1.25rem;
-  font-size: 0.9rem;
+  gap: 0.5rem 1.25rem;
+  font-size: var(--step--1);
 }

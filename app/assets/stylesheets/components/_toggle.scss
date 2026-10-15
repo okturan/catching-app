@@ -1,40 +1,48 @@
+// The switch that hides the times nobody offered.
 .switch {
   position: relative;
   display: inline-block;
-  width: 52px;
-  height: 30px;
+  inline-size: 52px;
+  block-size: 30px;
   flex: none;
 }
 
 .switch input {
+  position: absolute;
   opacity: 0;
-  width: 0;
-  height: 0;
+  inline-size: 0;
+  block-size: 0;
 }
 
 .slider {
   position: absolute;
   cursor: pointer;
   inset: 0;
-  background-color: rgba(20, 20, 20, 0.25);
-  transition: 0.25s;
+  border-radius: 30px;
+  background-color: var(--ink-25);
+
+  &::before {
+    position: absolute;
+    content: "";
+    block-size: 22px;
+    inline-size: 22px;
+    inset-inline-start: 4px;
+    inset-block-end: 4px;
+    border-radius: 50%;
+    background-color: white;
+    box-shadow: var(--shadow-knob);
+  }
 }
 
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 22px;
-  width: 22px;
-  left: 4px;
-  bottom: 4px;
-  background-color: $face;
-  transition: 0.25s;
-  box-shadow: 0 1px 2px rgba(20, 20, 20, 0.3);
+input:checked + .slider { background-color: var(--enamel); }
+input:focus-visible + .slider { outline: max(2px, 0.08em) solid var(--link); outline-offset: 2px; }
+input:checked + .slider::before { translate: 22px 0; }
+.switch:active .slider::before { scale: 0.92; }
+
+[dir="rtl"] input:checked + .slider::before { translate: -22px 0; }
+
+.slider { transition: background-color 200ms var(--ease-out); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .slider::before { transition: translate 200ms var(--ease-out), scale 160ms var(--ease-out); }
 }
-
-input:checked + .slider { background-color: $enamel; }
-input:focus-visible + .slider { outline: 3px solid $enamel; outline-offset: 2px; }
-input:checked + .slider:before { transform: translateX(22px); }
-
-.slider.round { border-radius: 30px; }
-.slider.round:before { border-radius: 50%; }

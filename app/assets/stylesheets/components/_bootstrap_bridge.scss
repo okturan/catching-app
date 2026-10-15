@@ -1,0 +1,168 @@
+// The Bootstrap pieces the app still borrows (reboot, forms, alerts, the
+// outline and link buttons, collapse) read the world's tokens, so they
+// follow the theme like everything else.
+
+:root {
+  --bs-body-bg: var(--wall);
+  --bs-body-color: var(--ink);
+  --bs-emphasis-color: var(--ink);
+  --bs-secondary-color: var(--ink-soft);
+  --bs-border-color: var(--rule);
+  --bs-heading-color: var(--ink);
+  --bs-body-font-family: var(--body-font);
+  --bs-body-font-size: var(--step-0);
+}
+
+.form-label { font-weight: 600; }
+
+.form-text { color: var(--ink-soft); }
+
+.form-control,
+.form-select {
+  background-color: var(--face);
+  color: var(--ink);
+  border-color: var(--rule);
+  border-radius: var(--radius-control);
+
+  &::placeholder { color: var(--ink-soft); opacity: 0.8; }
+
+  &:focus {
+    background-color: var(--face);
+    color: var(--ink);
+    border-color: var(--link);
+    box-shadow: var(--focus-halo);
+    outline-color: transparent;
+  }
+
+  &:disabled {
+    background-color: var(--wall);
+    color: var(--ink-soft);
+  }
+
+  // Marked only once the visitor has left the field, never on first paint.
+  &:user-invalid { border-color: var(--signal); }
+}
+
+// The caret drawn in the ink of the theme, where Bootstrap's is a fixed image.
+.form-select {
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--ink-soft) 50%),
+    linear-gradient(135deg, var(--ink-soft) 50%, transparent 50%);
+  background-position:
+    calc(100% - 1.15rem) 50%,
+    calc(100% - 0.8rem) 50%;
+  background-size: 0.35rem 0.35rem;
+  background-repeat: no-repeat;
+}
+
+// A text box grows with what is typed, between three and twelve lines.
+textarea.form-control {
+  field-sizing: content;
+  min-block-size: 3lh;
+  max-block-size: 12lh;
+  resize: none;
+}
+
+.form-check-input {
+  background-color: var(--face);
+  border-color: var(--rule);
+
+  &:checked {
+    background-color: var(--enamel);
+    border-color: var(--enamel);
+  }
+
+  &:focus {
+    border-color: var(--link);
+    box-shadow: var(--focus-halo);
+  }
+}
+
+.btn {
+  --bs-btn-font-weight: 700;
+  --bs-btn-padding-y: 0.65rem;
+  --bs-btn-padding-x: 1.25rem;
+  --bs-btn-border-radius: var(--radius-control);
+  --bs-btn-focus-box-shadow: none;
+
+  &:active { scale: 0.97; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .btn { transition: color 160ms var(--ease-out), background-color 160ms var(--ease-out), border-color 160ms var(--ease-out), scale 160ms var(--ease-out); }
+}
+
+.btn-outline-secondary {
+  --bs-btn-color: var(--ink);
+  --bs-btn-bg: var(--face);
+  --bs-btn-border-color: var(--ink-soft);
+  --bs-btn-hover-color: var(--face);
+  --bs-btn-hover-bg: var(--ink);
+  --bs-btn-hover-border-color: var(--ink);
+  --bs-btn-active-color: var(--face);
+  --bs-btn-active-bg: var(--ink);
+  --bs-btn-active-border-color: var(--ink);
+}
+
+.btn-outline-danger {
+  --bs-btn-color: var(--signal);
+  --bs-btn-bg: var(--face);
+  --bs-btn-border-color: var(--signal);
+  --bs-btn-hover-color: white;
+  --bs-btn-hover-bg: var(--signal);
+  --bs-btn-hover-border-color: var(--signal);
+  --bs-btn-active-color: white;
+  --bs-btn-active-bg: var(--signal);
+  --bs-btn-active-border-color: var(--signal);
+}
+
+.btn-outline-primary {
+  --bs-btn-color: var(--link);
+  --bs-btn-bg: var(--face);
+  --bs-btn-border-color: var(--link);
+  --bs-btn-hover-color: var(--enamel-text);
+  --bs-btn-hover-bg: var(--enamel);
+  --bs-btn-hover-border-color: var(--enamel);
+  --bs-btn-active-color: var(--enamel-text);
+  --bs-btn-active-bg: var(--enamel);
+  --bs-btn-active-border-color: var(--enamel);
+}
+
+// Bootstrap paints hover on every pointer; a tap must not leave it stuck.
+@media (hover: none), (pointer: coarse) {
+  .btn-outline-secondary,
+  .btn-outline-danger,
+  .btn-outline-primary {
+    --bs-btn-hover-color: var(--bs-btn-color);
+    --bs-btn-hover-bg: var(--bs-btn-bg);
+    --bs-btn-hover-border-color: var(--bs-btn-border-color);
+  }
+}
+
+.btn-link {
+  --bs-btn-color: var(--link);
+  --bs-btn-hover-color: var(--link-hover);
+  --bs-btn-active-color: var(--link-hover);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.text-danger { color: var(--signal) !important; }
+
+.alert {
+  --bs-alert-color: var(--ink);
+  --bs-alert-bg: var(--face);
+  --bs-alert-border-color: var(--rule);
+}
+
+.alert-warning { --bs-alert-bg: var(--awake-wash); }
+
+// The close cross is a fixed black image; on the dark wall it turns white.
+// Only where the dark wall exists at all (see config/_tokens.scss).
+@supports (color: light-dark(white, black)) {
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
+  }
+
+  [data-theme="dark"] .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
+}

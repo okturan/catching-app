@@ -1,3 +1,7 @@
+// The planning pages (a new event, changing the times) and the event page
+// run wide.
+body:has(> main > :is(.page-head, .event-new-grid, .event-show-grid)) { --page-content: 82.5rem; }
+
 // The form element itself, so the grid panel sits inside the form and reading
 // order is tab order. Two explicit rows make the panel's 1 / -1 span resolve;
 // below 900px the placement drops and document order rules.
@@ -7,10 +11,8 @@
   // Row 2 is flexible so the panel's extra height lands there and the second
   // face sits directly under the first instead of being pushed down.
   grid-template-rows: auto 1fr;
-  gap: clamp(1rem, 3vw, 2.5rem);
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: clamp(1rem, 3vw, 2rem) clamp(1rem, 4vw, 2.5rem) 3rem;
+  gap: var(--gutter);
+  padding-block: clamp(1rem, 0.652rem + 1.739vw, 2rem) 3rem;
   align-items: start;
 
   // Two faces in column 1, the panel spanning both rows in column 2. Pinned,
@@ -23,7 +25,7 @@
     grid-column: 2;
     grid-row: 1 / -1;
     position: sticky;
-    top: 1rem;
+    inset-block-start: 1rem;
   }
 
   // The 422 summary is the form's first child and runs the full width, so the
@@ -57,14 +59,13 @@
 
 .form-events {
   @extend .face;
-  padding: clamp(1.25rem, 3vw, 2rem);
+  padding: var(--space-panel);
   display: grid;
   gap: 0.25rem;
 
   h2 {
-    font-size: 1.2rem;
+    font-size: var(--step-1);
     font-weight: 800;
-    letter-spacing: -0.02em;
     margin: 0 0 0.75rem;
   }
 }
@@ -73,68 +74,55 @@
 // Red marks it, it never fills it. Its Stimulus controller focuses it on render.
 .error-summary {
   @extend .face;
-  padding: clamp(1.25rem, 3vw, 1.75rem);
-  border-color: $signal;
+  padding: var(--space-panel);
+  border-color: var(--signal);
 
   h2 {
-    font-size: 1.2rem;
+    font-size: var(--step-1);
     font-weight: 800;
-    letter-spacing: -0.02em;
     margin: 0 0 0.5rem;
   }
 
   ul {
     margin: 0;
-    padding-left: 1.25rem;
-  }
-
-  li + li {
-    margin-top: 0.25rem;
+    padding-inline-start: 1.25rem;
+    display: grid;
+    gap: 0.25rem;
   }
 
   a {
-    color: $ink;
+    color: var(--ink);
     font-weight: 600;
-    text-decoration-color: $signal;
+    text-decoration-color: var(--signal);
     text-underline-offset: 0.2em;
-
-    &:hover {
-      color: $signal;
-    }
   }
+
+  &:focus-visible { outline-color: var(--signal); }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .error-summary a:hover { color: var(--signal); }
 }
 
 // The sentence that says what the button does, and the signed-in stand-in for
 // the two organizer fields. Quiet, but body-sized: it is not fine print.
 .form-note {
-  color: $ink-soft;
-  font-size: 0.9rem;
+  color: var(--ink-soft);
+  font-size: var(--step--1);
   line-height: 1.5;
-  max-width: 62ch;
-  margin: 0.5rem 0 1rem;
-}
-
-.form-control,
-.form-select {
-  border-radius: 4px;
-}
-
-.form-control:focus,
-.form-select:focus {
-  border-color: $enamel;
+  max-inline-size: 62ch;
+  margin-block: 0.5rem 1rem;
 }
 
 .page-head {
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: clamp(1.5rem, 4vw, 2.5rem) clamp(1rem, 4vw, 2.5rem) 0;
+  padding-block: clamp(1.5rem, 1.152rem + 1.739vw, 2.5rem) 0;
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   gap: 0.75rem 1.5rem;
 
   h1 {
-    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    font-size: var(--step-3);
     font-weight: 800;
     margin: 0;
   }

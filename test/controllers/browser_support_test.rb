@@ -8,7 +8,7 @@ class BrowserSupportTest < ActionDispatch::IntegrationTest
 
     assert_response :not_acceptable
     assert_select "#unsupported-browser"
-    assert_match "reply to the invitation email", response.body
+    assert_match "tell the organizer which times work for you", response.body
   end
 
   test "a supported browser passes" do

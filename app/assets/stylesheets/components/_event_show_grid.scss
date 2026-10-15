@@ -6,10 +6,8 @@
   display: grid;
   grid-template-columns: minmax(300px, 400px) minmax(0, 1fr);
   grid-template-rows: auto 1fr;
-  gap: 1rem clamp(1rem, 3vw, 2.5rem);
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: clamp(1rem, 3vw, 2rem) clamp(1rem, 4vw, 2.5rem) 3rem;
+  gap: 1rem var(--gutter);
+  padding-block: clamp(1rem, 0.652rem + 1.739vw, 2rem) 3rem;
   align-items: start;
 
   > .event-show-side { grid-column: 1; }
@@ -17,7 +15,7 @@
     grid-column: 2;
     grid-row: 1 / -1;
     position: sticky;
-    top: 1rem;
+    inset-block-start: 1rem;
   }
 
   // minmax(0, …): a bare 1fr grows to the grid table, and the phone scrolls sideways.
@@ -34,7 +32,6 @@
   display: grid;
   gap: 1rem;
   align-content: start;
-  min-width: 0;
 
   &:empty { display: none; }
 }
@@ -45,12 +42,12 @@
   .time-grid-show-wrapper {
     display: flex;
     flex-direction: column;
-    max-height: calc(100dvh - var(--navbar-h) - 1rem);
+    max-block-size: calc(100dvh - var(--navbar-h) - 1rem);
 
     > .time-grid-scroll {
       flex: 1 1 auto;
-      min-height: 12rem;
-      max-height: none;
+      min-block-size: 12rem;
+      max-block-size: none;
     }
   }
 }
@@ -65,17 +62,15 @@
   padding: 0.25rem 0.25rem 1rem;
 
   h2 {
-    font-size: 1.2rem;
+    font-size: var(--step-1);
     font-weight: 800;
-    letter-spacing: -0.02em;
     margin: 0 0 0.3rem;
   }
-  .form-text { margin: 0; max-width: 62ch; }
+  .form-text { margin: 0; max-inline-size: 62ch; }
 }
 
 .grid-panel-title {
   flex: 1 1 20rem;
-  min-width: 0;
 }
 
 .grid-view-controls {
@@ -87,68 +82,67 @@
 
 // A select is as wide as its longest zone name unless told otherwise.
 #event-show-select {
-  width: 15rem;
-  max-width: 100%;
-  .form-select { min-width: 0; }
-  small { display: block; margin-top: 0.25rem; font-size: 0.75rem; color: $ink-soft; }
+  inline-size: 15rem;
+  max-inline-size: 100%;
+  small { display: block; margin-block-start: 0.25rem; font-size: var(--step--2); color: var(--ink-soft); }
 }
 
 .event-panel {
   @extend .face;
-  padding: clamp(1.25rem, 3vw, 1.75rem);
+  padding: var(--space-panel);
   display: grid;
   gap: 0.75rem;
 
   .plate { justify-self: start; }
   h1 {
-    font-size: clamp(1.5rem, 2.6vw, 2rem);
+    font-size: var(--step-3);
     font-weight: 800;
     margin: 0;
-    .plate { font-size: 0.65rem; vertical-align: middle; margin-left: 0.4rem; }
+    .plate { font-size: 0.65rem; vertical-align: middle; margin-inline-start: 0.4rem; }
   }
-  .event-description { color: $ink-soft; margin: 0; }
+  .event-description { color: var(--ink-soft); margin: 0; }
   // Whose page this is, above the event name: the link is the identity.
   .event-viewer {
     margin: 0;
-    padding-bottom: 0.6rem;
-    border-bottom: 1px solid $hairline;
-    font-size: 0.85rem;
+    padding-block-end: 0.6rem;
+    border-block-end: 1px solid var(--hairline);
+    font-size: var(--step--1);
     font-weight: 600;
-    color: $ink-soft;
-    strong { color: $ink; }
+    color: var(--ink-soft);
+    strong { color: var(--ink); }
   }
   .event-when {
-    font-family: $time-font;
-    font-size: 0.85rem;
+    font-family: var(--time-font);
+    font-size: var(--step--1);
     line-height: 1.5;
     display: grid;
     gap: 0.15rem;
   }
-  .event-when.is-pending { color: $ink-soft; font-family: $body-font; font-weight: 600; }
+  .event-when.is-pending { color: var(--ink-soft); font-family: var(--body-font); font-weight: 600; }
   // The set window, read off a band of wall: the viewer's own zone first when
   // it differs, the event's zone under it in small.
   .event-when.is-set {
     padding: 0.65rem 0.8rem;
     border-radius: 4px;
-    background: $wall;
-    > span { font-size: 1rem; font-weight: 500; color: $ink; }
-    > #final-window-local:not([hidden]) + .event-when-zone { font-size: 0.78rem; color: $ink-soft; }
+    background: var(--wall);
+    > span { font-size: var(--step-0); font-weight: 500; color: var(--ink); }
+    > #final-window-local:not([hidden]) + .event-when-zone { font-size: var(--step--2); color: var(--ink-soft); }
   }
   // The cancelled line: words in the body face, the instants in the mono face.
-  .event-when.is-cancelled { font-family: $body-font; font-weight: 600; }
+  .event-when.is-cancelled { font-family: var(--body-font); font-weight: 600; }
   // The organizer's hairline note after a reopen: how many are left and
   // when the set time was withdrawn, the instant in the mono face.
   .event-reopened {
     display: grid;
     gap: 0.15rem;
     margin: 0;
-    padding-top: 0.6rem;
-    border-top: 1px solid $hairline;
-    font-size: 0.9rem;
+    padding-block-start: 0.6rem;
+    border-block-start: 1px solid var(--hairline);
+    font-size: var(--step--1);
     font-weight: 600;
-    color: $ink-soft;
-    span:first-child { color: $ink; }
-    time { font-size: 0.85rem; color: $ink; }
+    color: var(--ink-soft);
+    span:first-child { color: var(--ink); }
+    time { font-size: var(--step--1); color: var(--ink); }
   }
   // Where and how long: labels in the form-label style, values in body type.
   .event-facts {
@@ -156,7 +150,7 @@
     grid-template-columns: max-content minmax(0, 1fr);
     gap: 0.35rem 1rem;
     margin: 0;
-    font-size: 0.95rem;
+    font-size: var(--step-0);
     dt { font-weight: 600; margin: 0; }
     dd { margin: 0; overflow-wrap: anywhere; }
   }
@@ -164,11 +158,11 @@
   // mono face once the time is set, the note as a muted second line.
   .event-plan {
     margin: 0;
-    padding-left: 1.25rem;
+    padding-inline-start: 1.25rem;
     li { margin: 0 0 0.3rem; }
-    li:last-child { margin-bottom: 0; }
-    time { display: block; font-size: 0.85rem; }
-    .event-plan-note { display: block; color: $ink-soft; font-size: 0.9rem; }
+    li:last-child { margin-block-end: 0; }
+    time { display: block; font-size: var(--step--1); }
+    .event-plan-note { display: block; color: var(--ink-soft); font-size: var(--step--1); }
   }
   // Plate buttons under the card: Add to calendar once set, Edit details
   // for the organizer, Plan a new event once cancelled.
@@ -184,17 +178,17 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 0.5rem 1rem;
-    font-size: 0.9rem;
+    font-size: var(--step--1);
     font-weight: 600;
-    color: $ink-soft;
+    color: var(--ink-soft);
     .event-untold-form { margin: 0; }
   }
   .event-people {
-    border-top: 1px solid $hairline;
-    padding-top: 0.75rem;
-    font-size: 0.9rem;
-    color: $ink-soft;
-    strong { color: $ink; }
+    border-block-start: 1px solid var(--hairline);
+    padding-block-start: 0.75rem;
+    font-size: var(--step--1);
+    color: var(--ink-soft);
+    strong { color: var(--ink); }
   }
 }
 
@@ -210,7 +204,7 @@
 
 .organizer-panel {
   @extend .face;
-  padding: clamp(1.25rem, 3vw, 1.75rem);
+  padding: var(--space-panel);
   display: grid;
   gap: 1rem;
 
@@ -218,9 +212,8 @@
     display: flex;
     align-items: center;
     gap: 0.6rem;
-    font-size: 1.2rem;
+    font-size: var(--step-1);
     font-weight: 800;
-    letter-spacing: -0.02em;
     margin: 0;
     .plate { font-size: 0.7rem; padding: 0.35em 0.8em; }
   }
@@ -233,12 +226,12 @@
   gap: 0.5rem;
   margin: 0;
   cursor: pointer;
-  .switch-label { font-size: 0.85rem; font-weight: 600; color: $ink-soft; white-space: nowrap; }
+  .switch-label { font-size: var(--step--1); font-weight: 600; color: var(--ink-soft); white-space: nowrap; }
 }
 
 // The guest's reply: a name the organizer reads, and the two other answers.
 .guest-panel {
-  .form-label { margin-bottom: 0.35rem; }
+  .form-label { margin-block-end: 0.35rem; }
   .form-text { margin: 0.35rem 0 0; }
 }
 
@@ -259,9 +252,9 @@
   gap: 0.2rem 0.6rem;
   margin: 0;
   padding: 0.25rem 0.25rem 0;
-  font-size: 0.9rem;
-  color: $ink-soft;
-  a { font-weight: 700; color: $enamel; }
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+  a { font-weight: 700; color: var(--link); }
 }
 
 .guests-invite {
@@ -269,30 +262,31 @@
   gap: 0.4rem;
   .form-label { margin: 0; }
   .form-text { margin: 0; }
-  .btn-meeting { justify-self: start; margin-top: 0.35rem; }
+  .btn-meeting { justify-self: start; margin-block-start: 0.35rem; }
 }
 
 .guests-blocked {
   margin: 0;
   padding: 0.75rem 1rem;
   border-radius: 4px;
-  background: $awake-wash;
-  color: $ink;
+  background: var(--awake-wash);
+  color: var(--ink);
   font-weight: 600;
 }
 
 // One guest per row, read top to bottom: who, where they stand, what the
 // organizer can do. The table stays a table; the narrow column stacks it.
 .guest-table {
-  width: 100%;
+  inline-size: 100%;
   border-collapse: collapse;
-  font-size: 0.9rem;
+  font-size: var(--step--1);
 
   thead {
     position: absolute;
-    width: 1px;
-    height: 1px;
+    inline-size: 1px;
+    block-size: 1px;
     overflow: hidden;
+    overflow: clip;
     clip-path: inset(50%);
     white-space: nowrap;
   }
@@ -301,18 +295,17 @@
     display: grid;
     gap: 0.15rem;
     padding: 0.75rem 0;
-    border-top: 1px solid $hairline;
+    border-block-start: 1px solid var(--hairline);
   }
   td { display: block; padding: 0; }
 
   .guest-who {
-    min-width: 0;
     strong { display: block; font-weight: 700; overflow-wrap: anywhere; }
-    span { display: block; color: $ink-soft; font-size: 0.82rem; overflow-wrap: anywhere; }
+    span { display: block; color: var(--ink-soft); font-size: var(--step--1); overflow-wrap: anywhere; }
   }
   .guest-state {
-    color: $ink-soft;
-    time { font-size: 0.78rem; color: $ink-soft; }
+    color: var(--ink-soft);
+    time { font-size: var(--step--2); color: var(--ink-soft); }
   }
   .guest-actions {
     display: flex;
@@ -320,7 +313,7 @@
     gap: 0 1rem;
     &:empty { display: none; }
     form { margin: 0; }
-    .btn-link { padding: 0.15rem 0; font-size: 0.82rem; border: 0; }
+    .btn-link { padding-block: 0.15rem; padding-inline: 0; font-size: var(--step--1); border: 0; }
   }
 
   tr.is-left { opacity: 0.6; }
