@@ -1,12 +1,13 @@
+// The dashboard: the heading and the two lists, one gap apart.
+body:has(> main > .dashboard) { --page-content: 57.5rem; }
+
 .dashboard {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: clamp(1.5rem, 4vw, 3rem) clamp(1rem, 4vw, 2.5rem) 3rem;
+  padding-block: var(--space-section);
   display: grid;
   gap: 2.5rem;
 
   h1 {
-    font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+    font-size: var(--step-4);
     font-weight: 800;
     margin: 0;
   }
@@ -20,7 +21,7 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    font-size: 1.3rem;
+    font-size: var(--step-1);
     font-weight: 800;
     margin: 0;
     .plate { font-size: 0.7rem; padding: 0.35em 0.9em; }
@@ -29,11 +30,12 @@
   .empty {
     @extend .face;
     padding: 1.5rem;
-    color: $ink-soft;
+    color: var(--ink-soft);
     display: flex;
     flex-wrap: wrap;
     gap: 1rem;
     align-items: center;
-    justify-content: space-between;
+
+    > :last-child:not(:first-child) { margin-inline-start: auto; }
   }
 }

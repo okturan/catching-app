@@ -1,48 +1,105 @@
-// Shared materials of the world.
+// The reset and the shared materials of the world.
 
-:root {
-  --wall: #{$wall};
-  --face: #{$face};
-  --ink: #{$ink};
-  --enamel: #{$enamel};
-  --signal: #{$signal};
-  --awake: #{$awake};
-  --time-font: #{$time-font};
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  min-width: 0;
 }
 
-html {
-  background: $wall;
+:root {
+  interpolate-size: allow-keywords;
+  scrollbar-gutter: stable;
+  text-wrap: pretty;
+  overflow-wrap: break-word;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  background: var(--wall);
 }
 
 body {
-  background: $wall;
-  color: $ink;
-  font-family: $body-font;
-  font-feature-settings: "ss01";
-  -webkit-font-smoothing: antialiased;
-  min-height: 100dvh;
+  margin: 0;
+  min-block-size: 100svh;
   display: flex;
   flex-direction: column;
+  background: var(--wall);
+  color: var(--ink);
+  font-family: var(--body-font);
+  font-size: var(--step-0);
+  font-feature-settings: "ss01";
 }
 
-body > main {
-  flex: 1 0 auto;
-}
-
-::selection {
-  background: $awake;
-  color: $ink;
-}
-
-:focus-visible {
-  outline: 3px solid $enamel;
-  outline-offset: 2px;
-  border-radius: 3px;
-}
+body > main { flex: 1 0 auto; }
 
 h1, h2, h3, h4 {
   letter-spacing: -0.02em;
   text-wrap: balance;
+}
+
+img, svg, video {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+input, textarea, select { font-size: max(16px, 1rem); }
+
+button, a, [role="button"], label { touch-action: manipulation; }
+
+button, [role="button"], .btn {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+a { color: var(--link); }
+
+@media (hover: hover) and (pointer: fine) {
+  a:hover { color: var(--link-hover); }
+}
+
+::selection {
+  background: var(--awake);
+  color: var(--on-awake);
+}
+
+// One focus ring for everything.
+:focus-visible {
+  outline: max(2px, 0.08em) solid var(--link);
+  outline-offset: 0.2em;
+}
+
+// Every page is one content grid. Children sit in the content column,
+// .breakout runs wider and a band runs edge to edge; a page sets its own
+// --content.
+.content-grid,
+body > main {
+  --content: 75rem;
+  --breakout: max(80rem, var(--content));
+
+  display: grid;
+  align-content: start;
+  grid-template-columns:
+    [full-width-start] minmax(var(--gutter), 1fr)
+    [breakout-start] minmax(0, calc((var(--breakout) - var(--content)) / 2))
+    [content-start] min(100% - var(--gutter) * 2, var(--content)) [content-end]
+    minmax(0, calc((var(--breakout) - var(--content)) / 2)) [breakout-end]
+    minmax(var(--gutter), 1fr) [full-width-end];
+}
+
+// A page names its width once, on body; the header and footer line up
+// with it but never shrink below the site's own width.
+body > main { --content: var(--page-content, 75rem); }
+body > :is(.wall-nav, .wall-footer) { --content: max(75rem, var(--page-content, 75rem)); }
+
+:is(.content-grid, .full-width, body > main) > * { grid-column: content; }
+:is(.content-grid, .full-width, body > main) > .breakout { grid-column: breakout; }
+:is(.content-grid, .full-width, body > main) > .full-width {
+  grid-column: full-width;
+  display: grid;
+  grid-template-columns: inherit;
 }
 
 // Time is always set in the mono face, tabular by construction.
@@ -50,24 +107,24 @@ h1, h2, h3, h4 {
 time,
 .slot,
 .plate-time {
-  font-family: $time-font;
+  font-family: var(--time-font);
   font-variant-numeric: tabular-nums;
 }
 
-// Enamel plate: white engraved caps on deep blue. Flat colour, one hairline bevel.
+// Enamel plate: white engraved caps on deep blue. Flat colour, one bevel.
 .plate {
   display: inline-flex;
   align-items: center;
   gap: 0.6em;
-  background: $enamel;
-  color: $enamel-text;
+  background: var(--enamel);
+  color: var(--enamel-text);
   padding: 0.45em 1em;
-  border-radius: 3px;
+  border-radius: var(--radius-plate);
   font-weight: 700;
   font-size: 0.8rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 -1px 0 rgba(0, 0, 0, 0.35), 0 2px 4px rgba(20, 20, 20, 0.25);
+  box-shadow: var(--shadow-plate);
   position: relative;
   white-space: nowrap;
 
@@ -76,52 +133,74 @@ time,
     padding: 0.7em 1.4em;
   }
 
-  &.plate-signal { background: $signal; }
-  &.plate-ink { background: $ink; }
+  &.plate-signal { background: var(--signal); }
+  &.plate-ink { background: var(--plate-ink); }
+}
+
+// A plate that does something: lifts under a mouse, sinks under a press.
+.plate-press {
+  text-decoration: none;
+  cursor: pointer;
+
+  &:focus-visible { outline-color: var(--enamel); }
+  &:active { scale: 0.97; }
+  &:disabled { opacity: 0.6; scale: none; cursor: default; }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .plate-press:hover:not(:disabled) {
+    color: var(--enamel-text);
+    translate: 0 -1px;
+    box-shadow: var(--shadow-plate-lift);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .plate-press {
+    transition:
+      translate 160ms var(--ease-out),
+      scale 160ms var(--ease-out),
+      box-shadow 160ms var(--ease-out);
+  }
 }
 
 // White glass panel: the face of an instrument on the wall.
 .face {
-  background: $face;
-  border: 1px solid $hairline;
-  border-radius: 6px;
-  box-shadow: 0 1px 2px rgba(20, 20, 20, 0.06), 0 6px 18px -8px rgba(20, 20, 20, 0.25);
+  background: var(--face);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-face);
+  box-shadow: var(--shadow-face);
 }
 
-.face-pad {
-  padding: clamp(1rem, 2.5vw, 1.75rem);
-}
-
-.wall-section {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: clamp(2.5rem, 6vw, 5rem) clamp(1rem, 4vw, 2.5rem);
-}
+.face-pad { padding: var(--space-panel); }
 
 .eyebrowless-heading {
-  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-size: var(--step-3);
   font-weight: 800;
   margin: 0 0 0.35em;
 }
 
 .lede {
-  font-size: clamp(1.05rem, 1.4vw, 1.25rem);
+  font-size: var(--step-1);
   line-height: 1.5;
-  max-width: 62ch;
-  color: $ink-soft;
+  max-inline-size: 62ch;
+  color: var(--ink-soft);
 }
 
 .quiet-link {
-  color: $ink-soft;
+  color: var(--ink-soft);
   text-decoration: underline;
   text-underline-offset: 0.2em;
-  text-decoration-color: rgba(20, 20, 20, 0.35);
-  &:hover { color: $ink; text-decoration-color: $ink; }
+  text-decoration-color: var(--rule);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .quiet-link:hover { color: var(--ink); text-decoration-color: currentColor; }
 }
 
 .hairline {
   border: 0;
-  border-top: 1px solid $hairline;
+  border-block-start: 1px solid var(--hairline);
   margin: 0;
 }
 

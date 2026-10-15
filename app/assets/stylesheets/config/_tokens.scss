@@ -1,0 +1,163 @@
+// Every value the components use, as custom properties: colour in OKLCH
+// with both themes in one token, one fluid scale for type and space, and
+// the motion curves. Components read these and never repeat the maths.
+//
+// The app admits Safari 15.4, Chrome 99 and Firefox 93 (allow_browser in
+// ApplicationController). Those predate light-dark(), and some predate
+// oklch(), color-mix() and pow(), so each token first gets a plain value
+// that browser understands: the daytime wall in sRGB, and the scale as
+// clamp(). An @supports block then replaces it with the real token.
+
+:root {
+  --wall: #f2efe9;
+  --wall-deep: #e6e1d6;
+  --face: #fff;
+  --ink: #141414;
+  --ink-soft: #4a4744;
+  --hairline: rgb(20 20 20 / 0.14);
+  --rule: rgb(20 20 20 / 0.28);
+  --ink-08: rgb(20 20 20 / 0.08);
+  --ink-18: rgb(20 20 20 / 0.18);
+  --ink-22: rgb(20 20 20 / 0.22);
+  --ink-25: rgb(20 20 20 / 0.25);
+  --ink-35: rgb(20 20 20 / 0.35);
+  --ink-45: rgb(20 20 20 / 0.45);
+  --enamel: #24405e;
+  --enamel-deep: #1a2f47;
+  --enamel-text: #fff;
+  --link: #24405e;
+  --link-hover: #1a2f47;
+  --signal: #d7262a;
+  --awake: #ffc65a;
+  --awake-deep: #e0a52b;
+  --on-awake: #141414;
+  --success: #1a7f4b;
+  --plate-ink: #141414;
+  --awake-wash: #ffe5b5;
+  --enamel-wash: #c8cfd7;
+  --enamel-half: #8796a6;
+  --focus-halo: 0 0 0 3px rgb(36 64 94 / 0.25);
+  --shadow-face: 0 1px 2px rgb(20 20 20 / 0.06), 0 6px 18px -8px rgb(20 20 20 / 0.25);
+  --shadow-lift: 0 1px 2px rgb(20 20 20 / 0.06), 0 12px 24px -12px rgb(20 20 20 / 0.35);
+  --bevel: inset 0 1px 0 rgb(255 255 255 / 0.28), inset 0 -1px 0 rgb(0 0 0 / 0.35);
+  --shadow-plate: var(--bevel), 0 2px 4px rgb(20 20 20 / 0.25);
+  --shadow-plate-lift: var(--bevel), 0 6px 12px -4px rgb(20 20 20 / 0.4);
+  --shadow-knob: 0 1px 2px rgb(20 20 20 / 0.3);
+  --shadow-bar: 0 -6px 16px -10px rgb(20 20 20 / 0.35);
+  --shadow-track: inset 0 1px 3px rgb(20 20 20 / 0.12);
+  --shadow-clock: 0 6px 8px rgb(20 20 20 / 0.16);
+
+  // The scale below, written out as clamp() between 320px and 1240px.
+  --step--2: clamp(0.6944rem, 0.6793rem + 0.0755vw, 0.7378rem);
+  --step--1: clamp(0.8333rem, 0.8152rem + 0.0906vw, 0.8854rem);
+  --step-0: clamp(1rem, 0.9783rem + 0.1087vw, 1.0625rem);
+  --step-1: clamp(1.2rem, 1.155rem + 0.2228vw, 1.328rem);
+  --step-2: clamp(1.44rem, 1.363rem + 0.3829vw, 1.66rem);
+  --step-3: clamp(1.728rem, 1.607rem + 0.6038vw, 2.075rem);
+  --step-4: clamp(2.074rem, 1.893rem + 0.905vw, 2.594rem);
+  // The landing claim: 2.4rem on a 320px phone to 5.6rem at 1240px.
+  --step-display: clamp(2.4rem, 1.287rem + 5.565vw, 5.6rem);
+
+  // Space. The gutter runs 1rem to 2.5rem, a panel's padding 1.25rem to
+  // 1.75rem, a section's 2.5rem to 5rem, all between 320px and 1240px.
+  --gutter: clamp(1rem, 0.478rem + 2.609vw, 2.5rem);
+  --space-panel: clamp(1.25rem, 1.075rem + 0.87vw, 1.75rem);
+  --space-section: clamp(2.5rem, 1.63rem + 4.348vw, 5rem);
+
+  --radius-plate: 3px;
+  --radius-control: 4px;
+  --radius-face: 6px;
+
+  --body-font: #{$body-font};
+  --time-font: #{$time-font};
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+@supports (color: light-dark(white, black)) {
+  :root {
+    color-scheme: light dark;
+
+    // The newsroom clock wall: painted wall, white glass faces, black hands,
+    // one red second hand, enamel city plates, and the yellow of a painted
+    // "everyone is awake" band. At night the wall goes dark and the faces
+    // with it; the plates, the signal and the yellow keep their colour.
+    --wall: light-dark(oklch(95.3% 0.009 85), oklch(19% 0.008 85));
+    --wall-deep: light-dark(oklch(91.1% 0.016 86), oklch(16% 0.008 85));
+    --face: light-dark(oklch(1 0 none), oklch(24% 0.007 85));
+    --ink: light-dark(oklch(19.1% 0 none), oklch(94% 0.006 85));
+    --ink-soft: light-dark(oklch(40% 0.006 68), oklch(76% 0.008 80));
+    --hairline: color-mix(in oklch, var(--ink) 14%, transparent);
+    --rule: color-mix(in oklch, var(--ink) 28%, transparent);
+    --ink-08: color-mix(in oklch, var(--ink) 8%, transparent);
+    --ink-18: color-mix(in oklch, var(--ink) 18%, transparent);
+    --ink-22: color-mix(in oklch, var(--ink) 22%, transparent);
+    --ink-25: color-mix(in oklch, var(--ink) 25%, transparent);
+    --ink-35: color-mix(in oklch, var(--ink) 35%, transparent);
+    --ink-45: color-mix(in oklch, var(--ink) 45%, transparent);
+
+    --enamel: light-dark(oklch(36.4% 0.062 251), oklch(42% 0.07 251));
+    --enamel-deep: color-mix(in oklch, var(--enamel), black 25%);
+    --enamel-text: oklch(1 0 none);
+    // Enamel as text: on the dark wall it lightens to stay readable.
+    --link: light-dark(oklch(36.4% 0.062 251), oklch(80% 0.07 251));
+    --link-hover: light-dark(oklch(30% 0.052 253), oklch(90% 0.04 251));
+
+    --signal: light-dark(oklch(56.8% 0.21 26), oklch(68% 0.19 26));
+    --awake: oklch(85.8% 0.139 81);
+    --awake-deep: oklch(75.9% 0.145 80);
+    // Text on the yellow is always the daytime ink.
+    --on-awake: oklch(19.1% 0 none);
+    --success: light-dark(oklch(52.8% 0.121 155), oklch(72% 0.13 155));
+    --plate-ink: light-dark(oklch(19.1% 0 none), oklch(32% 0.006 85));
+
+    // Washes of a colour over the face.
+    // Mixed in OKLab: the face is a near-grey with a warm hue, and an OKLCH
+    // mix would swing the blue through green on its way there.
+    --awake-wash: light-dark(color-mix(in oklab, var(--awake) 45%, white), color-mix(in oklab, var(--awake) 38%, oklch(24% 0.007 85)));
+    --enamel-wash: color-mix(in oklab, var(--link) 25%, var(--face));
+    --enamel-half: color-mix(in oklab, var(--link) 55%, var(--face));
+    --focus-halo: 0 0 0 3px color-mix(in oklch, var(--link) 25%, transparent);
+
+    --shadow-color: light-dark(oklch(19% 0 none), oklch(0% 0 none));
+    --shadow-face: 0 1px 2px color-mix(in oklch, var(--shadow-color) 6%, transparent), 0 6px 18px -8px color-mix(in oklch, var(--shadow-color) 25%, transparent);
+    --shadow-lift: 0 1px 2px color-mix(in oklch, var(--shadow-color) 6%, transparent), 0 12px 24px -12px color-mix(in oklch, var(--shadow-color) 35%, transparent);
+    // The enamel bevel: one light hairline on top, one dark at the bottom.
+    --bevel: inset 0 1px 0 oklch(1 0 none / 0.28), inset 0 -1px 0 oklch(0% 0 none / 0.35);
+    --shadow-plate: var(--bevel), 0 2px 4px color-mix(in oklch, var(--shadow-color) 25%, transparent);
+    --shadow-plate-lift: var(--bevel), 0 6px 12px -4px color-mix(in oklch, var(--shadow-color) 40%, transparent);
+    --shadow-knob: 0 1px 2px color-mix(in oklch, var(--shadow-color) 30%, transparent);
+    --shadow-bar: 0 -6px 16px -10px color-mix(in oklch, var(--shadow-color) 35%, transparent);
+    --shadow-track: inset 0 1px 3px color-mix(in oklch, var(--shadow-color) 12%, transparent);
+    --shadow-clock: 0 6px 8px color-mix(in oklch, var(--shadow-color) 16%, transparent);
+  }
+
+  [data-theme="light"] { color-scheme: light; }
+  [data-theme="dark"] { color-scheme: dark; }
+}
+
+// One fluid scale. Body text is 16px on a 320px phone and 17px from a
+// 1240px window up; each step is ×1.2 narrow and ×1.25 wide.
+@supports (width: calc(pow(2, 2) * 1px)) {
+  :root {
+    --narrow: 20;
+    --wide: 77.5;
+    --size-narrow: 1;
+    --size-wide: 1.0625;
+    --ratio-narrow: 1.2;
+    --ratio-wide: 1.25;
+
+    --fluid: clamp(0rem, (100vw - var(--narrow) * 1rem) / (var(--wide) - var(--narrow)), 1rem);
+    --at-narrow: calc(var(--size-narrow) * (1rem - var(--fluid)));
+    --at-wide: calc(var(--size-wide) * var(--fluid));
+
+    --step--2: calc(var(--step--1) / var(--ratio-narrow));
+    --step--1: calc(var(--step-0) / var(--ratio-narrow));
+    --step-0: calc(var(--at-narrow) + var(--at-wide));
+    --step-1: calc(var(--at-narrow) * var(--ratio-narrow) + var(--at-wide) * var(--ratio-wide));
+    --step-2: calc(var(--at-narrow) * pow(var(--ratio-narrow), 2) + var(--at-wide) * pow(var(--ratio-wide), 2));
+    --step-3: calc(var(--at-narrow) * pow(var(--ratio-narrow), 3) + var(--at-wide) * pow(var(--ratio-wide), 3));
+    --step-4: calc(var(--at-narrow) * pow(var(--ratio-narrow), 4) + var(--at-wide) * pow(var(--ratio-wide), 4));
+  }
+}

@@ -23,7 +23,10 @@
     <%= yield :head %>
 
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#f2efe9">
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#f2efe9" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#1a1917" media="(prefers-color-scheme: dark)">
+    <meta name="view-transition" content="same-origin">
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
 
     <%= javascript_include_tag "application", "data-turbo-track": "reload", defer: true %>
@@ -31,9 +34,8 @@
 
   <body>
     <%= render 'shared/navbar' %>
-    <%= render 'shared/flashes' %>
-
     <main id="main">
+      <%= render 'shared/flashes' %>
       <%= yield %>
     </main>
     <%= render 'shared/footer' %>
