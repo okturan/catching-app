@@ -13,9 +13,18 @@
   --bs-body-font-size: var(--step-0);
 }
 
-.form-label { font-weight: 600; }
+// Labels name the field and step back: smaller than what is typed, so the
+// inputs carry the weight.
+.form-label {
+  font-size: var(--step--1);
+  font-weight: 600;
+  margin-block-end: 0.35rem;
+}
 
-.form-text { color: var(--ink-soft); }
+.form-text {
+  font-size: var(--step--1);
+  color: var(--ink-soft);
+}
 
 .form-control,
 .form-select {
@@ -43,16 +52,14 @@
   &:user-invalid { border-color: var(--signal); }
 }
 
-// The caret drawn in the ink of the theme, where Bootstrap's is a fixed image.
+// A thin chevron in the theme's ink, where Bootstrap draws a heavy one.
 .form-select {
-  background-image:
-    linear-gradient(45deg, transparent 50%, var(--ink-soft) 50%),
-    linear-gradient(135deg, var(--ink-soft) 50%, transparent 50%);
-  background-position:
-    calc(100% - 1.15rem) 50%,
-    calc(100% - 0.8rem) 50%;
-  background-size: 0.35rem 0.35rem;
+  --caret: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%234a4744' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-image: var(--caret);
+  background-position: right 0.85rem center;
+  background-size: 12px 8px;
   background-repeat: no-repeat;
+  padding-inline-end: 2.25rem;
 }
 
 // A text box grows with what is typed, between three and twelve lines.
@@ -157,12 +164,29 @@ textarea.form-control {
 
 .alert-warning { --bs-alert-bg: var(--awake-wash); }
 
-// The close cross is a fixed black image; on the dark wall it turns white.
-// Only where the dark wall exists at all (see config/_tokens.scss).
+// The close cross and the chevron are images; on the dark wall they turn
+// light. Only where the dark wall exists at all (see config/_tokens.scss).
+$caret-dark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23bdb9b2' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+
 @supports (color: light-dark(white, black)) {
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
+    :root:not([data-theme="light"]) .form-select { --caret: #{$caret-dark}; }
   }
 
   [data-theme="dark"] .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
+  [data-theme="dark"] .form-select { --caret: #{$caret-dark}; }
 }
+
+// One field from the form builder: label, control, then the error or hint
+// close under it. Fields keep one distance apart, wherever they sit.
+.field {
+  display: grid;
+  gap: 0.35rem;
+
+  > .form-label { margin: 0; }
+  > .form-text,
+  > .invalid-feedback { margin: 0; }
+}
+
+.field:not(:last-child) { margin-block-end: 1.25rem; }

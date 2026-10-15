@@ -15,7 +15,7 @@ class ApplicationFormBuilder < ActionView::Helpers::FormBuilder
     html[:aria] = { invalid: (true if error),
       describedby: [ (field_id(attribute, :help) if hint), describedby, (field_id(attribute, :error) if error) ].compact.join(" ").presence }
 
-    @template.tag.div(class: "mb-3") do
+    @template.tag.div(class: "field") do
       @template.safe_join([
         label(attribute, optional ? "#{name} (optional)" : name, class: "form-label"),
         as == :select ? select(attribute, choices, { include_blank: }, html) : public_send(as, attribute, html),
